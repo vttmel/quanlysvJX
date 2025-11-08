@@ -1,0 +1,31 @@
+services:
+  mysql57:
+    image: mysql:5.7
+    restart: always
+    container_name: jx1_mysql
+    ports:
+        - "3306:3306"
+    environment:
+        MYSQL_ROOT_PASSWORD: "1234560123"
+    volumes:
+        - ./database/mysql_server1/data:/var/lib/mysql
+    network_mode: host
+
+  
+ 
+  mssql_database:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    restart: always
+    container_name: jx1_mssql
+    environment:
+      SA_PASSWORD: "SAJx123456"
+      ACCEPT_EULA: "Y"
+      TZ: "Asia/Ho_Chi_Minh"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./database/mssql/data:/var/opt/mssql/data
+      - /etc/localtime:/etc/localtime:ro
+      - /home/database_backups:/home/database_backups
+    network_mode: host
