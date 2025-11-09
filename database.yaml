@@ -1,31 +1,27 @@
 services:
-  mysql57:
-    image: mysql:5.7
-    restart: always
-    container_name: jx1_mysql
-    ports:
-        - "3306:3306"
+  jxmysql:
+    image: mysql:5.6
+    container_name: jxmysql
     environment:
         MYSQL_ROOT_PASSWORD: "1234560123"
+    command: --explicit_defaults_for_timestamp=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    mem_limit: 1g
     volumes:
         - ./database/mysql_server1/data:/var/lib/mysql
+        - ./settings/docker.cnf:/etc/mysql/conf.d/docker.cnf:ro
     network_mode: host
-
-  
- 
+    restart: unless-stopped
   mssql_database:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    restart: always
-    container_name: jx1_mssql
-    environment:
-      SA_PASSWORD: "SAJx123456"
-      ACCEPT_EULA: "Y"
-      TZ: "Asia/Ho_Chi_Minh"
-      MSSQL_PID: "Express"
-    ports:
-      - "1433:1433"
-    volumes:
-      - ./database/mssql/data:/var/opt/mssql/data
-      - /etc/localtime:/etc/localtime:ro
-      - /home/database_backups:/home/database_backups
-    network_mode: host
+   image: mcr.microsoft.com/mssql/server:2019-latest
+   restart: unless-stopped
+   container_name: jx1_mssql
+   environment:
+       SA_PASSWORD: "SAJx123456"
+       ACCEPT_EULA: "Y"
+       TZ: "Asia/Ho_Chi_Minh"
+   volumes:
+        - ./database/mssql/data:/var/opt/mssql/data
+        - /etc/localtime:/etc/localtime:ro
+        - /home/database_backups:/home/database_backups
+   mem_limit: 1g
+   network_mode: host
