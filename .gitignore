@@ -1,4 +1,6 @@
 /database/
 .env
-*.log
+/logs/**/*.log
+/logs/**/*.txt
+/logs/**/*.sql
 

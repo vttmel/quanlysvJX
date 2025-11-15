@@ -35,6 +35,13 @@ services:
       - "${SERVER_PATH}/gateway:/src/jxser/gateway/"
       - "./settings/gateway/relay_config.ini:/src/jxser/gateway/s3relay/relay_config.ini"
       - "./settings/gateway/hostset.ini:/src/jxser/gateway/s3relay/settings/hostset.ini"
+      - ./logs/gateway/Logs:/src/jxser/gateway/Logs
+      - ./logs/gateway/Backup:/src/jxser/gateway/Backup
+      - ./logs/gateway/roleback:/src/jxser/gateway/roleback
+      - ./logs/gateway/rolevalue_setting/rolevalue_log:/src/jxser/gateway/rolevalue_setting/rolevalue_log
+      - ./logs/gateway/s3relay/Logs:/src/jxser/gateway/s3relay/Logs
+      - ./logs/gateway/s3relay/relay_logs:/src/jxser/gateway/s3relay/relay_logs
+      - ./logs/gateway/s3relay/RelayRunData:/src/jxser/gateway/s3relay/RelayRunData
     network_mode: host
   jx_linux:
     build:
@@ -47,4 +54,7 @@ services:
     volumes:
       - "${SERVER_PATH}/server1:/src/jxser/server1/"
       - "./settings/gs1/servercf0.ini:/src/jxser/server1/servercf0.ini"
+      - ./logs/server1/Logs:/src/jxser/server1/Logs
+      - ./logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
+      
     network_mode: host
