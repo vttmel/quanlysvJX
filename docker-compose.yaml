@@ -56,5 +56,6 @@ services:
       - "./settings/gs1/servercf0.ini:/src/jxser/server1/servercf0.ini"
       - ./logs/server1/Logs:/src/jxser/server1/Logs
       - ./logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
-      
+      - "./script/lenhbaitanthu.lua:/src/jxser/server1/script/global/general/lenhbaitanthu.lua"
+      - "./script/configall.lua:/src/jxser/server1/script/global/pgaming/configserver/configall.lua"
     network_mode: host
