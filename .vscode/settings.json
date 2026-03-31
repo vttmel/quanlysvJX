@@ -41,5 +41,6 @@
     "git.enableSmartCommit": true,
     "Lua.workspace.maxPreload": 50000,
     
-    "terminal.integrated.scrollback": 100000
+    "terminal.integrated.scrollback": 100000,
+    "luahelper.colors.Enable": false
 }

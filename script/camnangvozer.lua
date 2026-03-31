@@ -14,6 +14,7 @@ Include("\\script\\global\\mel\\feature\\vozertest.lua")
 Include("\\script\\global\\pgaming\\trangbixanh\\tuychontrangbixanh.lua")
 Include("\\script\\global\\pgaming\\doivukhixanh\\makeitemblue.lua")
 Include("\\script\\task\\metempsychosis\\task_func.lua")
+Include("\\script\\activitysys\\playerfunlib.lua")
 
 ----------------------------------------------------------------------------------------------------
 --											CÈm Nang Vozer								  		  --
@@ -84,11 +85,20 @@ tbListSkill = {
 	[491]={Level =1, name="Lenh bai"},
 	[492]={Level =10, name="chien co"},
 }
+nIdSkill = 586 -- tang chi mang
+nIdSkill = 73 -- Van doc  thu tam
+nIdSkill = 75 -- Ngu doc ky kinh
+nIdSkill = 253 -- Ngu doc thuc cot
+nIdSkill = 892
+nIdSkill = 16 --la han tran 
+nIdSkill = 983 --la han tran imba
+nIdSkill = 253
 function addskill()
 	--DoClearSkillCore()
-	local nIdSkill = 586 -- tang chi mang
-	local nIdSkill = 75 -- Ngu doc ky kinh
-	local nLevelSkill = 40
+	-- local nIdSkill = 586 -- tang chi mang
+	-- local nIdSkill = 75 -- Ngu doc ky kinh
+	-- local nIdSkill = 1129 -- Bang sat ngoai cong
+	local nLevelSkill = 50
 	AddMagic(nIdSkill, nLevelSkill);
 	-- for nId, setting in pairs(tbListSkill) do
 	-- 	if (HaveMagic(nId) ~= -1) then
@@ -107,7 +117,7 @@ function dellskill()
 	-- 	end
 	--end
 	--DelMagic(490)
-	DelMagic(75)
+	DelMagic(nIdSkill)
 end
 function testtk()
     local level = 3
@@ -115,32 +125,90 @@ function testtk()
 end
 function addkhang()
 	-- for i=0,4 do
-	-- 	AddMaxResist(i,-5)
+	-- 	AddMaxResist(i,10)
 	-- end
 	--AddMagicPoint(200)
-	local nTime = 18*60*60*60*60
+	--AddProp(45) 
+	local nTime = 174*(18*60*60*24)
     --zhuansheng_clear_skill(0, 0)
 	--RollbackSkill()    
-	-- -- AddSkillState( 471,0,0,nTime,0)
-	-- AddSkillState( 473, 1, 0,nTime,0)--kh¸ng vl
-	-- AddSkillState( 474, 1, 0,nTime,0)--kh¸ng ®éc
-	-- AddSkillState( 475, 1, 0,nTime,0) --kh¸ng b¨ng	
-	-- AddSkillState( 476, 1, 0,nTime,0)-- kh¶ng háa
-	-- AddSkillState( 477, 1, 0,nTime,0) -- kh¸ng l«i
-	--RemoveSkillState( 496)
-	-- RemoveSkillState( 473)--kh¸ng vl
-	-- RemoveSkillState( 474)--kh¸ng ®éc
-	-- RemoveSkillState( 475) --kh¸ng b¨ng	
-	-- RemoveSkillState( 476)-- kh¶ng háa
-	-- RemoveSkillState( 477) -- kh¸ng l«i
-	--AddSkillState( 493, 3, 1,nTime,1) --tèc ch¹y
 	--RemoveSkillState(484)
-	AddSkillState(464, 10, 1, nTime,1) -- hoi sinh luc
-	AddSkillState(465, 5, 1, nTime,1)
-	--AddSkillState(484, 10, 1, nTime,1) -- stvl
+	--RemoveSkillState(462)
+	-- AddSkillState(462, 2, 1, nTime,1) -- hoi sinh luc 
+	--RemoveSkillState(471)
+	--AddSkillState(471, 4, 1, nTime,1) -- hoi sinh luc +mana
+	--RemoveSkillState(472)
+	AddSkillState(472, 20, 1, nTime,1) -- hoi sinh luc +mana
+	--RemoveSkillState(463)
+	-- AddSkillState(463, 2, 1, nTime,1) -- hoi mana
+	-- -- --AddSkillState(484, 10, 1, nTime,1) -- stvl
+	-- 	-- --AddSkillState(487, 10, 1, nTime,1) -- stvl
 	--AddSkillState(293, 10, 1, nTime,1) -- Mi?n dich
-	AddSkillState(75, 30, 1, nTime,1) -- Ngu doc ky kinh
-	AddSkillState(586, 40, 1, nTime,1) -- tang chi mang
+	--AddSkillState(473,60, 1, nTime,1) -- PTVL
+	--AddSkillState(475,60, 1, nTime,1) -- Khang bang
+	--AddSkillState(476,60, 1, nTime,1) -- Khang bang
+	RemoveSkillState(485)
+	--AddSkillState(485,60, 1, nTime,1) -- doc ngoai cong
+	--RemoveSkillState(454)
+	-- AddSkillState(453, 60, 1, nTime,1) -- vl noi  cong
+	RemoveSkillState(454)
+	--AddSkillState(454,40, 1, nTime,1) -- doc noi  cong
+	-- AddSkillState(455, 60, 1, nTime,1) -- Bang noi  cong
+	RemoveSkillState(456)
+	--AddSkillState(456, 60, 1, nTime,1) -- hoa noi  cong
+	RemoveSkillState(457)
+	--AddSkillState(457, 60, 1, nTime,1) -- Loi noi  cong
+	-- -- AddSkillState(457, 40, 1, nTime,1) -- loi sat noi  cong
+	
+	
+	--AddSkillState(456, 60, 1, nTime,1) -- Hoa sat noi  cong
+	-- -- -- --AddSkillState(253, 11, 1, nTime,1) -- doc noi  cong
+	-- -- -- --AddSkillState(1230, 20, 1, nTime,1) -- Bang sat
+	--RemoveSkillState(498)
+	-- AddSkillState(498, 40, 1, nTime,1) -- Hoa sat
+	RemoveSkillState(499)
+	--AddSkillState(499,60, 1, nTime,1) -- Loi sat 
+	 
+	-- -- -- --AddSkillState(630, 20, 1, nTime,1) -- Huyen Thien vo cuc
+	-- -- -- --AddSkillState(962, 20, 1, nTime,1) -- xac xuat Hap tinh yem
+	RemoveSkillState(466)
+	-- AddSkillState(466, 4, 1, nTime,1) -- Giam thoi gian phuc hoi
+	RemoveSkillState(467)
+	-- AddSkillState(467, 4, 1, nTime,1) -- Giam thoi gian trung doc
+	RemoveSkillState(468)
+	-- AddSkillState(468, 4, 1, nTime,1) -- Giam thoi gian lam cham
+	RemoveSkillState(469)
+	--AddSkillState(469, 8, 1, nTime,1) -- Khang choang
+	RemoveSkillState(470)
+	--AddSkillState(470, 10, 1, nTime,1) -- Khang chi mang
+	RemoveSkillState(892)
+	--AddSkillState(892,  10, 1, nTime,1) -- Tang kinh nghiem
+	--RemoveSkillState(966)
+	--AddSkillState(966, 2, 1, nTime,1) -- nhat ky
+	--RemoveSkillState(496)
+	--AddSkillState(496, 12, 1, nTime,1) -- toc do danh
+	--RemoveSkillState(519)
+	--PlayerFunLib:AddSkillState(114,30,3, nTime,
+	--PlayerFunLib:AddSkillState(114,30,3, nTime,1) -- test
+	--RemoveSkillState(465)
+	--RemoveSkillState(464)
+	--RemoveSkillState(1214)
+	--RemoveSkillState(484)
+	local nday = 7 * 18*60*60*24
+	--RemoveSkillState(1235)
+	AddSkillState(1235, 1, 1, nday,1) -- danh hieu Bach chien bach thang
+	--RemoveSkillState(1236)
+	AddSkillState(1236, 1, 1, nday,1) -- vong sang chien thang TK
+	for i = 1, 2000 do
+		--RemoveSkillState(i)
+		local have_skill, time, rest_time = GetSkillState(i)
+		if have_skill > 0 then
+			local nDay = floor(rest_time/(18*60*60*24))
+			Msg2Player("skill id "..i.." con "..nDay.." ngay")
+		end
+	end
+
+
 	--KickOutSelf()
 
 end
@@ -150,45 +218,47 @@ function testnhando()
 	-- C?u hình các option c?n tìm (d? dàng thêm/b?t)
 	local tbRequiredOptions = {
 		--{magictype = 136, minValue = 5, name = "Hut sinh luc"},  -- Option 1
-		{magictype = 139, minValue = 1, name = "+ skill"},  -- Option 3
+		--{magictype = 139, minValue = 2, name = "+ skill"},  -- Option 3
 		--{magictype = 115, minValue = 30, name = "tdd"},
-		--{magictype = 116, minValue = 20, name = "tdd nc"},
-		--{magictype = 121, minValue = 30, name = "stvl"}, --- Option 2
+		--{magictype = 116, minValue = 10, name = "tdd nc"},
+		--{magictype = 121, minValue = 40, name = "stvl"}, --- Option 2
 		--{magictype = 126, minValue = 50, name = "%stvl"},
-		--{magictype = 125, minValue = 50, name = "doc sat ngoai cong"},
-		--{magictype = 172, minValue = 50, name = "doc sat noi cong"},
+		--{magictype = 123, minValue = 50, name = "bang sat ngoai cong"},
+		--{magictype = 125, minValue = 40, name = "doc sat ngoai cong"},
+		--{magictype = 171, minValue = 200, name = "Loi sat noi cong"},
+		--{magictype = 172, minValue = 30, name = "doc sat noi cong"},
 		--{magictype = 170, minValue = 200, name = "hs nc"},--- Option 2
 		-- {magictype = 116, minValue = 30, name = "Chí m?ng"},
-		--{magictype = 85, minValue = 180, name = "sinh luc"},
+		{magictype = 85, minValue = 180, name = "sinh luc"},
 		--{magictype = 92, minValue = 20, name = "phuc hoi noi luc"},
 		--{magictype = 113, minValue = 40, name = "tg phuc hoi"},
-		--{magictype = 101, minValue = 25, name = "khang doc"},
+		--{magictype = 101, minValue = 20, name = "khang doc"},
 		--{magictype = 103, minValue = 30, name = "khang loi"},
-		--{magictype = 102, minValue = 20, name = "khang hoa"},
+		{magictype = 102, minValue = 25, name = "khang hoa"},
 		--{magictype = 114, minValue = 20, name = "ktc"},
-			--{magictype = 110, minValue = 25, name = "tg lam choang"},
+		{magictype = 110, minValue = 40, name = "tg lam choang"},
 		--{magictype = 104, minValue = 25, name = "ptvl"},
 		--{magictype = 105, minValue = 25, name = "khang bang"},
-		--{magictype = 106, minValue = 25, name = "tg lam cham"},
+		--{magictype = 106, minValue = 40, name = "tg lam cham"},
 		--{magictype = 111, minValue = 40, name = "toc do di chuyen"},
-		--{magictype = 134, minValue = 10, name = "chstnl"},
+		--{magictype = 134, minValue = 15, name = "chstnl"},
 		--{magictype = 136, minValue = 5, name = "hut sl"},
 	}
 	
 	-- C?u hình item
 	local nCount = 0
 	local nItemGenre = 0
-	local nDetailType = 3
-	local nParticularType = 0
+	local nDetailType = 9
+	local nParticularType = 1
 	local nLevel = 10
-	local nSeries = 3
+	local nSeries = 2
 	local nLuck = 250
 	local nItemLevel = 10
 	local nMaxTries = 6000
 	
 	-- B?t ??u t?o item
 	for i = 1, nMaxTries do
-		xItem = AddVerItem(4, random(10, 99999999), nItemGenre, nDetailType, nParticularType, nLevel, nSeries, 250, 10)
+		xItem = AddVerItem(4, random(10, 99999999), nItemGenre, nDetailType, nParticularType, nLevel, nSeries, 250,10)
 		
 		-- Ki?m tra t?t c? các option yêu c?u
 		local tbFoundOptions = {}
@@ -235,21 +305,34 @@ function testnhando()
 	print("end")
 end
 function GiveLak()
-	--AddStackItem(18,1,303,1,nil,1000000);
-	--AddStackItem(50,6,1,156,1,0,0); -- chien co
-	-- --AddStackItem(50,6,1,157,1,0,0);
-	-- for i =1,10 do
-	--AddStackItem(50,6,1,156,1,0,0); -- chien co
-	--AddStackItem(50,6,1,157,1,0,0); -- lenh bai
-	-- end
-	-- for i =1,6 do
-	-- 	AddStackItem(50,6,1,178,1,0,0); --ngoai pho hoan
-	-- 	AddStackItem(50,6,1,179,1,0,0);
-	-- 	AddStackItem(50,6,1,180,1,0,0);
-	-- end
-	-- AddStackItem(5,6,1,4911,1,0,0);
-	-- AddStackItem(1,6,1,4924,1,0,0);
-	AddStackItem(1,6,1,2424,1,0,0) --dai thanh 90
+
+	--AddStackItem(5,6,1,2952,1,0,0); --KÝch C«ng Trî Lùc Hoµn
+	local nCount = 100
+	--AddStackItem(nCount,6,1,156,1,0,0); -- chien co
+	--AddStackItem(nCount,6,1,157,1,0,0); -- lenh bai
+	-- AddStackItem(nCount,6,1,190,1,0,0); --Phi toc TK
+	-- AddStackItem(nCount,6,1,187,1,0,0); --toc chay TK 
+	-- AddStackItem(nCount,6,1,178,1,0,0); --ngoai pho hoan TK
+	-- AddStackItem(nCount,6,1,179,1,0,0);-- NGoai bang hoan TK
+	-- AddStackItem(nCount,6,1,180,1,0,0); --Ngoai doc hoan TK
+	--AddStackItem(nCount,6,1,182,1,0,0); --Noi doc hoan TK
+	-- AddStackItem(nCount,6,1,184,1,0,0); --Noi hoa hoan TK
+	--AddStackItem(nCount,6,1,185,1,0,0); --Noi loi hoan TK
+	
+	-- -- -- -- -- end
+	-- -- -- -- 	-- for i =1,2 do
+	-- AddStackItem(nCount,6,1,191,1,0,0); --khang ptvl TK
+	-- AddStackItem(nCount,6,1,192,1,0,0);-- khang bang TK
+	-- AddStackItem(nCount,6,1,193,1,0,0); -- khang loi TK
+	-- AddStackItem(nCount,6,1,194,1,0,0); --khang hoa TK 
+	-- AddStackItem(nCount,6,1,195,1,0,0); --Khang doc TK
+	-- -- -- -- -- end
+
+	--AddStackItem(500,6,0,3,1,0,0); --dai luc hoan
+	--AddStackItem(500,6,0,6,1,0,0); --Phi toc
+	--AddStackItem(5,6,1,4911,1,0,0);
+	--AddStackItem(1,6,1,4924,1,0,0);
+	--AddStackItem(1,6,1,2424,1,0,0) --dai thanh 90
 	-- AddStackItem(1,6,1,2425,1,0,0) --dai thanh 120
 	-- AddStackItem(1,6,1,4922,1,0,0) --dai thanh 120
 	-- for i =1,5 do
@@ -260,19 +343,41 @@ function GiveLak()
 	-- 	AddStackItem(50,6,1,185,1,0,0);
 	-- end
 	-- for i = 1,8 do
-	--AddStackItem(50,6,1,187,1,0,0); --toc chay
-	--AddStackItem(50,6,1,190,1,0,0); --Phi toc
+	-- AddStackItem(50,6,1,187,1,0,0); --toc chay
+	--AddStackItem(50,6,1,190,1,0,0); --Phi toc TK
 	-- end
-	-- AddStackItem(50,6,1,4925,1,0,0); --cuong bao don
+	--AddStackItem(10,6,1,4925,1,0,0); --cuong bao don
+	AddStackItem(10,6,1,4935,1,0,0); --pho cong don
+	AddStackItem(10,6,1,4931,1,0,0); --phuc hoi
+	AddStackItem(10,6,1,4932,1,0,0); --khang choang
+	AddStackItem(10,6,1,4933,1,0,0); --trung doc
+	AddStackItem(10,6,1,4934,1,0,0); --khang cham
+	AddStackItem(10,6,1,4940,1,0,0); --mau
+
 	-- AddStackItem(50,6,1,4931,1,0,0);
 	-- AddStackItem(50,6,1,4932,1,0,0);
 	-- AddStackItem(50,6,1,4933,1,0,0);
-	-- AddStackItem(50,6,1,4934,1,0,0);
-	-- AddStackItem(50,6,1,4935,1,0,0);
+	--AddStackItem(1,6,1,4039,1,0,0);
+	--AddStackItem(50,6,1,4906,1,0,0); --TKL
+	--AddStackItem(300,6,1,4894,1,0,0); --bac dau
+	--AddStackItem(1,6,1,4923,1,0,0); --ruong kim quang
+	-- local nIdx = AddItem(0, 14, 0, 10, 0, 0, 0)
+	for i =1, 3 do
+	--AddGoldItem(0,  60)
+	end
+	--AddStackItem(1,6,1,61,1,0,0) --lenh bai boss
+	--local nIdx = AddGoldItem(0, 119)
+    -- if (nIdx > 0) then
+    --     SetItemBindState(nIdx, -2)
+    --     SyncItem(nIdx)
+    --     --Msg2Player("<color=green>N©ng cÊp thµnh c«ng:<color> <color=yellow>"..szTSName.." - "..cfg.name.."<color>")
+    -- end
 	--AddStackItem(999,6,1,4905,1,0,0); --vo lam lenh
-	--AddStackItem(8,6,1,12,1,0,0);
+	--AddGoldItem(0, 5290) -- An HK TL
+	--AddGoldItem(0, 5298) -- An HK VD
 	
 end
+
 ----------------------------------------------------------------------------------------------------
 --										  		 Mua M¸u							  		  	  --
 ----------------------------------------------------------------------------------------------------
