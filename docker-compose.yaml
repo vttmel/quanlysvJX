@@ -58,4 +58,5 @@ services:
       - ./logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
       - "./script/camnangvozer.lua:/src/jxser/server1/script/global/mel/item/camnangvozer.lua"
       - "./script/configserver.lua:/src/jxser/server1/script/global/mel/configserver.lua"
+      - "./settings/npcs.txt:/src/jxser/server1/settings/npcs.txt"
     network_mode: host
