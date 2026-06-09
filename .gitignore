@@ -4,3 +4,5 @@
 /logs/**/*.txt
 /logs/**/*.sql
 
+/paysyswin/payserver_log
+/paysyswin/relayserver_log
