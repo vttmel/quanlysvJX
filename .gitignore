@@ -1,6 +1,9 @@
 /database/
 .env
 .superpowers/
+node_modules/
+dist/
+apps/*/dist/
 /logs/**/*.log
 /logs/**/*.txt
 /logs/**/*.sql
