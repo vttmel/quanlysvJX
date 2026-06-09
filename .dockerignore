@@ -1,0 +1,7 @@
+*
+!dockerfiles/
+!dockerfiles/Dockerfile.paysys
+!dockerfiles/paysys-entrypoint.sh
+!dockerfiles/paysys-setup-mdac.sh
+!paysyswin/
+!paysyswin/MDAC_TYP.EXE

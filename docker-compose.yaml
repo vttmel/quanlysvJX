@@ -63,8 +63,8 @@ services:
 
   paysys:
     build:
-      context: ./dockerfiles
-      dockerfile: Dockerfile.paysys
+      context: .
+      dockerfile: dockerfiles/Dockerfile.paysys
     image: paysys
     container_name: paysys
     restart: no

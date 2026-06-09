@@ -24,7 +24,6 @@ RUN dpkg --add-architecture i386 \
         iproute2 \
         cabextract \
         unzip \
-        winetricks \
         winehq-stable \
         xauth \
         xvfb \
@@ -49,7 +48,13 @@ WORKDIR /src/paysys/
 
 RUN mkdir -p /src/paysys/payserver_log
 
-COPY paysys-entrypoint.sh /usr/local/bin/paysys-entrypoint.sh
-RUN chmod +x /usr/local/bin/paysys-entrypoint.sh
+COPY dockerfiles/paysys-setup-mdac.sh /usr/local/bin/paysys-setup-mdac.sh
+COPY dockerfiles/paysys-entrypoint.sh /usr/local/bin/paysys-entrypoint.sh
+COPY paysyswin/MDAC_TYP.EXE /tmp/MDAC_TYP.EXE
+
+RUN chmod +x /usr/local/bin/paysys-entrypoint.sh /usr/local/bin/paysys-setup-mdac.sh \
+    && xvfb-run -a /usr/local/bin/paysys-setup-mdac.sh /tmp/MDAC_TYP.EXE \
+    && rm -f /tmp/MDAC_TYP.EXE \
+    && rm -rf /tmp/mdac-extract /tmp/sqloldb /tmp/sqlnet /tmp/sqlodbc /tmp/wdsetup /tmp/mdacxpak
 
 CMD [ "paysys-entrypoint.sh" ]
