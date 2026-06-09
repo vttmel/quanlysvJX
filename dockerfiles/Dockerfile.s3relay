@@ -9,7 +9,8 @@ RUN for f in /etc/yum.repos.d/*.repo; do \
 	&& yum -y makecache || true \
 	&& yum -y update \
 	&& yum -y install libuuid.i686 libcrypto.so.6 libcurl.so.4 \
-	&& yum clean all
+	&& yum clean all \
+	&& rm -rf /var/cache/yum
 
 WORKDIR /src/jxser/gateway/s3relay/
 
