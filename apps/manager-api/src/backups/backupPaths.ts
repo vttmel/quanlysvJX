@@ -18,7 +18,11 @@ export function buildBackupFilename(kind: BackupKind, date = new Date()) {
 }
 
 export function assertBackupFile(directory: string, filename: string) {
+  const safeFilenamePattern = /^[A-Za-z0-9._-]+$/;
   if (filename.includes('/') || filename.includes('\\') || filename === '.' || filename === '..') {
+    throw new ValidationError('Invalid backup filename');
+  }
+  if (!safeFilenamePattern.test(filename)) {
     throw new ValidationError('Invalid backup filename');
   }
 

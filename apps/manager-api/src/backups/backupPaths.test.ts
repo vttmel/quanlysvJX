@@ -22,4 +22,8 @@ describe('backup paths', () => {
   it('rejects path traversal', () => {
     expect(() => assertBackupFile(root, '../mysql.sql.gz')).toThrow('Invalid backup filename');
   });
+
+  it('rejects shell metacharacters in filenames', () => {
+    expect(() => assertBackupFile(root, 'mysql-20260609-030405.sql.gz;rm')).toThrow('Invalid backup filename');
+  });
 });

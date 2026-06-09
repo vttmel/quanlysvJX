@@ -3,6 +3,7 @@ import sensible from '@fastify/sensible';
 import { fail } from './api/envelope.js';
 import { AppError } from './api/errors.js';
 import { loadConfig, type ManagerConfig } from './config.js';
+import { registerBackupRoutes } from './routes/backupRoutes.js';
 import { registerHealthRoutes } from './routes/healthRoutes.js';
 import { registerLogRoutes } from './routes/logRoutes.js';
 import { registerServiceRoutes } from './routes/serviceRoutes.js';
@@ -37,6 +38,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerHealthRoutes(app);
   await registerServiceRoutes(app);
   await registerLogRoutes(app);
+  await registerBackupRoutes(app);
   return app;
 }
 
