@@ -127,6 +127,9 @@ Windows Registry Editor Version 5.00
 "*odbccp32"="native,builtin"
 "*oledb32"="native,builtin"
 
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\winebth]
+"Start"=dword:00000004
+
 [HKEY_CLASSES_ROOT\ADODB.Connection]
 @="Connection"
 
