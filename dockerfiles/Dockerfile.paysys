@@ -1,0 +1,26 @@
+FROM debian:12-slim
+
+ENV TZ=Asia/Ho_Chi_Minh
+ENV WINEARCH=win32
+ENV WINEPREFIX=/root/.win32
+ENV DEBIAN_FRONTEND=noninteractive
+ENV GNUTLS_SYSTEM_PRIORITY_FILE=/src/paysys/priorityGNU
+
+RUN dpkg --add-architecture i386 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        procps \
+        wine \
+        wine32 \
+        xauth \
+        xvfb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src/paysys/
+
+RUN mkdir -p /src/paysys/payserver_log \
+    && xvfb-run -a wineboot --init 2>/dev/null || true
+
+CMD [ "xvfb-run", "-a", "wine", "Sword3PaySys.exe" ]

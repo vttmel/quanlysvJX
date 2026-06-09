@@ -60,3 +60,16 @@ services:
       - "./script/configserver.lua:/src/jxser/server1/script/global/mel/configserver.lua"
       - "./settings/npcs.txt:/src/jxser/server1/settings/npcs.txt"
     network_mode: host
+
+  paysys:
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.paysys
+    image: paysys
+    container_name: paysys
+    restart: no
+    tty: true
+    volumes:
+      - "./paysyswin:/src/paysys"
+    network_mode: host
+
