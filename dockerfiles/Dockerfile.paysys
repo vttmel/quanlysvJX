@@ -1,26 +1,48 @@
-FROM debian:12-slim
+FROM ubuntu:22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Ho_Chi_Minh
 ENV WINEARCH=win32
 ENV WINEPREFIX=/root/.win32
-ENV DEBIAN_FRONTEND=noninteractive
 ENV GNUTLS_SYSTEM_PRIORITY_FILE=/src/paysys/priorityGNU
+ENV DISPLAY=:99
+ENV PATH=/opt/mssql-tools18/bin:${PATH}
 
 RUN dpkg --add-architecture i386 \
     && apt-get update \
-    && apt-get install -y --no-install-recommends \
+    && apt-get install -y --install-recommends \
         ca-certificates \
         procps \
+        cabextract \
+        curl \
+        gnupg \
+        unzip \
+        wget \
+        winetricks \
         wine \
         wine32 \
+        wine64 \
         xauth \
         xvfb \
+        unixodbc \
+        unixodbc-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list \
+        | sed -E 's#^deb \[([^]]*)\] #deb [\1 signed-by=/usr/share/keyrings/microsoft-prod.gpg] #; t; s#^deb #deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] #' \
+        > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 mssql-tools18 \
+    && ln -s /opt/mssql-tools18/bin/sqlcmd /usr/local/bin/sqlcmd \
+    && ln -s /opt/mssql-tools18/bin/bcp /usr/local/bin/bcp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src/paysys/
 
 RUN mkdir -p /src/paysys/payserver_log \
-    && xvfb-run -a wineboot --init 2>/dev/null || true
+    && xvfb-run -a sh -c 'wineboot --init && wineserver -w && winetricks --force -q mdac28 && wineserver -w'
 
-CMD [ "xvfb-run", "-a", "wine", "Sword3PaySys.exe" ]
+CMD [ "sh", "-c", "mkdir -p payserver_log; Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & sleep 1; exec wine Sword3PaySys.exe" ]
