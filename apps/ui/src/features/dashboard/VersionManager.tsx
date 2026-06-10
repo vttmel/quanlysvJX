@@ -7,6 +7,7 @@ import {
   FileButton,
   Group,
   Modal,
+  Progress,
   Stack,
   Table,
   Text,
@@ -14,6 +15,7 @@ import {
   Title
 } from '@mantine/core';
 import { api } from '@/services/client';
+import type { GameVersion } from '@/services/types';
 import { BrowseFolderModal } from './BrowseFolderModal';
 
 type Props = {
@@ -27,6 +29,14 @@ export function VersionManager({ onSuccess, onError }: Props) {
   const [gitBranch, setGitBranch] = useState('main');
   const [customName, setCustomName] = useState('');
   const [cloneModalOpened, setCloneModalOpened] = useState(false);
+  const [uploadModalOpened, setUploadModalOpened] = useState(false);
+  const [uploadName, setUploadName] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'extracting'>('idle');
+  const [renamingVersion, setRenamingVersion] = useState<GameVersion | null>(null);
+  const [renameName, setRenameName] = useState('');
+  const [renameDisplayName, setRenameDisplayName] = useState('');
   const [browsingVersion, setBrowsingVersion] = useState<string | null>(null);
 
   const versionsQuery = useQuery({
@@ -35,6 +45,9 @@ export function VersionManager({ onSuccess, onError }: Props) {
   });
 
   const { versions = [] } = versionsQuery.data ?? { versions: [] };
+  const uploadNameTrimmed = uploadName.trim();
+  const uploadNameExists = versions.some((version) => version.name === uploadNameTrimmed);
+  const uploadDisabled = !uploadNameTrimmed || !uploadFile || uploadNameExists;
 
   const selectMutation = useMutation({
     mutationFn: api.selectVersion,
@@ -60,12 +73,44 @@ export function VersionManager({ onSuccess, onError }: Props) {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: api.uploadVersion,
+    mutationFn: ({ name, file }: { name: string; file: File }) => {
+      setUploadStatus('uploading');
+      setUploadProgress(0);
+      return api.uploadVersionWithProgress({
+        name,
+        file,
+        onProgress: (progress) => {
+          setUploadProgress(progress);
+          if (progress >= 100) {
+            setUploadStatus('extracting');
+          }
+        }
+      });
+    },
     onSuccess: async () => {
       onSuccess('Upload và giải nén phiên bản game thành công');
+      setUploadName('');
+      setUploadFile(null);
+      setUploadProgress(0);
+      setUploadStatus('idle');
+      setUploadModalOpened(false);
       await queryClient.invalidateQueries({ queryKey: ['versions'] });
     },
-    onError: (error) => onError(error instanceof Error ? error.message : 'Upload hoặc giải nén thất bại')
+    onError: (error) => {
+      setUploadStatus('idle');
+      onError(error instanceof Error ? error.message : 'Upload hoặc giải nén thất bại');
+    }
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: ({ currentName, name, displayName }: { currentName: string; name: string; displayName: string }) =>
+      api.renameVersion(currentName, { name, displayName }),
+    onSuccess: async () => {
+      onSuccess('Đã đổi tên phiên bản game thành công');
+      setRenamingVersion(null);
+      await queryClient.invalidateQueries({ queryKey: ['versions'] });
+    },
+    onError: (error) => onError(error instanceof Error ? error.message : 'Đổi tên phiên bản thất bại')
   });
 
   const deleteMutation = useMutation({
@@ -93,10 +138,31 @@ export function VersionManager({ onSuccess, onError }: Props) {
     });
   };
 
-  const handleUploadFile = (file: File | null) => {
-    if (file) {
-      uploadMutation.mutate(file);
+  const handleUpload = () => {
+    if (!uploadNameTrimmed) {
+      onError('Vui lòng điền tên phiên bản');
+      return;
     }
+    if (!uploadFile) {
+      onError('Vui lòng chọn file game');
+      return;
+    }
+    if (uploadNameExists) {
+      onError('Tên phiên bản đã tồn tại');
+      return;
+    }
+    uploadMutation.mutate({ name: uploadNameTrimmed, file: uploadFile });
+  };
+
+  const openRenameModal = (version: GameVersion) => {
+    setRenamingVersion(version);
+    setRenameName(version.name);
+    setRenameDisplayName(version.displayName);
+  };
+
+  const handleRename = () => {
+    if (!renamingVersion) return;
+    renameMutation.mutate({ currentName: renamingVersion.name, name: renameName.trim(), displayName: renameDisplayName.trim() });
   };
 
   const handleSelectSubPath = (subPath: string) => {
@@ -105,7 +171,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
     }
   };
 
-  const loading = selectMutation.isPending || cloneMutation.isPending || uploadMutation.isPending || deleteMutation.isPending;
+  const loading = selectMutation.isPending || cloneMutation.isPending || uploadMutation.isPending || deleteMutation.isPending || renameMutation.isPending;
 
   return (
     <Card withBorder padding="md" radius="md">
@@ -118,13 +184,9 @@ export function VersionManager({ onSuccess, onError }: Props) {
         </div>
 
         <Group gap="md">
-          <FileButton onChange={handleUploadFile} accept=".zip,.tar.gz,.tgz">
-            {(props) => (
-              <Button {...props} loading={uploadMutation.isPending}>
-                Tải lên file game (.zip, .tar.gz, .tgz)
-              </Button>
-            )}
-          </FileButton>
+          <Button loading={uploadMutation.isPending} onClick={() => setUploadModalOpened(true)}>
+            Tải lên file game
+          </Button>
           <Button variant="light" onClick={() => setCloneModalOpened(true)}>
             Tải về từ GitHub
           </Button>
@@ -135,6 +197,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
             <Table.Tr>
               <Table.Th>Tên phiên bản</Table.Th>
               <Table.Th>Đường dẫn (.env)</Table.Th>
+              <Table.Th>Thời gian tải lên</Table.Th>
               <Table.Th>Trạng thái</Table.Th>
               <Table.Th>Thao tác</Table.Th>
             </Table.Tr>
@@ -142,16 +205,22 @@ export function VersionManager({ onSuccess, onError }: Props) {
           <Table.Tbody>
             {versions.length === 0 ? (
               <Table.Tr>
-                <Table.Td colSpan={4} align="center">
+                <Table.Td colSpan={5} align="center">
                   <Text size="sm" color="dimmed">Chưa có phiên bản game nào tải lên.</Text>
                 </Table.Td>
               </Table.Tr>
             ) : (
               versions.map((ver) => (
                 <Table.Tr key={ver.name}>
-                  <Table.Td fw={600}>{ver.name}</Table.Td>
                   <Table.Td>
-                    <Text style={{ fontFamily: 'monospace' }} size="xs">{ver.path}</Text>
+                    <Text fw={600}>{ver.displayName || ver.name}</Text>
+                    <Text size="xs" color="dimmed">{ver.name}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text style={{ fontFamily: 'monospace' }} size="xs">{ver.path ?? `./${ver.serverPath}/`}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="xs">{formatUploadedAt(ver.uploadedAt)}</Text>
                   </Table.Td>
                   <Table.Td>
                     {ver.isActive ? (
@@ -179,6 +248,14 @@ export function VersionManager({ onSuccess, onError }: Props) {
                         onClick={() => setBrowsingVersion(ver.name)}
                       >
                         Duyệt thư mục
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="light"
+                        disabled={loading}
+                        onClick={() => openRenameModal(ver)}
+                      >
+                        Đổi tên
                       </Button>
                       <Button
                         size="xs"
@@ -236,6 +313,78 @@ export function VersionManager({ onSuccess, onError }: Props) {
         </Stack>
       </Modal>
 
+      <Modal
+        opened={uploadModalOpened}
+        onClose={() => !uploadMutation.isPending && setUploadModalOpened(false)}
+        title="Tải lên phiên bản game"
+        size="md"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Tên phiên bản"
+            required
+            placeholder="mel_2026"
+            value={uploadName}
+            error={uploadNameExists ? 'Tên phiên bản đã tồn tại' : undefined}
+            onChange={(event) => setUploadName(event.currentTarget.value)}
+          />
+          <Group gap="sm">
+            <FileButton onChange={setUploadFile} accept=".zip,.tar.gz,.tgz">
+              {(props) => <Button {...props} variant="light">Chọn file</Button>}
+            </FileButton>
+            <Text size="sm" color={uploadFile ? undefined : 'dimmed'}>
+              {uploadFile ? uploadFile.name : 'Chưa chọn file'}
+            </Text>
+          </Group>
+          {(uploadMutation.isPending || uploadProgress > 0) && (
+            <Stack gap={4}>
+              <Progress value={uploadProgress} />
+              <Text size="xs" color="dimmed">
+                {uploadStatus === 'extracting' ? 'Đang giải nén...' : `Đang tải lên ${uploadProgress}%`}
+              </Text>
+            </Stack>
+          )}
+          <Group justify="flex-end">
+            <Button variant="default" disabled={uploadMutation.isPending} onClick={() => setUploadModalOpened(false)}>
+              Hủy
+            </Button>
+            <Button onClick={handleUpload} loading={uploadMutation.isPending} disabled={uploadDisabled}>
+              Upload
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={!!renamingVersion}
+        onClose={() => setRenamingVersion(null)}
+        title="Đổi tên phiên bản"
+        size="md"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Tên phiên bản"
+            required
+            value={renameName}
+            onChange={(event) => setRenameName(event.currentTarget.value)}
+          />
+          <TextInput
+            label="Tên hiển thị"
+            required
+            value={renameDisplayName}
+            onChange={(event) => setRenameDisplayName(event.currentTarget.value)}
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setRenamingVersion(null)}>
+              Hủy
+            </Button>
+            <Button onClick={handleRename} loading={renameMutation.isPending} disabled={!renameName.trim() || !renameDisplayName.trim()}>
+              Lưu
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <BrowseFolderModal
         opened={!!browsingVersion}
         onClose={() => setBrowsingVersion(null)}
@@ -245,4 +394,10 @@ export function VersionManager({ onSuccess, onError }: Props) {
       />
     </Card>
   );
+}
+
+function formatUploadedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('vi-VN', { hour12: false });
 }

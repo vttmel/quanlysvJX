@@ -12,6 +12,22 @@ export type ServiceStatus = {
   startedAt: string | null;
 };
 
+export type GameVersion = {
+  name: string;
+  displayName: string;
+  rootPath: string;
+  serverPath: string;
+  path: string;
+  enabled: boolean;
+  uploadedAt: string;
+  isActive: boolean;
+};
+
+export type VersionListResponse = {
+  activeVersion: string | null;
+  versions: GameVersion[];
+};
+
 export type BackupKind = 'mysql' | 'mssql';
 
 export type BackupFile = {
@@ -92,4 +108,3 @@ export type UpdateGameAccountPayload = {
   expiresAt: string;
   leftSeconds: number;
 };
-

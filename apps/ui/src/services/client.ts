@@ -10,8 +10,10 @@ import type {
   DatabaseBackupSchedule,
   GameAccount,
   GameAccountListResponse,
+  GameVersion,
   ServiceStatus,
-  UpdateGameAccountPayload
+  UpdateGameAccountPayload,
+  VersionListResponse
 } from '@/services/types';
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -69,8 +71,7 @@ export const api = {
   env: () => request<{ content: string }>('/api/env'),
   saveEnv: (content: string) =>
     request<{ message: string }>('/api/env', { method: 'POST', body: JSON.stringify({ content }) }),
-  versions: () =>
-    request<{ activeVersion: string | null; versions: Array<{ name: string; isActive: boolean; path: string }> }>('/api/versions'),
+  versions: () => request<VersionListResponse>('/api/versions'),
   selectVersion: (payload: { name: string; subPath?: string }) =>
     request<{ activeVersion: string; serverPath: string }>('/api/versions/select', { method: 'POST', body: JSON.stringify(payload) }),
   cloneVersion: (payload: { name: string; url: string; branch?: string }) =>
@@ -80,6 +81,10 @@ export const api = {
     form.append('file', file);
     return request<unknown>('/api/versions/upload', { method: 'POST', body: form });
   },
+  uploadVersionWithProgress: (payload: { name: string; displayName?: string; file: File; onProgress: (progress: number) => void }) =>
+    uploadWithProgress('/api/versions/upload', payload),
+  renameVersion: (currentName: string, payload: { name?: string; displayName?: string }) =>
+    request<GameVersion>(`/api/versions/${encodeURIComponent(currentName)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   deleteVersion: (name: string) =>
     request<unknown>(`/api/versions/${encodeURIComponent(name)}`, { method: 'DELETE' }),
   browseVersion: (name: string, path?: string) => {
@@ -87,3 +92,39 @@ export const api = {
     return request<{ currentPath: string; parentPath: string | null; directories: string[] }>(`/api/versions/${encodeURIComponent(name)}/browse${query}`);
   }
 };
+
+function uploadWithProgress(
+  url: string,
+  payload: { name: string; displayName?: string; file: File; onProgress: (progress: number) => void }
+): Promise<GameVersion> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('name', payload.name);
+    if (payload.displayName) {
+      form.append('displayName', payload.displayName);
+    }
+    form.append('file', payload.file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        payload.onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      try {
+        const body = JSON.parse(xhr.responseText || '{}') as ApiEnvelope<GameVersion>;
+        if (xhr.status >= 200 && xhr.status < 300 && body.success) {
+          resolve(body.data);
+          return;
+        }
+        reject(new Error(body.success === false ? body.error : `Upload failed with status ${xhr.status}`));
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error('Upload failed'));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Upload failed'));
+    xhr.send(form);
+  });
+}
