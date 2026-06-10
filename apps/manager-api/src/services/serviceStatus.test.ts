@@ -27,4 +27,16 @@ describe('parseComposePsJson', () => {
       }
     ]);
   });
+
+  it('normalizes compose ps json-lines rows', () => {
+    const rows = [
+      JSON.stringify({ Service: 'jxmysql', Name: 'jxmysql', State: 'running' }),
+      JSON.stringify({ Service: 'bishop', Name: 'bishop', State: 'running', Health: 'healthy' })
+    ].join('\n');
+
+    expect(parseComposePsJson(rows)).toMatchObject([
+      { name: 'jxmysql', containerName: 'jxmysql', state: 'running' },
+      { name: 'bishop', containerName: 'bishop', state: 'running', health: 'healthy' }
+    ]);
+  });
 });

@@ -8,6 +8,7 @@ services:
     working_dir: /workspace
     command: sh -c "npm install && npm --workspace apps/manager-api run dev"
     environment:
+      COMPOSE_PROJECT_NAME: quanlysvjx
       MANAGER_API_HOST: 0.0.0.0
       MANAGER_API_PORT: 3001
       MANAGER_PROJECT_ROOT: /workspace

@@ -26,7 +26,7 @@ export type ServiceStatus = {
 };
 
 export function parseComposePsJson(stdout: string): ServiceStatus[] {
-  const rows = z.array(composeRowSchema).parse(JSON.parse(stdout || '[]'));
+  const rows = z.array(composeRowSchema).parse(parseComposeRows(stdout));
 
   return rows.map((row) => ({
     name: assertServiceName(row.Service),
@@ -39,4 +39,17 @@ export function parseComposePsJson(stdout: string): ServiceStatus[] {
     ),
     startedAt: row.CreatedAt ?? null
   }));
+}
+
+function parseComposeRows(stdout: string) {
+  const text = stdout.trim();
+  if (text.length === 0) {
+    return [];
+  }
+
+  if (text.startsWith('[')) {
+    return JSON.parse(text) as unknown;
+  }
+
+  return text.split('\n').filter(Boolean).map((line) => JSON.parse(line) as unknown);
 }
