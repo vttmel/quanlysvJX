@@ -33,8 +33,8 @@ describe('ServiceTable', () => {
       </MantineProvider>
     );
 
-    const runningRow = screen.getByRole('button', { name: 'jxmysql' }).closest('tr') as HTMLTableRowElement;
-    const stoppedRow = screen.getByRole('button', { name: 'paysys' }).closest('tr') as HTMLTableRowElement;
+    const runningRow = screen.getByText('jxmysql').closest('tr') as HTMLTableRowElement;
+    const stoppedRow = screen.getByText('paysys').closest('tr') as HTMLTableRowElement;
 
     expect((within(runningRow).getByRole('button', { name: 'Start' }) as HTMLButtonElement).disabled).toBe(true);
     expect((within(runningRow).getByRole('button', { name: 'Stop' }) as HTMLButtonElement).disabled).toBe(false);

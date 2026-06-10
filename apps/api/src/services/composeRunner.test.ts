@@ -23,6 +23,13 @@ describe('service allowlist', () => {
 
 describe('buildComposeArgs', () => {
   it('builds argument arrays without shell interpolation', () => {
-    expect(buildComposeArgs(['ps', '--format', 'json'])).toEqual(['compose', 'ps', '--format', 'json']);
+    expect(buildComposeArgs(['ps', '--format', 'json'])).toEqual([
+      'compose',
+      '-f',
+      'apps/jx-services/docker-compose.yaml',
+      'ps',
+      '--format',
+      'json'
+    ]);
   });
 });

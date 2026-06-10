@@ -1,5 +1,5 @@
 {
-  "name": "manager-web",
+  "name": "ui",
   "private": true,
   "type": "module",
   "scripts": {

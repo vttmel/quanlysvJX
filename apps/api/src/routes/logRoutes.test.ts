@@ -21,7 +21,7 @@ describe('log routes', () => {
       data: { service: 'jxmysql', tail: 50, logs: 'ready\n' },
       error: null
     });
-    expect(calls).toEqual([['logs', '--no-color', '--tail', '50', 'jxmysql']]);
+    expect(calls).toEqual([['logs', '--no-color', '--timestamps', '--tail', '50', 'jxmysql']]);
   });
 
   it('rejects logs for unsupported services', async () => {
@@ -57,6 +57,6 @@ describe('log routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-type']).toContain('text/event-stream');
     expect(response.payload).toContain('event: log\ndata: "ready\\n"\n\n');
-    expect(calls).toEqual([['logs', '--no-color', '--tail', '20', '--follow', 'jxmysql']]);
+    expect(calls).toEqual([['logs', '--no-color', '--timestamps', '--tail', '20', '--follow', 'jxmysql']]);
   });
 });

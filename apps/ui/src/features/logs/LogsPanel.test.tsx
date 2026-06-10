@@ -49,14 +49,13 @@ describe('LogsPanel', () => {
     );
 
     await waitFor(() => expect(api.logs).toHaveBeenCalledWith('jxmysql', 300));
-    const textbox = screen.getAllByRole('textbox')[1] as HTMLTextAreaElement;
-    await waitFor(() => expect(textbox.value).toBe('snapshot\n'));
+    await screen.findByText('snapshot');
     await waitFor(() => expect(MockEventSource.instances[0]?.url).toBe('/api/services/jxmysql/logs/stream?tail=0'));
 
     act(() => {
       MockEventSource.instances[0]?.emit('log', JSON.stringify('streamed\n'));
     });
 
-    await waitFor(() => expect(textbox.value).toBe('snapshot\nstreamed\n'));
+    await screen.findByText('streamed');
   });
 });
