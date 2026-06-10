@@ -1,5 +1,15 @@
 import path from 'node:path';
 
+export type MssqlConfig = {
+  host: string;
+  port: number;
+  database: string;
+  user: string | null;
+  password: string | null;
+  encrypt: boolean;
+  trustServerCertificate: boolean;
+};
+
 export type ManagerConfig = {
   projectRoot: string;
   mysqlBackupDir: string;
@@ -9,6 +19,7 @@ export type ManagerConfig = {
   backupMetadataFile: string;
   backupScheduleFile: string;
   schedulerEnabled: boolean;
+  mssql: MssqlConfig;
 };
 
 export function loadConfig(env = process.env): ManagerConfig {
@@ -23,6 +34,15 @@ export function loadConfig(env = process.env): ManagerConfig {
     backupRetentionDays: Number(env.BACKUP_RETENTION_DAYS ?? '14'),
     backupMetadataFile: path.resolve(projectRoot, env.BACKUP_METADATA_FILE ?? path.join(backupRoot, 'backup-metadata.json')),
     backupScheduleFile: path.resolve(projectRoot, env.BACKUP_SCHEDULE_FILE ?? path.join(backupRoot, 'backup-schedules.json')),
-    schedulerEnabled: env.BACKUP_SCHEDULER_ENABLED === 'true'
+    schedulerEnabled: env.BACKUP_SCHEDULER_ENABLED === 'true',
+    mssql: {
+      host: env.MSSQL_HOST ?? 'localhost',
+      port: Number(env.MSSQL_PORT ?? '1433'),
+      database: env.MSSQL_DATABASE ?? 'account_tong',
+      user: env.MSSQL_USER ?? null,
+      password: env.MSSQL_PASSWORD ?? null,
+      encrypt: env.MSSQL_ENCRYPT === 'true',
+      trustServerCertificate: env.MSSQL_TRUST_SERVER_CERTIFICATE !== 'false'
+    }
   };
 }

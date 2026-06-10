@@ -14,7 +14,16 @@ function testConfig(root: string): ManagerConfig {
     backupRetentionDays: 14,
     backupMetadataFile: path.join(root, 'backup-metadata.json'),
     backupScheduleFile: path.join(root, 'backup-schedules.json'),
-    schedulerEnabled: false
+    schedulerEnabled: false,
+    mssql: {
+      host: 'localhost',
+      port: 1433,
+      database: 'account_tong',
+      user: null,
+      password: null,
+      encrypt: false,
+      trustServerCertificate: true
+    }
   };
 }
 
