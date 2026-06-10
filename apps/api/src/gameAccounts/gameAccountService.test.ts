@@ -9,7 +9,8 @@ function fakeRepository(overrides: Partial<GameAccountRepository> = {}): GameAcc
     findByName: vi.fn().mockResolvedValue({ accountName: 'jxuser', expiresAt: '2027-06-10', leftSeconds: 0, usedSeconds: 0, status: 'active' }),
     create: vi.fn().mockResolvedValue(undefined),
     update: vi.fn().mockResolvedValue(undefined),
-    softDelete: vi.fn().mockResolvedValue(undefined),
+    ban: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
     ...overrides
   };
 }

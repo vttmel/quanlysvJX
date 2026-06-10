@@ -163,7 +163,37 @@ export function createMssqlGameAccountRepository(config: MssqlConfig): GameAccou
       }
     },
 
-    async softDelete(accountName: string) {
+    async ban(accountName: string) {
+      const transaction = new sql.Transaction(await pool());
+      await transaction.begin();
+      try {
+        await new sql.Request(transaction)
+          .input('accountName', sql.VarChar(32), accountName)
+          .query('UPDATE dbo.Account_Info SET bIsBanned = 1 WHERE cAccName = @accountName');
+
+        const checkResult = await new sql.Request(transaction)
+          .input('accountName', sql.VarChar(32), accountName)
+          .query<{ countRows: number }>(`
+            SELECT COUNT(1) AS countRows FROM dbo.Account_Ban WHERE cAccName = @accountName
+          `);
+
+        if ((checkResult.recordset[0]?.countRows ?? 0) === 0) {
+          await new sql.Request(transaction)
+            .input('accountName', sql.VarChar(32), accountName)
+            .query(`
+              INSERT INTO dbo.Account_Ban (cAccName, dStartDate, dEndDate, iEndTime, cReason, cOperator, bIsBannedForever)
+              VALUES (@accountName, GETDATE(), '2050-10-10 10:10:10', 0, 'Banned from manager', 'manager', 1)
+            `);
+        }
+
+        await transaction.commit();
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
+    },
+
+    async delete(accountName: string) {
       const transaction = new sql.Transaction(await pool());
       await transaction.begin();
       try {

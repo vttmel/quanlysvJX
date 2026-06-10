@@ -21,6 +21,12 @@ export async function registerGameAccountRoutes(app: FastifyInstance) {
 
   app.delete('/api/game-accounts/:accountName', async (request) => {
     const { accountName } = request.params as { accountName: string };
-    return ok(await app.deps.gameAccounts.softDelete(accountName));
+    await app.deps.gameAccounts.delete(accountName);
+    return ok({ message: 'Account deleted' });
+  });
+
+  app.post('/api/game-accounts/:accountName/ban', async (request) => {
+    const { accountName } = request.params as { accountName: string };
+    return ok(await app.deps.gameAccounts.ban(accountName));
   });
 }

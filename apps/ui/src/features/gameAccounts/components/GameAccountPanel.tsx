@@ -7,6 +7,7 @@ import { CreateGameAccountModal } from './CreateGameAccountModal';
 import { EditGameAccountModal } from './EditGameAccountModal';
 import { GameAccountTable } from './GameAccountTable';
 import { SoftDeleteAccountModal } from './SoftDeleteAccountModal';
+import { BanAccountModal } from './BanAccountModal';
 
 type Props = {
   onSuccess: (message: string) => void;
@@ -20,6 +21,7 @@ export function GameAccountPanel(props: Props) {
   const [page, setPage] = useState(1);
   const [editingAccount, setEditingAccount] = useState<GameAccount | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<GameAccount | null>(null);
+  const [banningAccount, setBanningAccount] = useState<GameAccount | null>(null);
   const [createOpened, setCreateOpened] = useState(false);
 
   const accountsQuery = useQuery({
@@ -44,10 +46,16 @@ export function GameAccountPanel(props: Props) {
     onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể cập nhật tài khoản')
   });
 
-  const softDeleteMutation = useMutation({
-    mutationFn: api.softDeleteGameAccount,
+  const deleteMutation = useMutation({
+    mutationFn: api.deleteGameAccount,
     onSuccess: async () => { props.onSuccess('Đã xóa tài khoản'); setDeletingAccount(null); await invalidateAccounts(); },
     onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể xóa tài khoản')
+  });
+
+  const banMutation = useMutation({
+    mutationFn: api.banGameAccount,
+    onSuccess: async () => { props.onSuccess('Đã khóa tài khoản'); setBanningAccount(null); await invalidateAccounts(); },
+    onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể khóa tài khoản')
   });
 
   return (
@@ -65,7 +73,7 @@ export function GameAccountPanel(props: Props) {
         />
         <Button onClick={() => setCreateOpened(true)}>Thêm tài khoản</Button>
       </Group>
-      <GameAccountTable accounts={data.items} onEdit={setEditingAccount} onDelete={setDeletingAccount} />
+      <GameAccountTable accounts={data.items} onEdit={setEditingAccount} onDelete={setDeletingAccount} onBan={setBanningAccount} />
       {data.pagination.total > pageSize && <Pagination total={data.pagination.totalPages} value={page} onChange={setPage} />}
       <CreateGameAccountModal
         opened={createOpened}
@@ -83,9 +91,16 @@ export function GameAccountPanel(props: Props) {
       <SoftDeleteAccountModal
         opened={deletingAccount !== null}
         account={deletingAccount}
-        loading={softDeleteMutation.isPending}
+        loading={deleteMutation.isPending}
         onClose={() => setDeletingAccount(null)}
-        onConfirm={() => deletingAccount && softDeleteMutation.mutate(deletingAccount.accountName)}
+        onConfirm={() => deletingAccount && deleteMutation.mutate(deletingAccount.accountName)}
+      />
+      <BanAccountModal
+        opened={banningAccount !== null}
+        account={banningAccount}
+        loading={banMutation.isPending}
+        onClose={() => setBanningAccount(null)}
+        onConfirm={() => banningAccount && banMutation.mutate(banningAccount.accountName)}
       />
     </Stack>
   );

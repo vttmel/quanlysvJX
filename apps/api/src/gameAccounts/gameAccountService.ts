@@ -23,7 +23,8 @@ export type GameAccountRepository = {
   findByName: (accountName: string) => Promise<GameAccountView | null>;
   create: (record: CreateGameAccountRecord) => Promise<void>;
   update: (accountName: string, record: UpdateGameAccountRecord) => Promise<void>;
-  softDelete: (accountName: string) => Promise<void>;
+  ban: (accountName: string) => Promise<void>;
+  delete: (accountName: string) => Promise<void>;
 };
 
 export function createGameAccountService(repository: GameAccountRepository) {
@@ -82,14 +83,22 @@ export function createGameAccountService(repository: GameAccountRepository) {
       return updated;
     },
 
-    async softDelete(accountName: string): Promise<GameAccountView> {
+    async ban(accountName: string): Promise<GameAccountView> {
       const current = await repository.findByName(accountName);
       if (!current) {
         throw new NotFoundError('Account not found');
       }
-      await repository.softDelete(accountName);
+      await repository.ban(accountName);
       const updated = await repository.findByName(accountName);
       return updated ?? { ...current, status: 'banned' };
+    },
+
+    async delete(accountName: string): Promise<void> {
+      const current = await repository.findByName(accountName);
+      if (!current) {
+        throw new NotFoundError('Account not found');
+      }
+      await repository.delete(accountName);
     }
   };
 }

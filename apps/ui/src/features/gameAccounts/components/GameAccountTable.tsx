@@ -5,9 +5,10 @@ type Props = {
   accounts: GameAccount[];
   onEdit: (account: GameAccount) => void;
   onDelete: (account: GameAccount) => void;
+  onBan: (account: GameAccount) => void;
 };
 
-export function GameAccountTable({ accounts, onEdit, onDelete }: Props) {
+export function GameAccountTable({ accounts, onEdit, onDelete, onBan }: Props) {
   return (
     <Table striped highlightOnHover withTableBorder>
       <Table.Thead>
@@ -31,6 +32,7 @@ export function GameAccountTable({ accounts, onEdit, onDelete }: Props) {
             <Table.Td>
               <Group gap="xs">
                 <Button size="xs" variant="light" onClick={() => onEdit(account)}>Sửa</Button>
+                <Button size="xs" color="yellow" variant="light" onClick={() => onBan(account)} disabled={account.status === 'banned'}>Khóa</Button>
                 <Button size="xs" color="red" variant="light" onClick={() => onDelete(account)}>Xóa</Button>
               </Group>
             </Table.Td>

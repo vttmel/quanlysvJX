@@ -60,6 +60,8 @@ export const api = {
     request<GameAccount>('/api/game-accounts', { method: 'POST', body: JSON.stringify(payload) }),
   updateGameAccount: (accountName: string, payload: UpdateGameAccountPayload) =>
     request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
-  softDeleteGameAccount: (accountName: string) =>
-    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}`, { method: 'DELETE' })
+  deleteGameAccount: (accountName: string) =>
+    request<{ message: string }>(`/api/game-accounts/${encodeURIComponent(accountName)}`, { method: 'DELETE' }),
+  banGameAccount: (accountName: string) =>
+    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}/ban`, { method: 'POST' })
 };
