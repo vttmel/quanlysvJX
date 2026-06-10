@@ -1,5 +1,4 @@
 import { Badge, Button, Group, Table, Text, Tooltip } from '@mantine/core';
-import { useClickOutside } from '@mantine/hooks';
 import type { ServiceStatus } from '../../api/types';
 
 type Props = {
@@ -21,8 +20,6 @@ const SERVICE_COLORS: Record<string, string> = {
 };
 
 export function ServiceTable({ services, selected, onSelect, onAction }: Props) {
-  const ref = useClickOutside(() => onSelect('all'));
-
   const isS3RelayRunning = services.some(
     (s) => s.name === 's3relay' && (s.state === 'running' || s.state === 'starting')
   );
@@ -31,7 +28,7 @@ export function ServiceTable({ services, selected, onSelect, onAction }: Props) 
   );
 
   return (
-    <Table.ScrollContainer minWidth={320} ref={ref}>
+    <Table.ScrollContainer minWidth={320}>
       <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'fixed', width: '100%' }}>
         <Table.Thead>
           <Table.Tr>

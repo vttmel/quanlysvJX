@@ -69,13 +69,30 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
     };
   }, [autoFollow, activeService, streamReady, tail]);
 
+  // Reset autoFollow khi đổi service
+  useEffect(() => {
+    setAutoFollow(true);
+    shouldFollowRef.current = true;
+  }, [activeService]);
+
   // Tự động cuộn xuống cuối
   useEffect(() => {
     if (!autoFollow || !shouldFollowRef.current) return;
-    const viewport = viewportRef.current;
-    if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
-    }
+    
+    const scrollToBottomFn = () => {
+      const viewport = viewportRef.current;
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    };
+
+    const handle = requestAnimationFrame(() => {
+      scrollToBottomFn();
+      // setTimeout dự phòng để chắc chắn DOM đã render xong
+      setTimeout(scrollToBottomFn, 50);
+    });
+
+    return () => cancelAnimationFrame(handle);
   }, [autoFollow, logs]);
 
   const scrollToBottom = () => {

@@ -40,6 +40,7 @@ export async function registerLogRoutes(app: FastifyInstance) {
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no'
     });
+    reply.raw.write(':\n\n');
 
     const writeLog = (chunk: unknown) => {
       if (!reply.raw.destroyed) {
