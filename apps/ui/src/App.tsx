@@ -23,7 +23,12 @@ export function App() {
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [loadingAction, setLoadingAction] = useState(false);
   const activeRootTab = location.pathname.startsWith('/backup') ? 'backup' : 'dashboard';
-  const servicesQuery = useQuery({ queryKey: ['services'], queryFn: api.services, refetchInterval: 5000 });
+  const servicesQuery = useQuery({
+    queryKey: ['services'],
+    queryFn: api.services,
+    enabled: activeRootTab === 'dashboard',
+    refetchInterval: activeRootTab === 'dashboard' ? 5000 : false
+  });
   const services = servicesQuery.data ?? [];
 
   const showError = useCallback((message: string) => {

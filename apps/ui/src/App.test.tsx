@@ -61,5 +61,7 @@ describe('App routing', () => {
 
     expect(screen.getByRole('tab', { name: 'Sao lưu (Backup)' }).getAttribute('aria-selected')).toBe('true');
     expect(await screen.findByRole('tab', { name: 'Files' })).toBeTruthy();
+    await waitFor(() => expect(api.backups).toHaveBeenCalledTimes(1));
+    expect(api.services).not.toHaveBeenCalled();
   });
 });
