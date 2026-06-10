@@ -106,7 +106,11 @@ export function BackupFilesTab({ onSuccess, onError }: Props) {
             ) : (
               filteredFiles.map((file) => (
                 <Table.Tr key={`${file.kind}/${file.filename}`}>
-                  <Table.Td><Badge variant="light">{file.kind.toUpperCase()}</Badge></Table.Td>
+                  <Table.Td>
+                    <Badge variant="light" color={file.kind === 'mysql' ? 'blue' : 'red'}>
+                      {file.kind.toUpperCase()}
+                    </Badge>
+                  </Table.Td>
                   <Table.Td>
                     <Group gap="xs">
                       <Text fw={600}>{file.filename}</Text>
