@@ -5,7 +5,10 @@ import { fail } from './api/envelope.js';
 import { AppError } from './api/errors.js';
 import { startBackupScheduler } from './backups/backupScheduler.js';
 import { loadConfig, type ManagerConfig } from './config.js';
+import { createGameAccountService, type GameAccountService } from './gameAccounts/gameAccountService.js';
+import { createMssqlGameAccountRepository } from './gameAccounts/mssqlGameAccountRepository.js';
 import { registerBackupRoutes } from './routes/backupRoutes.js';
+import { registerGameAccountRoutes } from './routes/gameAccountRoutes.js';
 import { registerHealthRoutes } from './routes/healthRoutes.js';
 import { registerLogRoutes } from './routes/logRoutes.js';
 import { registerServiceRoutes } from './routes/serviceRoutes.js';
@@ -20,6 +23,7 @@ export type AppDeps = {
   config: ManagerConfig;
   runCompose: (args: readonly string[]) => Promise<CommandResult>;
   streamCompose: (args: readonly string[]) => ComposeStream;
+  gameAccounts: GameAccountService;
 };
 
 export async function buildApp(overrides: Partial<AppDeps> = {}) {
@@ -27,7 +31,8 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   const deps: AppDeps = {
     config,
     runCompose: overrides.runCompose ?? ((args) => runDockerCompose(args, config.projectRoot)),
-    streamCompose: overrides.streamCompose ?? ((args) => runDockerComposeStream(args, config.projectRoot))
+    streamCompose: overrides.streamCompose ?? ((args) => runDockerComposeStream(args, config.projectRoot)),
+    gameAccounts: overrides.gameAccounts ?? createGameAccountService(createMssqlGameAccountRepository(config.mssql))
   };
 
   const app = Fastify({ logger: true });
@@ -54,6 +59,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerServiceRoutes(app);
   await registerLogRoutes(app);
   await registerBackupRoutes(app);
+  await registerGameAccountRoutes(app);
 
   if (config.schedulerEnabled) {
     const scheduledTask = startBackupScheduler(deps);
