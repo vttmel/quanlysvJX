@@ -5,10 +5,12 @@ mount/database/*
 mount/database/mssql/*
 !mount/database/mssql/seed/
 mount/database/mssql/seed/*
-!mount/database/mssql/seed/README.md
-!mount/database/mssql/seed/account_tong.sample.sql
 !mount/database/mssql/seed/init-account-tong.sh
+!mount/database/mssql/seed/account_tong_seed.bak
+!mount/database/mssql/certs/
+!mount/database/mssql/mssql.conf
 mount/logs/
 mount/paysyswin/payserver_log
 mount/paysyswin/relayserver_log
 mount/paysyswin/wineprefix-paysys.tar.gz
+
