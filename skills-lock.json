@@ -37,6 +37,12 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "ef32aea0a8fab9b365ff9e08a95f8d353e20ca21ea46ec2e73587c86dd341351"
     },
+    "lark-doc": {
+      "source": "larksuite/cli",
+      "sourceType": "github",
+      "skillPath": "skills/lark-doc/SKILL.md",
+      "computedHash": "72b1f110e1cd42c42cf638d5fa31e9390cd59fbca73b8f78f6d994ab15497102"
+    },
     "mantine-combobox": {
       "source": "mantinedev/skills",
       "sourceType": "github",
