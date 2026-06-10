@@ -32,9 +32,9 @@ describe('game account modals', () => {
     await waitFor(() => expect(submit).toHaveBeenCalledWith({ expiresAt: '2027-06-10', leftSeconds: 0 }));
   });
 
-  it('labels delete as banning the account', () => {
+  it('labels delete as deleting the account', () => {
     renderWithProviders(<SoftDeleteAccountModal opened account={{ accountName: 'jxuser', expiresAt: '2027-06-10', leftSeconds: 0, usedSeconds: 0, status: 'active' }} onClose={vi.fn()} onConfirm={vi.fn()} loading={false} />);
 
-    expect(screen.getAllByText(/ban tài khoản/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/xóa tài khoản/i).length).toBeGreaterThan(0);
   });
 });
