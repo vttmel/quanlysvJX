@@ -4,7 +4,7 @@ import { CommandError } from '../api/errors.js';
 import type { AppDeps } from '../app.js';
 import { buildBackupFilename } from './backupPaths.js';
 
-const databaseName = 'server1';
+const databaseName = 'account_tong';
 
 export async function backupMssql(deps: AppDeps) {
   mkdirSync(deps.config.mssqlBackupDir, { recursive: true });
@@ -32,6 +32,6 @@ export async function restoreMssql(deps: AppDeps, filename: string) {
 }
 
 function runSqlcmd(deps: AppDeps, sql: string) {
-  const script = `SQLCMD=/opt/mssql-tools18/bin/sqlcmd; if [ ! -x "$SQLCMD" ]; then SQLCMD=/opt/mssql-tools/bin/sqlcmd; fi; "$SQLCMD" -C -S localhost -U sa -P "$SA_PASSWORD" -Q "${sql}"`;
+  const script = `SQLCMD=/opt/mssql-tools18/bin/sqlcmd; if [ ! -x "$SQLCMD" ]; then SQLCMD=/opt/mssql-tools/bin/sqlcmd; fi; "$SQLCMD" -C -b -S localhost -U sa -P "$SA_PASSWORD" -Q "${sql}"`;
   return deps.runCompose(['exec', '-T', 'jxmssql', 'bash', '-lc', script]);
 }
