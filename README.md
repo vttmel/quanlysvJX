@@ -19,10 +19,14 @@ cd quanlysvJX
 
 Hệ thống cần một số thư mục để chứa dữ liệu cơ sở dữ liệu và chứng chỉ bảo mật. An đã tạo sẵn file script `setup.sh` để tự động hóa toàn bộ việc này.
 
-Hãy chạy dòng lệnh dưới đây tại thư mục gốc của dự án để tự động tạo thư mục và cấp quyền truy cập chính xác (tránh lỗi Permission Denied khi Docker khởi chạy):
+Hãy mở Terminal tại thư mục gốc của dự án, cấp quyền thực thi cho file và khởi chạy bằng các lệnh sau:
 
 ```bash
-bash setup.sh
+# 1. Cấp quyền thực thi cho file setup.sh
+chmod +x setup.sh
+
+# 2. Chạy file script để tự động tạo thư mục và phân quyền
+./setup.sh
 ```
 
 ---
