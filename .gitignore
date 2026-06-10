@@ -6,3 +6,9 @@ dist/
 test-results/
 playwright-report/
 manager-dashboard.png
+
+# Runtime database files and private seed backups
+apps/jx-services/mount/database/mssql/data/
+apps/jx-services/mount/database/mssql/seed/*.bak
+apps/jx-services/mount/database/mssql/seed/*.mdf
+apps/jx-services/mount/database/mssql/seed/*.ldf

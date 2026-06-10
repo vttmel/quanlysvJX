@@ -1,4 +1,13 @@
 mount/database/
+!mount/database/
+mount/database/*
+!mount/database/mssql/
+mount/database/mssql/*
+!mount/database/mssql/seed/
+mount/database/mssql/seed/*
+!mount/database/mssql/seed/README.md
+!mount/database/mssql/seed/account_tong.sample.sql
+!mount/database/mssql/seed/init-account-tong.sh
 mount/logs/
 mount/paysyswin/payserver_log
 mount/paysyswin/relayserver_log

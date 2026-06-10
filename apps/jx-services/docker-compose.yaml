@@ -33,6 +33,7 @@ services:
       TZ: "Asia/Ho_Chi_Minh"
     volumes:
       - ./mount/database/mssql/data:/var/opt/mssql/data
+      - ./mount/database/mssql/seed:/var/opt/mssql/seed:ro
       - ./mount/database/mssql/certs:/var/opt/mssql/certs:ro
       - ./mount/database/mssql/mssql.conf:/var/opt/mssql/mssql.conf:ro
       - /etc/localtime:/etc/localtime:ro
@@ -45,6 +46,22 @@ services:
       timeout: 5s
       retries: 30
       start_period: 30s
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: jxmssql-init
+    restart: "no"
+    environment:
+      SA_PASSWORD: "SAJx123456"
+      MSSQL_ACCOUNT_DATABASE: account_tong
+    volumes:
+      - ./mount/database/mssql/seed:/var/opt/mssql/seed:ro
+    networks:
+      - jxnet
+    depends_on:
+      jxmssql:
+        condition: service_healthy
+    command: [ "/bin/bash", "/var/opt/mssql/seed/init-account-tong.sh" ]
 
   paysys:
     build:
@@ -68,8 +85,8 @@ services:
     depends_on:
       jxmysql:
         condition: service_healthy
-      jxmssql:
-        condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     healthcheck:
       test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5002'" ]
       interval: 5s
