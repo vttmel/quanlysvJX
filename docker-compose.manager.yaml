@@ -1,3 +1,5 @@
+name: quanlysvjx-manager
+
 services:
   manager-api:
     build:
