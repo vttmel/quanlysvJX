@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { ok } from '../api/envelope.js';
@@ -22,6 +24,20 @@ const scheduleSchema = z.object({
 
 export async function registerBackupRoutes(app: FastifyInstance) {
   app.get('/api/backups', async () => ok(listBackupFiles(app.deps.config)));
+
+  app.get('/api/backups/:kind/:filename/download', async (request, reply) => {
+    const { kind, filename } = request.params as { kind: string; filename: string };
+    const parsedKind = kindSchema.parse(kind);
+    const dir = getBackupDirectory(parsedKind, app.deps.config);
+    assertBackupFile(dir, filename);
+    const filePath = path.join(dir, filename);
+
+    const fileStream = fs.createReadStream(filePath);
+    reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+    reply.header('Content-Type', 'application/octet-stream');
+    return reply.send(fileStream);
+  });
+
   app.get('/api/jobs', async () => ok(backupJobStore.listJobs()));
 
   app.post('/api/backups/mysql', async () => ok(await runJob({ kind: 'backup', database: 'mysql', trigger: 'manual' }, () => backupMysql(app.deps))));

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { api } from '@/services/client';
 import type { GameAccount, UpdateGameAccountPayload } from '@/services/types';
 import { CreateGameAccountModal } from './CreateGameAccountModal';
-import { EditGameAccountModal } from './EditGameAccountModal';
+import { ChangePasswordModal } from './ChangePasswordModal';
+import { ChangeSecondaryPasswordModal } from './ChangeSecondaryPasswordModal';
+import { ExtendAccountModal } from './ExtendAccountModal';
 import { GameAccountTable } from './GameAccountTable';
 import { SoftDeleteAccountModal } from './SoftDeleteAccountModal';
 import { BanAccountModal } from './BanAccountModal';
@@ -20,7 +22,9 @@ const pageSize = 10;
 export function GameAccountPanel(props: Props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [editingAccount, setEditingAccount] = useState<GameAccount | null>(null);
+  const [passwordAccount, setPasswordAccount] = useState<GameAccount | null>(null);
+  const [secondaryPasswordAccount, setSecondaryPasswordAccount] = useState<GameAccount | null>(null);
+  const [extendAccount, setExtendAccount] = useState<GameAccount | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<GameAccount | null>(null);
   const [banningAccount, setBanningAccount] = useState<GameAccount | null>(null);
   const [unbanningAccount, setUnbanningAccount] = useState<GameAccount | null>(null);
@@ -44,7 +48,13 @@ export function GameAccountPanel(props: Props) {
 
   const updateMutation = useMutation({
     mutationFn: (payload: { accountName: string; values: UpdateGameAccountPayload }) => api.updateGameAccount(payload.accountName, payload.values),
-    onSuccess: async () => { props.onSuccess('Đã cập nhật tài khoản'); setEditingAccount(null); await invalidateAccounts(); },
+    onSuccess: async () => {
+      props.onSuccess('Đã cập nhật tài khoản');
+      setPasswordAccount(null);
+      setSecondaryPasswordAccount(null);
+      setExtendAccount(null);
+      await invalidateAccounts();
+    },
     onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể cập nhật tài khoản')
   });
 
@@ -81,7 +91,15 @@ export function GameAccountPanel(props: Props) {
         />
         <Button onClick={() => setCreateOpened(true)}>Thêm tài khoản</Button>
       </Group>
-      <GameAccountTable accounts={data.items} onEdit={setEditingAccount} onDelete={setDeletingAccount} onBan={setBanningAccount} onUnban={setUnbanningAccount} />
+      <GameAccountTable
+        accounts={data.items}
+        onChangePassword={setPasswordAccount}
+        onChangeSecondaryPassword={setSecondaryPasswordAccount}
+        onExtend={setExtendAccount}
+        onDelete={setDeletingAccount}
+        onBan={setBanningAccount}
+        onUnban={setUnbanningAccount}
+      />
       {data.pagination.total > pageSize && <Pagination total={data.pagination.totalPages} value={page} onChange={setPage} />}
       <CreateGameAccountModal
         opened={createOpened}
@@ -89,12 +107,55 @@ export function GameAccountPanel(props: Props) {
         onClose={() => setCreateOpened(false)}
         onSubmit={(payload) => createMutation.mutate(payload)}
       />
-      <EditGameAccountModal
-        opened={editingAccount !== null}
-        account={editingAccount}
+      <ChangePasswordModal
+        opened={passwordAccount !== null}
+        account={passwordAccount}
         loading={updateMutation.isPending}
-        onClose={() => setEditingAccount(null)}
-        onSubmit={(values) => editingAccount && updateMutation.mutate({ accountName: editingAccount.accountName, values })}
+        onClose={() => setPasswordAccount(null)}
+        onSubmit={(password) =>
+          passwordAccount &&
+          updateMutation.mutate({
+            accountName: passwordAccount.accountName,
+            values: {
+              password,
+              expiresAt: passwordAccount.expiresAt ?? '',
+              leftSeconds: passwordAccount.leftSeconds ?? 0
+            }
+          })
+        }
+      />
+      <ChangeSecondaryPasswordModal
+        opened={secondaryPasswordAccount !== null}
+        account={secondaryPasswordAccount}
+        loading={updateMutation.isPending}
+        onClose={() => setSecondaryPasswordAccount(null)}
+        onSubmit={(secondaryPassword) =>
+          secondaryPasswordAccount &&
+          updateMutation.mutate({
+            accountName: secondaryPasswordAccount.accountName,
+            values: {
+              secondaryPassword,
+              expiresAt: secondaryPasswordAccount.expiresAt ?? '',
+              leftSeconds: secondaryPasswordAccount.leftSeconds ?? 0
+            }
+          })
+        }
+      />
+      <ExtendAccountModal
+        opened={extendAccount !== null}
+        account={extendAccount}
+        loading={updateMutation.isPending}
+        onClose={() => setExtendAccount(null)}
+        onSubmit={(values) =>
+          extendAccount &&
+          updateMutation.mutate({
+            accountName: extendAccount.accountName,
+            values: {
+              expiresAt: values.expiresAt,
+              leftSeconds: values.leftSeconds
+            }
+          })
+        }
       />
       <SoftDeleteAccountModal
         opened={deletingAccount !== null}

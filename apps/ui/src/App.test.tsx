@@ -30,7 +30,14 @@ vi.mock('@/services/client', () => ({
     updateGameAccount: vi.fn(),
     deleteGameAccount: vi.fn(),
     banGameAccount: vi.fn(),
-    unbanGameAccount: vi.fn()
+    unbanGameAccount: vi.fn(),
+    env: vi.fn().mockResolvedValue({ content: '' }),
+    saveEnv: vi.fn(),
+    versions: vi.fn().mockResolvedValue({ activeVersion: null, versions: [] }),
+    selectVersion: vi.fn(),
+    cloneVersion: vi.fn(),
+    uploadVersion: vi.fn(),
+    deleteVersion: vi.fn()
   }
 }));
 

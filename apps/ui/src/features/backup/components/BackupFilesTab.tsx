@@ -125,6 +125,7 @@ export function BackupFilesTab({ onSuccess, onError }: Props) {
                     <Group gap="xs">
                       <Button size="xs" variant="light" onClick={() => setRestoringFile(file)}>Restore</Button>
                       <Button size="xs" variant="default" onClick={() => setEditingFile(file)}>Edit</Button>
+                      <Button size="xs" variant="light" component="a" href={`/api/backups/${file.kind}/${encodeURIComponent(file.filename)}/download`} download>Download</Button>
                       <Button size="xs" color="red" variant="light" disabled={file.isLatest} onClick={() => setDeletingFile(file)}>Delete</Button>
                     </Group>
                   </Table.Td>

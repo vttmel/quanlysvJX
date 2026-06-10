@@ -12,6 +12,8 @@ import { registerGameAccountRoutes } from './routes/gameAccountRoutes.js';
 import { registerHealthRoutes } from './routes/healthRoutes.js';
 import { registerLogRoutes } from './routes/logRoutes.js';
 import { registerServiceRoutes } from './routes/serviceRoutes.js';
+import { registerEnvRoutes } from './routes/envRoutes.js';
+import { registerVersionRoutes } from './routes/versionRoutes.js';
 import {
   runDockerCompose,
   runDockerComposeStream,
@@ -60,6 +62,8 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerLogRoutes(app);
   await registerBackupRoutes(app);
   await registerGameAccountRoutes(app);
+  await registerEnvRoutes(app);
+  await registerVersionRoutes(app);
 
   if (config.schedulerEnabled) {
     const scheduledTask = startBackupScheduler(deps);

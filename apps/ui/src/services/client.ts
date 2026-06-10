@@ -65,5 +65,25 @@ export const api = {
   banGameAccount: (accountName: string) =>
     request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}/ban`, { method: 'POST' }),
   unbanGameAccount: (accountName: string) =>
-    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}/unban`, { method: 'POST' })
+    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}/unban`, { method: 'POST' }),
+  env: () => request<{ content: string }>('/api/env'),
+  saveEnv: (content: string) =>
+    request<{ message: string }>('/api/env', { method: 'POST', body: JSON.stringify({ content }) }),
+  versions: () =>
+    request<{ activeVersion: string | null; versions: Array<{ name: string; isActive: boolean; path: string }> }>('/api/versions'),
+  selectVersion: (payload: { name: string; subPath?: string }) =>
+    request<{ activeVersion: string; serverPath: string }>('/api/versions/select', { method: 'POST', body: JSON.stringify(payload) }),
+  cloneVersion: (payload: { name: string; url: string; branch?: string }) =>
+    request<unknown>('/api/versions/clone', { method: 'POST', body: JSON.stringify(payload) }),
+  uploadVersion: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return request<unknown>('/api/versions/upload', { method: 'POST', body: form });
+  },
+  deleteVersion: (name: string) =>
+    request<unknown>(`/api/versions/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+  browseVersion: (name: string, path?: string) => {
+    const query = path ? `?path=${encodeURIComponent(path)}` : '';
+    return request<{ currentPath: string; parentPath: string | null; directories: string[] }>(`/api/versions/${encodeURIComponent(name)}/browse${query}`);
+  }
 };

@@ -3,13 +3,23 @@ import type { GameAccount } from '@/services/types';
 
 type Props = {
   accounts: GameAccount[];
-  onEdit: (account: GameAccount) => void;
+  onChangePassword: (account: GameAccount) => void;
+  onChangeSecondaryPassword: (account: GameAccount) => void;
+  onExtend: (account: GameAccount) => void;
   onDelete: (account: GameAccount) => void;
   onBan: (account: GameAccount) => void;
   onUnban: (account: GameAccount) => void;
 };
 
-export function GameAccountTable({ accounts, onEdit, onDelete, onBan, onUnban }: Props) {
+export function GameAccountTable({
+  accounts,
+  onChangePassword,
+  onChangeSecondaryPassword,
+  onExtend,
+  onDelete,
+  onBan,
+  onUnban
+}: Props) {
   return (
     <Table striped highlightOnHover withTableBorder>
       <Table.Thead>
@@ -32,7 +42,9 @@ export function GameAccountTable({ accounts, onEdit, onDelete, onBan, onUnban }:
             </Table.Td>
             <Table.Td>
               <Group gap="xs">
-                <Button size="xs" variant="light" onClick={() => onEdit(account)}>Sửa</Button>
+                <Button size="xs" variant="light" onClick={() => onChangePassword(account)}>Đổi MK1</Button>
+                <Button size="xs" variant="light" onClick={() => onChangeSecondaryPassword(account)}>Đổi MK2</Button>
+                <Button size="xs" variant="light" onClick={() => onExtend(account)}>Gia hạn</Button>
                 {account.status === 'banned' ? (
                   <Button size="xs" color="green" variant="light" onClick={() => onUnban(account)}>Mở khóa</Button>
                 ) : (

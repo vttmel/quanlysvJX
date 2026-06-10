@@ -1,4 +1,4 @@
-import { AppShell, Button, Grid, Group, MantineProvider, Tabs, Text, Title } from '@mantine/core';
+import { AppShell, Button, Grid, Group, MantineProvider, Stack, Tabs, Text, Title } from '@mantine/core';
 import { Notifications, notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
@@ -8,8 +8,9 @@ import type { ServiceStatus } from '@/services/types';
 import { BackupPanel } from '@/features/backup';
 import { GameAccountPanel } from '@/features/gameAccounts';
 import { LogsPanel } from '@/features/logs';
-import { ServiceActionModal } from '@/features/services';
-import { ServiceTable } from '@/features/services';
+import { ServiceActionModal, ServiceTable } from '@/features/services';
+import { VersionManager } from '@/features/dashboard/VersionManager';
+import { EnvEditor } from '@/features/dashboard/EnvEditor';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@/assets/styles/styles.css';
@@ -109,6 +110,7 @@ export function App() {
                   setSelectedService={setSelectedService}
                   runAction={runAction}
                   showError={showError}
+                  showSuccess={showSuccess}
                 />
               }
             />
@@ -145,17 +147,28 @@ type DashboardViewProps = {
   setSelectedService: (service: string | null) => void;
   runAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
   showError: (message: string) => void;
+  showSuccess: (message: string) => void;
 };
 
-function DashboardView({ services, selectedService, setSelectedService, runAction, showError }: DashboardViewProps) {
+function DashboardView({ services, selectedService, setSelectedService, runAction, showError, showSuccess }: DashboardViewProps) {
   return (
-    <Grid align="stretch">
-      <Grid.Col span={{ base: 12, md: 3 }}>
-        <ServiceTable services={services} selected={selectedService} onSelect={setSelectedService} onAction={runAction} />
-      </Grid.Col>
-      <Grid.Col span={{ base: 12, md: 9 }}>
-        <LogsPanel services={services.map((service) => service.name)} selected={selectedService} onSelect={setSelectedService} onError={showError} />
-      </Grid.Col>
-    </Grid>
+    <Stack gap="md">
+      <Grid align="stretch">
+        <Grid.Col span={{ base: 12, md: 3 }}>
+          <ServiceTable services={services} selected={selectedService} onSelect={setSelectedService} onAction={runAction} />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 9 }}>
+          <LogsPanel services={services.map((service) => service.name)} selected={selectedService} onSelect={setSelectedService} onError={showError} />
+        </Grid.Col>
+      </Grid>
+      <Grid>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <VersionManager onSuccess={showSuccess} onError={showError} />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <EnvEditor onSuccess={showSuccess} onError={showError} />
+        </Grid.Col>
+      </Grid>
+    </Stack>
   );
 }

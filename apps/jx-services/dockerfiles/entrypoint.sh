@@ -28,7 +28,13 @@ if [ -z "$CONFIG_FILE" ]; then
     case "$APP_CMD" in
         "goddess_y") CONFIG_FILE="goddess.cfg" ;;
         "bishop_y")  CONFIG_FILE="bishop.cfg" ;;
-        "s3relay_y") CONFIG_FILE="s3relay/relay_config.ini" ;;
+        "s3relay_y") 
+            if [ -f "relay_config.ini" ]; then
+                CONFIG_FILE="relay_config.ini"
+            else
+                CONFIG_FILE="s3relay/relay_config.ini"
+            fi
+            ;;
         "jx_linux_y") CONFIG_FILE="servercf0.ini" ;;
     esac
 fi
