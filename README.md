@@ -15,26 +15,14 @@ cd quanlysvJX
 
 ---
 
-### Bước 2: Tạo các thư mục cần thiết và phân quyền
-Hệ thống cần một số thư mục để chứa cơ sở dữ liệu và chứng chỉ bảo mật. Hãy chạy các dòng lệnh dưới đây để tự động tạo thư mục và cấp quyền truy cập chính xác (tránh lỗi Permission Denied khi Docker chạy):
+### Bước 2: Tạo các thư mục và phân quyền tự động
+
+Hệ thống cần một số thư mục để chứa dữ liệu cơ sở dữ liệu và chứng chỉ bảo mật. An đã tạo sẵn file script `setup.sh` để tự động hóa toàn bộ việc này.
+
+Hãy chạy dòng lệnh dưới đây tại thư mục gốc của dự án để tự động tạo thư mục và cấp quyền truy cập chính xác (tránh lỗi Permission Denied khi Docker khởi chạy):
 
 ```bash
-# 1. Tạo các thư mục chứa dữ liệu và cấu hình
-mkdir -p apps/jx-services/mount/database/mysql_server1/data
-mkdir -p apps/jx-services/mount/database/backups/mysql
-mkdir -p apps/jx-services/mount/database/mssql/data
-mkdir -p apps/jx-services/mount/database/mssql/seed
-mkdir -p apps/jx-services/mount/database/mssql/certs
-mkdir -p apps/jx-services/mount/logs
-
-# 2. Phân quyền đọc/ghi để Docker có thể ghi dữ liệu cơ sở dữ liệu và đọc chứng chỉ
-chmod -R 777 apps/jx-services/mount/database/mysql_server1/data
-chmod -R 777 apps/jx-services/mount/database/backups/mysql
-chmod -R 777 apps/jx-services/mount/database/mssql/data
-chmod -R 755 apps/jx-services/mount/database/mssql/certs
-chmod -R 755 apps/jx-services/mount/database/mssql/seed
-chmod 644 apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak
-
+bash setup.sh
 ```
 
 ---
