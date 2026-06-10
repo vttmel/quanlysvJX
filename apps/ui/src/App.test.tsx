@@ -28,7 +28,8 @@ vi.mock('@/services/client', () => ({
     gameAccounts: vi.fn().mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 1 } }),
     createGameAccount: vi.fn(),
     updateGameAccount: vi.fn(),
-    softDeleteGameAccount: vi.fn()
+    deleteGameAccount: vi.fn(),
+    banGameAccount: vi.fn()
   }
 }));
 

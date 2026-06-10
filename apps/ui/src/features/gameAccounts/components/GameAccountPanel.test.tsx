@@ -13,7 +13,8 @@ vi.mock('@/services/client', () => ({
     gameAccounts: (...args: Parameters<typeof mockGameAccounts>) => mockGameAccounts(...args),
     createGameAccount: vi.fn(),
     updateGameAccount: vi.fn(),
-    softDeleteGameAccount: vi.fn()
+    deleteGameAccount: vi.fn(),
+    banGameAccount: vi.fn()
   }
 }));
 
