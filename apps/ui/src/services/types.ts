@@ -57,3 +57,39 @@ export type BackupSettings = {
   backupMetadataFile: string;
   backupScheduleFile: string;
 };
+
+export type GameAccountStatus = 'active' | 'banned';
+
+export type GameAccount = {
+  accountName: string;
+  expiresAt: string | null;
+  leftSeconds: number | null;
+  usedSeconds: number | null;
+  status: GameAccountStatus;
+};
+
+export type GameAccountListResponse = {
+  items: GameAccount[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type CreateGameAccountPayload = {
+  accountName: string;
+  password: string;
+  secondaryPassword: string;
+  expiresAt: string;
+  leftSeconds: number;
+};
+
+export type UpdateGameAccountPayload = {
+  password?: string;
+  secondaryPassword?: string;
+  expiresAt: string;
+  leftSeconds: number;
+};
+

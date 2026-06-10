@@ -6,8 +6,12 @@ import type {
   BackupList,
   BackupScheduleConfig,
   BackupSettings,
+  CreateGameAccountPayload,
   DatabaseBackupSchedule,
-  ServiceStatus
+  GameAccount,
+  GameAccountListResponse,
+  ServiceStatus,
+  UpdateGameAccountPayload
 } from '@/services/types';
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -47,5 +51,15 @@ export const api = {
   schedules: () => request<BackupScheduleConfig>('/api/backup-schedules'),
   saveSchedule: (kind: BackupKind, schedule: DatabaseBackupSchedule) =>
     request<BackupScheduleConfig>(`/api/backup-schedules/${kind}`, { method: 'PUT', body: JSON.stringify(schedule) }),
-  backupSettings: () => request<BackupSettings>('/api/backup-settings')
+  backupSettings: () => request<BackupSettings>('/api/backup-settings'),
+  gameAccounts: (params: { search: string; page: number; pageSize: number }) => {
+    const query = new URLSearchParams({ search: params.search, page: String(params.page), pageSize: String(params.pageSize) });
+    return request<GameAccountListResponse>(`/api/game-accounts?${query.toString()}`);
+  },
+  createGameAccount: (payload: CreateGameAccountPayload) =>
+    request<GameAccount>('/api/game-accounts', { method: 'POST', body: JSON.stringify(payload) }),
+  updateGameAccount: (accountName: string, payload: UpdateGameAccountPayload) =>
+    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  softDeleteGameAccount: (accountName: string) =>
+    request<GameAccount>(`/api/game-accounts/${encodeURIComponent(accountName)}`, { method: 'DELETE' })
 };
