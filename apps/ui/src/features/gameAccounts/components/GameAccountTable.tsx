@@ -1,0 +1,42 @@
+import { Badge, Button, Group, Table } from '@mantine/core';
+import type { GameAccount } from '@/services/types';
+
+type Props = {
+  accounts: GameAccount[];
+  onEdit: (account: GameAccount) => void;
+  onDelete: (account: GameAccount) => void;
+};
+
+export function GameAccountTable({ accounts, onEdit, onDelete }: Props) {
+  return (
+    <Table striped highlightOnHover withTableBorder>
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Tài khoản</Table.Th>
+          <Table.Th>Ngày hết hạn</Table.Th>
+          <Table.Th>iLeftSecond</Table.Th>
+          <Table.Th>Trạng thái</Table.Th>
+          <Table.Th>Thao tác</Table.Th>
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {accounts.map((account) => (
+          <Table.Tr key={account.accountName}>
+            <Table.Td>{account.accountName}</Table.Td>
+            <Table.Td>{account.expiresAt ?? '-'}</Table.Td>
+            <Table.Td>{account.leftSeconds ?? 0}</Table.Td>
+            <Table.Td>
+              <Badge color={account.status === 'banned' ? 'red' : 'green'}>{account.status === 'banned' ? 'Đã ban' : 'Hoạt động'}</Badge>
+            </Table.Td>
+            <Table.Td>
+              <Group gap="xs">
+                <Button size="xs" variant="light" onClick={() => onEdit(account)}>Sửa</Button>
+                <Button size="xs" color="red" variant="light" onClick={() => onDelete(account)}>Xóa</Button>
+              </Group>
+            </Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
