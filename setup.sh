@@ -14,6 +14,7 @@ mkdir -p apps/jx-services/mount/database/mssql/data
 mkdir -p apps/jx-services/mount/database/mssql/seed
 mkdir -p apps/jx-services/mount/database/mssql/certs
 mkdir -p apps/jx-services/mount/logs
+mkdir -p apps/jx-services/versions
 
 echo "✓ Đã tạo các thư mục cần thiết thành công."
 echo ""
@@ -27,6 +28,9 @@ chmod -R 777 apps/jx-services/mount/database/backups/mysql || echo "Lưu ý: Có
 chmod -R 777 apps/jx-services/mount/database/mssql/data || echo "Lưu ý: Có file/thư mục mssql thuộc quyền root/docker, việc đổi quyền một số file cũ có thể bị bỏ qua."
 chmod -R 755 apps/jx-services/mount/database/mssql/certs
 chmod -R 755 apps/jx-services/mount/database/mssql/seed
+chmod -R 777 apps/jx-services/versions
+chmod -R 777 apps/jx-services/paysyswin
+chmod -R 777 apps/jx-services/logs
 
 if [ -f "apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak" ]; then
   chmod 644 apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak
