@@ -6,3 +6,16 @@ export function normalizeTail(value: unknown) {
 
   return Math.min(2000, Math.max(50, Math.trunc(parsed)));
 }
+
+export function normalizeStreamTail(value: unknown) {
+  const parsed = typeof value === 'string' ? Number(value) : 100;
+  if (!Number.isFinite(parsed)) {
+    return 100;
+  }
+
+  return Math.min(2000, Math.max(0, Math.trunc(parsed)));
+}
+
+export function formatSseLogEvent(chunk: string, event = 'log') {
+  return `event: ${event}\ndata: ${JSON.stringify(chunk)}\n\n`;
+}

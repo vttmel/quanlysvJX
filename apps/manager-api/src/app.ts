@@ -7,18 +7,25 @@ import { registerBackupRoutes } from './routes/backupRoutes.js';
 import { registerHealthRoutes } from './routes/healthRoutes.js';
 import { registerLogRoutes } from './routes/logRoutes.js';
 import { registerServiceRoutes } from './routes/serviceRoutes.js';
-import { runDockerCompose, type CommandResult } from './services/composeRunner.js';
+import {
+  runDockerCompose,
+  runDockerComposeStream,
+  type CommandResult,
+  type ComposeStream
+} from './services/composeRunner.js';
 
 export type AppDeps = {
   config: ManagerConfig;
   runCompose: (args: readonly string[]) => Promise<CommandResult>;
+  streamCompose: (args: readonly string[]) => ComposeStream;
 };
 
 export async function buildApp(overrides: Partial<AppDeps> = {}) {
   const config = overrides.config ?? loadConfig();
   const deps: AppDeps = {
     config,
-    runCompose: overrides.runCompose ?? ((args) => runDockerCompose(args, config.projectRoot))
+    runCompose: overrides.runCompose ?? ((args) => runDockerCompose(args, config.projectRoot)),
+    streamCompose: overrides.streamCompose ?? ((args) => runDockerComposeStream(args, config.projectRoot))
   };
 
   const app = Fastify({ logger: true });

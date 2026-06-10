@@ -2,16 +2,16 @@ import type { FastifyInstance } from 'fastify';
 import { ok } from '../api/envelope.js';
 import { CommandError } from '../api/errors.js';
 import { assertServiceName } from '../services/serviceAllowlist.js';
-import { parseComposePsJson } from '../services/serviceStatus.js';
+import { parseManagedServiceStatuses } from '../services/serviceStatus.js';
 
 export async function registerServiceRoutes(app: FastifyInstance) {
   app.get('/api/services', async () => {
-    const result = await app.deps.runCompose(['ps', '--format', 'json']);
+    const result = await app.deps.runCompose(['ps', '--all', '--format', 'json']);
     if (result.exitCode !== 0) {
       throw new CommandError('Unable to read Docker Compose services');
     }
 
-    return ok(parseComposePsJson(result.stdout));
+    return ok(parseManagedServiceStatuses(result.stdout));
   });
 
   app.post('/api/services/:name/start', async (request) => {
@@ -33,8 +33,13 @@ export async function registerServiceRoutes(app: FastifyInstance) {
 async function runAction(app: FastifyInstance, args: readonly string[], message: string) {
   const result = await app.deps.runCompose(args);
   if (result.exitCode !== 0) {
-    throw new CommandError(`${message} failed`);
+    throw new CommandError(formatActionError(message, result.stderr || result.stdout));
   }
 
   return { message };
+}
+
+function formatActionError(message: string, output: string) {
+  const detail = output.trim().slice(0, 1000);
+  return detail ? `${message} failed: ${detail}` : `${message} failed`;
 }

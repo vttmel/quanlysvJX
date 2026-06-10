@@ -22,27 +22,39 @@ export function ServiceTable({ services, selected, onSelect, onAction }: Props) 
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {services.map((service) => (
-            <Table.Tr key={service.name} bg={selected === service.name ? 'var(--mantine-color-blue-light)' : undefined}>
-              <Table.Td>
-                <button className="linkButton" onClick={() => onSelect(service.name)}>{service.name}</button>
-                <Text size="xs" c="dimmed">{service.containerName}</Text>
-              </Table.Td>
-              <Table.Td><Badge color={service.state === 'running' ? 'green' : 'gray'}>{service.state}</Badge></Table.Td>
-              <Table.Td><Badge color={service.health === 'healthy' ? 'green' : 'yellow'}>{service.health}</Badge></Table.Td>
-              <Table.Td><Text size="sm" lineClamp={1}>{service.image || '-'}</Text></Table.Td>
-              <Table.Td>
-                <Group gap="xs" wrap="nowrap">
-                  <Button size="xs" variant="light" onClick={() => onSelect(service.name)}>Log</Button>
-                  <Button size="xs" color="green" onClick={() => onAction(service.name, 'start')}>Start</Button>
-                  <Button size="xs" color="red" variant="light" onClick={() => onAction(service.name, 'stop')}>Stop</Button>
-                  <Button size="xs" variant="light" onClick={() => onAction(service.name, 'restart')}>Restart</Button>
-                </Group>
-              </Table.Td>
-            </Table.Tr>
-          ))}
+          {services.map((service) => {
+            const running = service.state === 'running';
+            const stopped = service.state === 'stopped' || service.state === 'not created';
+
+            return (
+              <Table.Tr key={service.name} bg={selected === service.name ? 'var(--mantine-color-blue-light)' : undefined}>
+                <Table.Td>
+                  <button className="linkButton" onClick={() => onSelect(service.name)}>{service.name}</button>
+                  <Text size="xs" c="dimmed">{service.containerName}</Text>
+                </Table.Td>
+                <Table.Td><Badge color={stateColor(service.state)}>{service.state}</Badge></Table.Td>
+                <Table.Td><Badge color={service.health === 'healthy' ? 'green' : 'yellow'}>{service.health}</Badge></Table.Td>
+                <Table.Td><Text size="sm" lineClamp={1}>{service.image || '-'}</Text></Table.Td>
+                <Table.Td>
+                  <Group gap="xs" wrap="nowrap">
+                    <Button size="xs" variant="light" onClick={() => onSelect(service.name)}>Log</Button>
+                    <Button size="xs" color="green" disabled={running} onClick={() => onAction(service.name, 'start')}>Start</Button>
+                    <Button size="xs" color="red" variant="light" disabled={!running} onClick={() => onAction(service.name, 'stop')}>Stop</Button>
+                    <Button size="xs" variant="light" disabled={stopped} onClick={() => onAction(service.name, 'restart')}>Restart</Button>
+                  </Group>
+                </Table.Td>
+              </Table.Tr>
+            );
+          })}
         </Table.Tbody>
       </Table>
     </Table.ScrollContainer>
   );
+}
+
+function stateColor(state: string) {
+  if (state === 'running') return 'green';
+  if (state === 'starting') return 'yellow';
+  if (state === 'stopped' || state === 'not created') return 'gray';
+  return 'orange';
 }

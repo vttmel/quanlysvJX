@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
+import { describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../app.js';
 
 describe('log routes', () => {
@@ -28,5 +30,33 @@ describe('log routes', () => {
     const response = await app.inject({ method: 'GET', url: '/api/services/not-real/logs' });
 
     expect(response.statusCode).toBe(400);
+  });
+
+  it('streams docker logs for an allowlisted service', async () => {
+    const calls: string[][] = [];
+    const kill = vi.fn();
+    const app = await buildApp({
+      streamCompose: (args) => {
+        calls.push([...args]);
+        const stdout = new PassThrough();
+        const stderr = new PassThrough();
+        const stream = Object.assign(new EventEmitter(), { stdout, stderr, kill });
+
+        queueMicrotask(() => {
+          stdout.write('ready\n');
+          stdout.end();
+          stream.emit('close', 0);
+        });
+
+        return stream;
+      }
+    });
+
+    const response = await app.inject({ method: 'GET', url: '/api/services/jxmysql/logs/stream?tail=20' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain('text/event-stream');
+    expect(response.payload).toContain('event: log\ndata: "ready\\n"\n\n');
+    expect(calls).toEqual([['logs', '--no-color', '--tail', '20', '--follow', 'jxmysql']]);
   });
 });

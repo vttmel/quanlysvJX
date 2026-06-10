@@ -1,10 +1,17 @@
 import { spawn } from 'node:child_process';
+import type { EventEmitter } from 'node:events';
 import { CommandError } from '../api/errors.js';
 
 export type CommandResult = {
   stdout: string;
   stderr: string;
   exitCode: number;
+};
+
+export type ComposeStream = EventEmitter & {
+  stdout: NodeJS.ReadableStream;
+  stderr: NodeJS.ReadableStream;
+  kill: (signal?: NodeJS.Signals) => boolean;
 };
 
 export function buildComposeArgs(args: readonly string[]) {
@@ -32,4 +39,8 @@ export async function runDockerCompose(args: readonly string[], cwd: string): Pr
       resolve({ stdout, stderr, exitCode: exitCode ?? 1 });
     });
   });
+}
+
+export function runDockerComposeStream(args: readonly string[], cwd: string): ComposeStream {
+  return spawn('docker', buildComposeArgs(args), { cwd, shell: false });
 }

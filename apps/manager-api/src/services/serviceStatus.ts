@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { assertServiceName, type ServiceName } from './serviceAllowlist.js';
+import { assertServiceName, serviceNames, type ServiceName } from './serviceAllowlist.js';
 
 const publisherSchema = z.object({ PublishedPort: z.union([z.string(), z.number()]).optional() }).passthrough();
 
@@ -28,17 +28,51 @@ export type ServiceStatus = {
 export function parseComposePsJson(stdout: string): ServiceStatus[] {
   const rows = z.array(composeRowSchema).parse(parseComposeRows(stdout));
 
-  return rows.map((row) => ({
+  return rows.map(normalizeComposeRow);
+}
+
+export function parseManagedServiceStatuses(stdout: string): ServiceStatus[] {
+  const discovered = new Map(parseComposePsJson(stdout).map((service) => [service.name, service]));
+
+  return serviceNames.map((name) => discovered.get(name) ?? createMissingServiceStatus(name));
+}
+
+function normalizeComposeRow(row: z.infer<typeof composeRowSchema>): ServiceStatus {
+  return {
     name: assertServiceName(row.Service),
     containerName: row.Name ?? row.Service,
-    state: row.State ?? 'unknown',
-    health: row.Health ?? 'unknown',
+    state: normalizeState(row.State),
+    health: normalizeHealth(row.Health),
     image: row.Image ?? '',
     ports: (row.Publishers ?? []).flatMap((publisher) =>
       publisher.PublishedPort === undefined ? [] : [String(publisher.PublishedPort)]
     ),
     startedAt: row.CreatedAt ?? null
-  }));
+  };
+}
+
+function createMissingServiceStatus(name: ServiceName): ServiceStatus {
+  return {
+    name,
+    containerName: name,
+    state: 'not created',
+    health: 'unknown',
+    image: '',
+    ports: [],
+    startedAt: null
+  };
+}
+
+function normalizeState(value: string | undefined) {
+  const state = value?.trim().toLowerCase();
+  if (!state) return 'unknown';
+  if (state === 'exited' || state === 'dead') return 'stopped';
+  if (state === 'restarting') return 'starting';
+  return state;
+}
+
+function normalizeHealth(value: string | undefined) {
+  return value?.trim() || 'unknown';
 }
 
 function parseComposeRows(stdout: string) {

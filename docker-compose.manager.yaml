@@ -1,20 +1,26 @@
 name: quanlysvjx-manager
 
+x-manager-project-root: &manager-project-root ${MANAGER_PROJECT_ROOT:-${PWD}}
+
 services:
   manager-api:
     build:
       context: .
       dockerfile: manager/Dockerfile.api
-    working_dir: /workspace
+    working_dir: *manager-project-root
     command: sh -c "npm install && npm --workspace apps/manager-api run dev"
     environment:
       COMPOSE_PROJECT_NAME: quanlysvjx
       MANAGER_API_HOST: 0.0.0.0
       MANAGER_API_PORT: 3001
-      MANAGER_PROJECT_ROOT: /workspace
+      MANAGER_PROJECT_ROOT: *manager-project-root
     volumes:
-      - ./:/workspace
-      - manager-api-node-modules:/workspace/node_modules
+      - type: bind
+        source: *manager-project-root
+        target: *manager-project-root
+      - type: volume
+        source: manager-api-node-modules
+        target: ${MANAGER_PROJECT_ROOT:-${PWD}}/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - manager-net
@@ -22,13 +28,17 @@ services:
 
   manager-web:
     image: node:22-alpine
-    working_dir: /workspace
+    working_dir: *manager-project-root
     command: sh -c "npm install && npm --workspace apps/manager-web run dev -- --host 0.0.0.0"
     environment:
       VITE_HOST: 0.0.0.0
     volumes:
-      - ./:/workspace
-      - manager-web-node-modules:/workspace/node_modules
+      - type: bind
+        source: *manager-project-root
+        target: *manager-project-root
+      - type: volume
+        source: manager-web-node-modules
+        target: ${MANAGER_PROJECT_ROOT:-${PWD}}/node_modules
     networks:
       - manager-net
     restart: unless-stopped

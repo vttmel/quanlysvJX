@@ -18,6 +18,7 @@ export const api = {
     request<{ message: string }>(`/api/services/${service}/${action}`, { method: 'POST' }),
   logs: (service: string, tail: number) =>
     request<{ service: string; tail: number; logs: string }>(`/api/services/${service}/logs?tail=${tail}`),
+  logStreamUrl: (service: string, tail: number) => `/api/services/${service}/logs/stream?tail=${tail}`,
   backups: () => request<BackupList>('/api/backups'),
   backup: (kind: 'mysql' | 'mssql' | 'all') => request<unknown>(`/api/backups/${kind}`, { method: 'POST' }),
   restore: (kind: 'mysql' | 'mssql', filename: string) =>

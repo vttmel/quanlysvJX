@@ -64,6 +64,14 @@ export function App() {
     void refreshServices();
   }, [refreshServices]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void refreshServices();
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [refreshServices]);
+
   return (
     <MantineProvider defaultColorScheme="auto">
       <Notifications />
