@@ -7,7 +7,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': new URL('./src', import.meta.url).pathname
-    }
+    },
+    dedupe: ['@mantine/core', '@mantine/form', '@mantine/hooks', '@mantine/notifications']
+  },
+  optimizeDeps: {
+    include: ['@mantine/form']
   },
   server: {
     host: '0.0.0.0',
