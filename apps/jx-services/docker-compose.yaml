@@ -9,13 +9,13 @@ services:
     command: --explicit_defaults_for_timestamp=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     mem_limit: 1g
     volumes:
-      - ../../database/mysql_server1/data:/var/lib/mysql
-      - ../../config/docker.cnf:/etc/mysql/conf.d/docker.cnf:ro
+      - ./mount/database/mysql_server1/data:/var/lib/mysql
+      - ./mount/config/docker.cnf:/etc/mysql/conf.d/docker.cnf:ro
     networks:
       - jxnet
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent" ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -32,15 +32,15 @@ services:
       ACCEPT_EULA: "Y"
       TZ: "Asia/Ho_Chi_Minh"
     volumes:
-      - ../../database/mssql/data:/var/opt/mssql/data
-      - ../../database/mssql/certs:/var/opt/mssql/certs:ro
-      - ../../database/mssql/mssql.conf:/var/opt/mssql/mssql.conf:ro
+      - ./mount/database/mssql/data:/var/opt/mssql/data
+      - ./mount/database/mssql/certs:/var/opt/mssql/certs:ro
+      - ./mount/database/mssql/mssql.conf:/var/opt/mssql/mssql.conf:ro
       - /etc/localtime:/etc/localtime:ro
     mem_limit: 1g
     networks:
       - jxnet
     healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/1433'"]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/1433'" ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -62,8 +62,8 @@ services:
       - JX_MSSQL_USER_ENCRYPTED=${JX_MSSQL_USER_ENCRYPTED}
       - JX_MSSQL_PASS_ENCRYPTED=${JX_MSSQL_PASS_ENCRYPTED}
     volumes:
-      - "../../paysyswin:/src/paysys"
-      - "../../config/paysys/database.ini:/src/paysys/database.ini"
+      - "./mount/paysyswin:/src/paysys"
+      - "./mount/config/paysys/database.ini:/src/paysys/database.ini"
     network_mode: host
     depends_on:
       jxmysql:
@@ -71,7 +71,7 @@ services:
       jxmssql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5002'"]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5002'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -90,14 +90,14 @@ services:
       - JX_MSSQL_USER_ENCRYPTED=${JX_MSSQL_USER_ENCRYPTED}
       - JX_MSSQL_PASS_ENCRYPTED=${JX_MSSQL_PASS_ENCRYPTED}
     volumes:
-      - "../../paysyswin:/src/paysys"
-      - "../../config/paysys/database.ini:/src/paysys/database.ini"
+      - "./mount/paysyswin:/src/paysys"
+      - "./mount/config/paysys/database.ini:/src/paysys/database.ini"
     network_mode: host
     depends_on:
       paysys:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/7777'"]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/7777'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -121,15 +121,15 @@ services:
       - APP_CMD=goddess_y
     volumes:
       - "${SERVER_PATH}/gateway:/src/jxser/gateway/"
-      - "../../config/gateway/goddess.cfg:/src/jxser/gateway/goddess.cfg"
+      - "./mount/config/gateway/goddess.cfg:/src/jxser/gateway/goddess.cfg"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
-    entrypoint: ["/bin/bash", "/src/entrypoint.sh"]
+    entrypoint: [ "/bin/bash", "/src/entrypoint.sh" ]
     network_mode: host
     depends_on:
       s3relayserver:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5001'"]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5001'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -152,15 +152,15 @@ services:
       - APP_CMD=bishop_y
     volumes:
       - "${SERVER_PATH}/gateway:/src/jxser/gateway/"
-      - "../../config/gateway/bishop.cfg:/src/jxser/gateway/bishop.cfg"
+      - "./mount/config/gateway/bishop.cfg:/src/jxser/gateway/bishop.cfg"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
-    entrypoint: ["/bin/bash", "/src/entrypoint.sh"]
+    entrypoint: [ "/bin/bash", "/src/entrypoint.sh" ]
     network_mode: host
     depends_on:
       goddess:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5622'"]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5622'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -183,23 +183,23 @@ services:
       - APP_CMD=s3relay_y
     volumes:
       - "${SERVER_PATH}/gateway:/src/jxser/gateway/"
-      - "../../config/gateway/relay_config.ini:/src/jxser/gateway/s3relay/relay_config.ini"
-      - "../../config/gateway/hostset.ini:/src/jxser/gateway/s3relay/settings/hostset.ini"
+      - "./mount/config/gateway/relay_config.ini:/src/jxser/gateway/s3relay/relay_config.ini"
+      - "./mount/config/gateway/hostset.ini:/src/jxser/gateway/s3relay/settings/hostset.ini"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
-      - ../../logs/gateway/Logs:/src/jxser/gateway/Logs
-      - ../../logs/gateway/Backup:/src/jxser/gateway/Backup
-      - ../../logs/gateway/roleback:/src/jxser/gateway/roleback
-      - ../../logs/gateway/rolevalue_setting/rolevalue_log:/src/jxser/gateway/rolevalue_setting/rolevalue_log
-      - ../../logs/gateway/s3relay/Logs:/src/jxser/gateway/s3relay/Logs
-      - ../../logs/gateway/s3relay/relay_logs:/src/jxser/gateway/s3relay/relay_logs
-      - ../../logs/gateway/s3relay/RelayRunData:/src/jxser/gateway/s3relay/RelayRunData
-    entrypoint: ["/bin/bash", "/src/entrypoint.sh"]
+      - ./mount/logs/gateway/Logs:/src/jxser/gateway/Logs
+      - ./mount/logs/gateway/Backup:/src/jxser/gateway/Backup
+      - ./mount/logs/gateway/roleback:/src/jxser/gateway/roleback
+      - ./mount/logs/gateway/rolevalue_setting/rolevalue_log:/src/jxser/gateway/rolevalue_setting/rolevalue_log
+      - ./mount/logs/gateway/s3relay/Logs:/src/jxser/gateway/s3relay/Logs
+      - ./mount/logs/gateway/s3relay/relay_logs:/src/jxser/gateway/s3relay/relay_logs
+      - ./mount/logs/gateway/s3relay/RelayRunData:/src/jxser/gateway/s3relay/RelayRunData
+    entrypoint: [ "/bin/bash", "/src/entrypoint.sh" ]
     network_mode: host
     depends_on:
       bishop:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "sleep 10; kill -0 1"]
+      test: [ "CMD-SHELL", "sleep 10; kill -0 1" ]
       interval: 10s
       timeout: 12s
       retries: 12
@@ -221,20 +221,17 @@ services:
       - APP_CMD=jx_linux_y
     volumes:
       - "${SERVER_PATH}/server1:/src/jxser/server1/"
-      - "../../config/gs1/servercf0.ini:/src/jxser/server1/servercf0.ini"
+      - "./mount/config/gs1/servercf0.ini:/src/jxser/server1/servercf0.ini"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
-      - ../../logs/server1/Logs:/src/jxser/server1/Logs
-      - ../../logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
-      - "../../script/camnangvozer.lua:/src/jxser/server1/script/global/mel/item/camnangvozer.lua"
-      - "../../script/configserver.lua:/src/jxser/server1/script/global/mel/configserver.lua"
-      - "../../config/npcs.txt:/src/jxser/server1/settings/npcs.txt"
-    entrypoint: ["/bin/bash", "/src/entrypoint.sh"]
+      - ./mount/logs/server1/Logs:/src/jxser/server1/Logs
+      - ./mount/logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
+    entrypoint: [ "/bin/bash", "/src/entrypoint.sh" ]
     network_mode: host
     depends_on:
       s3relay:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "ip=$$(hostname -I | awk '{print $$1}'); bash -ec \"</dev/tcp/$${ip}/6666\""]
+      test: [ "CMD-SHELL", "ip=$$(hostname -I | awk '{print $$1}'); bash -ec \"</dev/tcp/$${ip}/6666\"" ]
       interval: 10s
       timeout: 5s
       retries: 30
