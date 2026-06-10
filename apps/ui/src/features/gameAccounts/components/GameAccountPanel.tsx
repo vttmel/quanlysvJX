@@ -1,9 +1,12 @@
 import { Button, Group, Pagination, Stack, TextInput } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/services/client';
-import type { GameAccount } from '@/services/types';
+import type { GameAccount, UpdateGameAccountPayload } from '@/services/types';
+import { CreateGameAccountModal } from './CreateGameAccountModal';
+import { EditGameAccountModal } from './EditGameAccountModal';
 import { GameAccountTable } from './GameAccountTable';
+import { SoftDeleteAccountModal } from './SoftDeleteAccountModal';
 
 type Props = {
   onSuccess: (message: string) => void;
@@ -12,7 +15,7 @@ type Props = {
 
 const pageSize = 10;
 
-export function GameAccountPanel(_props: Props) {
+export function GameAccountPanel(props: Props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editingAccount, setEditingAccount] = useState<GameAccount | null>(null);
@@ -25,6 +28,27 @@ export function GameAccountPanel(_props: Props) {
   });
 
   const data = accountsQuery.data ?? { items: [], pagination: { page, pageSize, total: 0, totalPages: 1 } };
+
+  const queryClient = useQueryClient();
+  const invalidateAccounts = () => queryClient.invalidateQueries({ queryKey: ['game-accounts'] });
+
+  const createMutation = useMutation({
+    mutationFn: api.createGameAccount,
+    onSuccess: async () => { props.onSuccess('Đã tạo tài khoản'); setCreateOpened(false); await invalidateAccounts(); },
+    onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể tạo tài khoản')
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: { accountName: string; values: UpdateGameAccountPayload }) => api.updateGameAccount(payload.accountName, payload.values),
+    onSuccess: async () => { props.onSuccess('Đã cập nhật tài khoản'); setEditingAccount(null); await invalidateAccounts(); },
+    onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể cập nhật tài khoản')
+  });
+
+  const softDeleteMutation = useMutation({
+    mutationFn: api.softDeleteGameAccount,
+    onSuccess: async () => { props.onSuccess('Đã ban tài khoản'); setDeletingAccount(null); await invalidateAccounts(); },
+    onError: (error) => props.onError(error instanceof Error ? error.message : 'Không thể ban tài khoản')
+  });
 
   return (
     <Stack>
@@ -43,7 +67,26 @@ export function GameAccountPanel(_props: Props) {
       </Group>
       <GameAccountTable accounts={data.items} onEdit={setEditingAccount} onDelete={setDeletingAccount} />
       {data.pagination.total > pageSize && <Pagination total={data.pagination.totalPages} value={page} onChange={setPage} />}
-      <span hidden>{createOpened ? 'create-open' : 'create-closed'}{editingAccount?.accountName}{deletingAccount?.accountName}</span>
+      <CreateGameAccountModal
+        opened={createOpened}
+        loading={createMutation.isPending}
+        onClose={() => setCreateOpened(false)}
+        onSubmit={(payload) => createMutation.mutate(payload)}
+      />
+      <EditGameAccountModal
+        opened={editingAccount !== null}
+        account={editingAccount}
+        loading={updateMutation.isPending}
+        onClose={() => setEditingAccount(null)}
+        onSubmit={(values) => editingAccount && updateMutation.mutate({ accountName: editingAccount.accountName, values })}
+      />
+      <SoftDeleteAccountModal
+        opened={deletingAccount !== null}
+        account={deletingAccount}
+        loading={softDeleteMutation.isPending}
+        onClose={() => setDeletingAccount(null)}
+        onConfirm={() => deletingAccount && softDeleteMutation.mutate(deletingAccount.accountName)}
+      />
     </Stack>
   );
 }
