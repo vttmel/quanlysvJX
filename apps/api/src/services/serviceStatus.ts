@@ -27,8 +27,9 @@ export type ServiceStatus = {
 
 export function parseComposePsJson(stdout: string): ServiceStatus[] {
   const rows = z.array(composeRowSchema).parse(parseComposeRows(stdout));
+  const managedRows = rows.filter((row) => (serviceNames as readonly string[]).includes(row.Service));
 
-  return rows.map(normalizeComposeRow);
+  return managedRows.map(normalizeComposeRow);
 }
 
 export function parseManagedServiceStatuses(stdout: string): ServiceStatus[] {
