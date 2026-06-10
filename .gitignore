@@ -1,4 +1,6 @@
 /database/
+apps/jx-services/mount/database/
+apps/jx-services/mount/logs/
 .env
 .superpowers/
 .playwright-mcp/
