@@ -18,11 +18,20 @@ export function buildComposeArgs(args: readonly string[]) {
   return ['compose', '-f', 'apps/jx-services/docker-compose.yaml', ...args];
 }
 
-export async function runDockerCompose(args: readonly string[], cwd: string): Promise<CommandResult> {
+export async function runDockerCompose(
+  args: readonly string[],
+  cwd: string,
+  options?: { stdin?: string | Buffer }
+): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     const child = spawn('docker', buildComposeArgs(args), { cwd, shell: false });
     let stdout = '';
     let stderr = '';
+
+    if (options?.stdin !== undefined) {
+      child.stdin.write(options.stdin);
+      child.stdin.end();
+    }
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
