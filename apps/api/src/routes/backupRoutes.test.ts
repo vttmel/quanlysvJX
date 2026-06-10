@@ -11,7 +11,10 @@ function testConfig(root: string): ManagerConfig {
     mysqlBackupDir: path.join(root, 'mysql'),
     mssqlBackupDir: path.join(root, 'mssql'),
     backupSchedule: '0 3 * * *',
-    backupRetentionDays: 14
+    backupRetentionDays: 14,
+    backupMetadataFile: path.join(root, 'backup-metadata.json'),
+    backupScheduleFile: path.join(root, 'backup-schedules.json'),
+    schedulerEnabled: false
   };
 }
 
@@ -35,6 +38,9 @@ describe('backup routes', () => {
 
     const response = await app.inject({ method: 'GET', url: '/api/backups' });
 
+    expect(app.deps.config.backupMetadataFile.endsWith('backup-metadata.json')).toBe(true);
+    expect(app.deps.config.backupScheduleFile.endsWith('backup-schedules.json')).toBe(true);
+    expect(app.deps.config.schedulerEnabled).toBe(false);
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ success: true, data: { mysql: [], mssql: [] }, error: null });
   });

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fastify/cors": "latest",
+    "@fastify/multipart": "^10.0.0",
     "@fastify/sensible": "latest",
     "fastify": "latest",
     "node-cron": "latest",
