@@ -3,8 +3,18 @@ import { ok } from '../api/envelope.js';
 import { CommandError, ValidationError } from '../api/errors.js';
 import { assertServiceName } from '../services/serviceAllowlist.js';
 import { parseManagedServiceStatuses } from '../services/serviceStatus.js';
+import { readVersionRegistry } from '../versions/versionRegistry.js';
+
+function assertActiveVersion(projectRoot: string) {
+  const registry = readVersionRegistry(projectRoot);
+  if (!registry.activeVersion) {
+    throw new ValidationError('Chưa có phiên bản game nào được kích hoạt. Vui lòng kích hoạt một phiên bản trước.');
+  }
+}
 
 export async function registerServiceRoutes(app: FastifyInstance) {
+  const projectRoot = app.deps.config.projectRoot;
+
   app.get('/api/services', async () => {
     const result = await app.deps.runCompose(['ps', '--all', '--format', 'json']);
     if (result.exitCode !== 0) {
@@ -16,6 +26,7 @@ export async function registerServiceRoutes(app: FastifyInstance) {
 
   app.post('/api/services/:name/start', async (request) => {
     const name = assertServiceName((request.params as { name: string }).name);
+    assertActiveVersion(projectRoot);
     return ok(await runAction(app, ['up', '-d', name], `Started ${name}`));
   });
 
@@ -27,6 +38,7 @@ export async function registerServiceRoutes(app: FastifyInstance) {
 
   app.post('/api/services/:name/restart', async (request) => {
     const name = assertServiceName((request.params as { name: string }).name);
+    assertActiveVersion(projectRoot);
     await preHandleStopDependency(app, name);
     return ok(await runAction(app, ['restart', name], `Restarted ${name}`));
   });

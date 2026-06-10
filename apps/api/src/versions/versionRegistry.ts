@@ -265,7 +265,7 @@ function getActiveServerPathFromEnv(projectRoot: string) {
   if (!existsSync(envFilePath)) return null;
   const line = readFileSync(envFilePath, 'utf8').split(/\r?\n/).find((item) => item.trim().startsWith('SERVER_PATH='));
   const value = line?.split('=')[1]?.trim().replace(/^\.\//, '').replace(/\/$/, '');
-  const match = value?.match(/^apps\/jx-services\/versions\/([A-Za-z0-9_-]+)(?:\/.*)?$/);
+  const match = value?.match(/(?:^|\/)apps\/jx-services\/versions\/([A-Za-z0-9_-]+)(?:\/.*)?$/);
   if (!value || !match?.[1]) return null;
   return { versionName: match[1], serverPath: value };
 }
