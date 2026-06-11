@@ -31,9 +31,10 @@ export type SystemInfo = {
 const fallbackIp = '127.0.0.1';
 const coreServiceNames = new Set(['jxserver', 's3relay', 'bishop', 'goddess']);
 
-export function getServerIpChoices(interfaces = os.networkInterfaces()) {
+export function getServerIpChoices(interfaces?: NodeJS.Dict<NetworkInterfaceInfo[]>) {
   const ips = new Set<string>([fallbackIp]);
-  for (const entries of Object.values(interfaces)) {
+  const detectedInterfaces = interfaces ?? safeNetworkInterfaces();
+  for (const entries of Object.values(detectedInterfaces)) {
     for (const entry of entries ?? []) {
       if (isIpv4Interface(entry)) {
         ips.add(entry.address);
@@ -41,6 +42,14 @@ export function getServerIpChoices(interfaces = os.networkInterfaces()) {
     }
   }
   return [...ips].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+}
+
+function safeNetworkInterfaces() {
+  try {
+    return os.networkInterfaces();
+  } catch {
+    return {};
+  }
 }
 
 export function normalizeGameNetworkConfig(

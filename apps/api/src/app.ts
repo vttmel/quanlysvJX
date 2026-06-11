@@ -13,6 +13,7 @@ import { registerHealthRoutes } from './routes/healthRoutes.js';
 import { registerLogRoutes } from './routes/logRoutes.js';
 import { registerServiceRoutes } from './routes/serviceRoutes.js';
 import { registerEnvRoutes } from './routes/envRoutes.js';
+import { registerSystemRoutes } from './routes/systemRoutes.js';
 import { registerVersionRoutes } from './routes/versionRoutes.js';
 import {
   runDocker,
@@ -70,6 +71,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerBackupRoutes(app);
   await registerGameAccountRoutes(app);
   await registerEnvRoutes(app);
+  await registerSystemRoutes(app);
   await registerVersionRoutes(app);
 
   if (config.schedulerEnabled) {
