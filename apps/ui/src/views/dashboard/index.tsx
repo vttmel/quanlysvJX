@@ -1,6 +1,7 @@
 import { Grid, Stack, Button, Group, Paper, Text } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { BatchActionModal } from '@/components/BatchActionModal';
 import { ServiceActionModal } from '@/components/ServiceActionModal';
 import { useServices, serviceKeys } from '@/hooks/useServices';
@@ -16,7 +17,7 @@ export default function Dashboard() {
     action: 'start' | 'stop' | 'restart';
   } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const { services, runAction } = useServices(true); // polling status every 5 seconds
+  const { services, runAction, error, isError } = useServices(true); // polling status every 5 seconds
 
   const [prepareOpened, setPrepareOpened] = useState(false);
   const [servicesToPrepare, setServicesToPrepare] = useState<string[]>([]);
@@ -98,9 +99,36 @@ export default function Dashboard() {
     }
     return acc;
   }, new Set<string>()).size;
+  const serviceErrorMessage = error instanceof Error ? error.message : '';
+  const hasMissingGameVersion =
+    isError && serviceErrorMessage.toLocaleLowerCase('vi-VN').includes('phiên bản game');
 
   return (
     <Stack gap="md">
+      {hasMissingGameVersion && (
+        <Paper
+          withBorder
+          p="md"
+          bg="var(--mantine-color-red-light)"
+          style={{ borderColor: 'var(--mantine-color-red-outline)' }}
+        >
+          <Group justify="space-between" align="center">
+            <Stack gap={2}>
+              <Text fw={700} c="red" size="md">
+                Cảnh báo: Chưa có Phiên bản Game
+              </Text>
+              <Text size="sm" c="dimmed">
+                Vui lòng vào Quản lý phiên bản game để tải lên hoặc tải về từ GitHub, sau đó kích
+                hoạt một phiên bản trước khi khởi chạy dịch vụ.
+              </Text>
+            </Stack>
+            <Button color="red" size="md" component={Link} to="/settings">
+              Mở quản lý phiên bản
+            </Button>
+          </Group>
+        </Paper>
+      )}
+
       {missingImagesCount > 0 && (
         <Paper
           withBorder

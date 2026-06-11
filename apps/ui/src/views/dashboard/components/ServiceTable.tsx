@@ -250,6 +250,7 @@ export function ServiceTable({
   onBatchAction,
   missingImagesCount = 0,
 }: Props) {
+  const hasNoServices = services.length === 0;
   const isS3RelayRunning = React.useMemo(
     () =>
       services.some(
@@ -278,13 +279,19 @@ export function ServiceTable({
             color="green"
             onClick={() => onBatchAction('start')}
             disabled={
+              hasNoServices ||
               missingImagesCount > 0 ||
               (services.length > 0 && services.every((s) => s.state === 'running'))
             }
           >
             Start All
           </Button>
-          <Button size="xs" color="red" onClick={() => onBatchAction('stop')}>
+          <Button
+            size="xs"
+            color="red"
+            onClick={() => onBatchAction('stop')}
+            disabled={hasNoServices}
+          >
             Stop All
           </Button>
         </Group>

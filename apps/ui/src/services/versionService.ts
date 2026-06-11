@@ -1,6 +1,8 @@
 import ApiService from './base/apiService';
 import type { VersionListResponse, GameVersion, ApiResponse } from './types';
 
+const CLONE_VERSION_TIMEOUT_MS = 10 * 60 * 1000;
+
 export const versionService = {
   getVersions: async () => {
     const res = await ApiService.fetchData<any, VersionListResponse>({
@@ -22,6 +24,7 @@ export const versionService = {
       url: '/api/versions/clone',
       method: 'POST',
       data: payload,
+      timeout: CLONE_VERSION_TIMEOUT_MS,
     });
     return res.data;
   },
