@@ -15,6 +15,24 @@ type Props = {
   onComplete?: () => void;
 };
 
+type StartPhaseEvent = { type: 'phase'; phase: string; message: string };
+type StartLogEvent = { type: 'log'; stream: 'stdout' | 'stderr'; message: string };
+type StartErrorEvent = {
+  type: 'error';
+  code: string;
+  message: string;
+  detail: string;
+  exitCode?: number;
+};
+type StartReadyEvent = {
+  type: 'ready';
+  service: string;
+  state: string;
+  health: string;
+  message: string;
+};
+type StartCloseEvent = { type: 'close'; exitCode: number };
+
 export function ServiceActionModal({
   opened,
   service,
@@ -51,6 +69,10 @@ export function ServiceActionModal({
       return;
     }
 
+    if (action === 'start') {
+      return;
+    }
+
     const currentService = services.find((s) => s.name === service);
     if (!currentService) {
       return;
@@ -63,14 +85,14 @@ export function ServiceActionModal({
     const hasHealthCheck =
       currentService.health && currentService.health !== '' && currentService.health !== 'none';
 
-    let isStartSuccess = false;
-    if (action === 'start' || action === 'restart') {
+    let isRestartSuccess = false;
+    if (action === 'restart') {
       if (hasHealthCheck) {
         // Nếu dịch vụ cấu hình healthcheck: chỉ coi là hoàn tất khi trạng thái là running VÀ health đạt 'healthy'
-        isStartSuccess = currentService.state === 'running' && currentService.health === 'healthy';
+        isRestartSuccess = currentService.state === 'running' && currentService.health === 'healthy';
       } else {
         // Nếu không có healthcheck: chỉ cần trạng thái là running
-        isStartSuccess = currentService.state === 'running';
+        isRestartSuccess = currentService.state === 'running';
       }
     }
 
@@ -78,7 +100,7 @@ export function ServiceActionModal({
       action === 'stop' &&
       (currentService.state === 'stopped' || currentService.state === 'not created');
 
-    if (isStartSuccess || isStopSuccess) {
+    if (isRestartSuccess || isStopSuccess) {
       setLogs((current) => `${current}\n[Hệ thống] Tác vụ thực thi thành công!\n`);
 
       // Đóng EventSource sớm
@@ -92,7 +114,7 @@ export function ServiceActionModal({
       setTimeout(() => {
         notifications.show({
           title: 'Thành công',
-          message: `${action === 'start' ? 'Khởi động' : action === 'stop' ? 'Dừng' : 'Khởi động lại'} dịch vụ ${service} thành công!`,
+          message: `${action === 'stop' ? 'Dừng' : 'Khởi động lại'} dịch vụ ${service} thành công!`,
           color: 'green',
         });
         if (onCompleteRef.current) {
@@ -149,34 +171,61 @@ export function ServiceActionModal({
         source = new EventSource(serviceService.startStreamUrl(service));
         activeEventSourceRef.current = source;
 
-        const appendLog = (event: MessageEvent<string>) => {
-          let chunk = event.data;
+        let readyReceived = false;
+        let errorReceived = false;
+
+        const appendTerminalLine = (line: string) => {
+          setLogs((current) => `${current}${line.endsWith('\n') ? line : `${line}\n`}`);
+        };
+
+        const parseEventData = <T,>(event: MessageEvent<string>): T | null => {
           try {
-            chunk = JSON.parse(event.data) as string;
+            return JSON.parse(event.data) as T;
           } catch {
-            void 0;
+            return null;
           }
+        };
 
-          setLogs((current) => {
-            // Lọc trùng lặp dòng log liên tiếp
-            const currentLines = current.split('\n');
-            const lastLine =
-              currentLines[currentLines.length - 1] || currentLines[currentLines.length - 2] || '';
-            const incomingLines = chunk.split('\n');
+        const handlePhase = (event: MessageEvent<string>) => {
+          const data = parseEventData<StartPhaseEvent>(event);
+          if (data) {
+            appendTerminalLine(`[${data.phase}] ${data.message}`);
+          }
+        };
 
-            const filteredIncoming = incomingLines.filter((line, index) => {
-              const cleanedLine = line.trim();
-              if (!cleanedLine) {
-                return true;
-              }
-              // So sánh với dòng ngay trước đó trong cụm log mới hoặc log cũ
-              const previousItem = incomingLines[index - 1];
-              const prev = index === 0 ? lastLine.trim() : previousItem ? previousItem.trim() : '';
-              return cleanedLine !== prev;
-            });
+        const handleLog = (event: MessageEvent<string>) => {
+          const data = parseEventData<StartLogEvent>(event);
+          appendTerminalLine(data ? data.message : event.data);
+        };
 
-            return `${current}${filteredIncoming.join('\n')}`;
+        const handleStartError = (event: MessageEvent<string>) => {
+          const data = parseEventData<StartErrorEvent>(event);
+          errorReceived = true;
+          const message = data
+            ? `[${data.code}] ${data.message}${data.exitCode !== undefined ? ` (exitCode: ${data.exitCode})` : ''}\n${data.detail}`
+            : event.data;
+          appendTerminalLine(message);
+          notifications.show({
+            title: data ? `Lỗi ${data.code}` : 'Lỗi tiến trình',
+            message: data?.message ?? 'Tiến trình start thất bại.',
+            color: 'red',
           });
+        };
+
+        const handleReady = (event: MessageEvent<string>) => {
+          const data = parseEventData<StartReadyEvent>(event);
+          readyReceived = true;
+          appendTerminalLine(data?.message ?? `Dịch vụ ${service} đã sẵn sàng.`);
+          notifications.show({
+            title: 'Thành công',
+            message: `Khởi động dịch vụ ${service} thành công!`,
+            color: 'green',
+          });
+          setTimeout(() => {
+            if (onCompleteRef.current) {
+              onCompleteRef.current();
+            }
+          }, 1500);
         };
 
         const handleCloseEvent = (event: Event) => {
@@ -197,25 +246,19 @@ export function ServiceActionModal({
             activeStreamTargetRef.current = null;
           }
 
-          if (data.exitCode === 0) {
-            // Không làm gì, để useEffect auto-close theo dõi status polling từ services.
-            // Hoặc nếu dịch vụ chưa kịp polling lên healthy/running thì ta in log kết thúc.
-            setLogs(
-              (current) => `${current}\n[Hệ thống] Tiến trình khởi chạy đã kết thúc thành công!\n`
+          if (!readyReceived && !errorReceived) {
+            appendTerminalLine(
+              `[Hệ thống] Tiến trình kết thúc với mã ${data.exitCode ?? 'không xác định'}, đang chờ trạng thái ready.`
             );
-          } else {
-            notifications.show({
-              title: 'Lỗi tiến trình',
-              message: `Tiến trình kết thúc với mã lỗi: ${data.exitCode ?? 'Không xác định'}.`,
-              color: 'red',
-            });
-            if (onCloseRef.current) {
-              onCloseRef.current();
-            }
           }
         };
 
-        const handleError = (_event: Event) => {
+        const handleError = (event: Event) => {
+          if ('data' in event) {
+            handleStartError(event as MessageEvent<string>);
+            return;
+          }
+
           // Trì hoãn báo lỗi để đợi handleCloseEvent chạy trước và thiết lập streamEnded = true
           setTimeout(() => {
             if (streamEnded) {
@@ -242,9 +285,11 @@ export function ServiceActionModal({
           }, 150);
         };
 
-        source.addEventListener('log', appendLog);
-        source.addEventListener('close', handleCloseEvent);
+        source.addEventListener('phase', handlePhase);
+        source.addEventListener('log', handleLog);
         source.addEventListener('error', handleError);
+        source.addEventListener('ready', handleReady);
+        source.addEventListener('close', handleCloseEvent);
       }, 250);
 
       return () => {
