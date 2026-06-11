@@ -12,6 +12,9 @@ export type ServiceStatus = {
   image: string;
   ports: string[];
   startedAt: string | null;
+  imageExists: boolean;
+  hasBuild: boolean;
+  imageName: string;
 };
 
 export type GameVersion = {

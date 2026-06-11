@@ -1,11 +1,14 @@
-import { Grid, Stack } from '@mantine/core';
+import { Grid, Stack, Button, Group } from '@mantine/core';
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ServiceActionModal } from '@/components/ServiceActionModal';
-import { useServices } from '@/hooks/useServices';
+import { useServices, serviceKeys } from '@/hooks/useServices';
 import { LogsPanel } from './components/LogsPanel';
 import { ServiceTable } from './components/ServiceTable';
+import { PrepareImagesModal } from './components/PrepareImagesModal';
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const [selectedService, setSelectedService] = useState<string | null>('all');
   const [actionTarget, setActionTarget] = useState<{
     service: string;
@@ -13,6 +16,9 @@ export default function Dashboard() {
   } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const { services, runAction } = useServices(true); // polling status every 5 seconds
+
+  const [prepareOpened, setPrepareOpened] = useState(false);
+  const [servicesToPrepare, setServicesToPrepare] = useState<string[]>([]);
 
   const handleSelectService = useCallback((service: string | null) => {
     setSelectedService(service);
@@ -54,8 +60,36 @@ export default function Dashboard() {
     // Error notification handled globally
   }, []);
 
+  const handlePrepareSingleImage = useCallback((service: string) => {
+    setServicesToPrepare([service]);
+    setPrepareOpened(true);
+  }, []);
+
+  const handlePrepareAllImages = useCallback(() => {
+    const missing = services
+      .filter((s) => !s.imageExists)
+      .map((s) => s.name);
+    if (missing.length > 0) {
+      setServicesToPrepare(missing);
+      setPrepareOpened(true);
+    }
+  }, [services]);
+
+  const handlePrepareSuccess = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: serviceKeys.all });
+  }, [queryClient]);
+
+  const missingImagesCount = services.filter((s) => !s.imageExists).length;
+
   return (
     <Stack gap="md">
+      {missingImagesCount > 0 && (
+        <Group justify="flex-start">
+          <Button color="blue" onClick={handlePrepareAllImages}>
+            Tải / Build hàng loạt Docker Images ({missingImagesCount})
+          </Button>
+        </Group>
+      )}
       <Grid align="stretch">
         <Grid.Col span={{ base: 12, md: 3 }}>
           <ServiceTable
@@ -63,6 +97,7 @@ export default function Dashboard() {
             selected={selectedService}
             onSelect={handleSelectService}
             onAction={handleRunAction}
+            onPrepareImage={handlePrepareSingleImage}
           />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 9 }}>
@@ -83,6 +118,13 @@ export default function Dashboard() {
         onClose={handleCloseModal}
         onConfirm={handleConfirmAction}
         onComplete={handleCloseModal}
+      />
+      <PrepareImagesModal
+        opened={prepareOpened}
+        onClose={() => setPrepareOpened(false)}
+        servicesToPrepare={servicesToPrepare}
+        servicesInfo={services}
+        onSuccess={handlePrepareSuccess}
       />
     </Stack>
   );

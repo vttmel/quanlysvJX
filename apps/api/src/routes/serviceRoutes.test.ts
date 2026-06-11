@@ -53,8 +53,18 @@ describe('service routes', () => {
     const calls: string[][] = [];
     const app = await buildApp({
       config: testConfig(root),
+      runDocker: async () => {
+        return { stdout: '[]', stderr: '', exitCode: 0 };
+      },
       runCompose: async (args) => {
         calls.push([...args]);
+        if (args[0] === 'config') {
+          return {
+            stdout: JSON.stringify({ services: { jxmysql: { image: 'mysql:5.6' } } }),
+            stderr: '',
+            exitCode: 0
+          };
+        }
         return {
           stdout: JSON.stringify([{ Service: 'jxmysql', Name: 'jxmysql', State: 'running' }]),
           stderr: '',
@@ -66,16 +76,19 @@ describe('service routes', () => {
     const response = await app.inject({ method: 'GET', url: '/api/services' });
 
     expect(response.statusCode).toBe(200);
-    expect(calls).toEqual([['ps', '--all', '--format', 'json']]);
+    expect(calls).toEqual([
+      ['ps', '--all', '--format', 'json'],
+      ['config', '--format', 'json']
+    ]);
     const body = response.json();
     expect(body.success).toBe(true);
     expect(body.error).toBeNull();
     expect(body.data).toHaveLength(8);
     expect(body.data).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: 'jxmysql', state: 'running' }),
-        expect.objectContaining({ name: 'jxmssql', state: 'not created' }),
-        expect.objectContaining({ name: 'paysys', state: 'not created' })
+        expect.objectContaining({ name: 'jxmysql', state: 'running', imageExists: true }),
+        expect.objectContaining({ name: 'jxmssql', state: 'not created', imageExists: true }),
+        expect.objectContaining({ name: 'paysys', state: 'not created', imageExists: true })
       ])
     );
   });

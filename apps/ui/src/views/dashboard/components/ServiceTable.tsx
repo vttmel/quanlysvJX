@@ -7,6 +7,7 @@ type Props = {
   selected: string | null;
   onSelect: (service: string) => void;
   onAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
+  onPrepareImage: (service: string) => void;
 };
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -26,6 +27,7 @@ const ServiceRow = React.memo(
     selected,
     onSelect,
     onAction,
+    onPrepareImage,
     _isS3RelayRunning,
     areOtherServicesRunning,
     services,
@@ -34,6 +36,7 @@ const ServiceRow = React.memo(
     selected: string | null;
     onSelect: (service: string) => void;
     onAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
+    onPrepareImage: (service: string) => void;
     _isS3RelayRunning: boolean;
     areOtherServicesRunning: boolean;
     services: ServiceStatus[];
@@ -60,12 +63,19 @@ const ServiceRow = React.memo(
 
     const isDatabaseHealthy = isServiceHealthy('jxmysql') && isServiceHealthy('jxmssql');
 
-    let startDisabled = running;
+    let startDisabled = running || !service.imageExists;
     let startTooltip = 'Khởi chạy dịch vụ';
     let stopDisabled = !running;
     let stopTooltip = 'Dừng dịch vụ';
     let restartDisabled = stopped;
     let restartTooltip = 'Khởi động lại dịch vụ';
+
+    // Ràng buộc nếu chưa có Image
+    if (!service.imageExists) {
+      startTooltip = service.hasBuild
+        ? 'Dịch vụ chưa có Docker Image. Vui lòng build image trước.'
+        : 'Dịch vụ chưa có Docker Image. Vui lòng tải image về trước.';
+    }
 
     // Ràng buộc thứ tự START
     if (service.name === 'paysys') {
@@ -171,6 +181,15 @@ const ServiceRow = React.memo(
             <Badge size="xs" color={service.health === 'healthy' ? 'green' : 'yellow'}>
               {service.health}
             </Badge>
+            <Badge
+              size="xs"
+              color={service.imageExists ? 'teal' : 'red'}
+              variant={service.imageExists ? 'light' : 'filled'}
+            >
+              {service.imageExists
+                ? 'Image: Sẵn sàng'
+                : `Image: Thiếu (${service.hasBuild ? 'Build' : 'Tải'})`}
+            </Badge>
           </Group>
         </Table.Td>
         <Table.Td onClick={(e) => e.stopPropagation()}>
@@ -188,6 +207,17 @@ const ServiceRow = React.memo(
                 </Button>
               </span>
             </Tooltip>
+            {!service.imageExists && (
+              <Button
+                size="xs"
+                px={6}
+                color="blue"
+                variant="outline"
+                onClick={() => onPrepareImage(service.name)}
+              >
+                {service.hasBuild ? 'Build' : 'Tải'}
+              </Button>
+            )}
             <Tooltip label={stopTooltip} withArrow>
               <span>
                 <Button
@@ -224,7 +254,7 @@ const ServiceRow = React.memo(
 
 ServiceRow.displayName = 'ServiceRow';
 
-export function ServiceTable({ services, selected, onSelect, onAction }: Props) {
+export function ServiceTable({ services, selected, onSelect, onAction, onPrepareImage }: Props) {
   const isS3RelayRunning = React.useMemo(
     () =>
       services.some(
@@ -266,6 +296,7 @@ export function ServiceTable({ services, selected, onSelect, onAction }: Props) 
               selected={selected}
               onSelect={onSelect}
               onAction={onAction}
+              onPrepareImage={onPrepareImage}
               _isS3RelayRunning={isS3RelayRunning}
               areOtherServicesRunning={areOtherServicesRunning}
               services={services}
@@ -289,3 +320,4 @@ function stateColor(state: string) {
   }
   return 'orange';
 }
+

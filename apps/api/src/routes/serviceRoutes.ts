@@ -6,6 +6,10 @@ import { startServiceWithProgress } from '../services/serviceStartOrchestrator.j
 import { parseManagedServiceStatuses } from '../services/serviceStatus.js';
 import { readVersionRegistry } from '../versions/versionRegistry.js';
 import type { StartServiceEvent } from '../services/serviceStartEvents.js';
+import { resolveComposeServiceConfig, type ComposeConfigDocument } from '../services/composeConfig.js';
+import { prepareServicesWithProgress, type PrepareServiceEvent } from '../services/servicePrepareOrchestrator.js';
+
+let cachedComposeConfig: ComposeConfigDocument | null = null;
 
 function assertActiveVersion(projectRoot: string) {
   const registry = readVersionRegistry(projectRoot);
@@ -23,7 +27,125 @@ export async function registerServiceRoutes(app: FastifyInstance) {
       throw new CommandError('Unable to read Docker Compose services');
     }
 
-    return ok(parseManagedServiceStatuses(result.stdout));
+    const services = parseManagedServiceStatuses(result.stdout);
+
+    if (!cachedComposeConfig) {
+      const configResult = await app.deps.runCompose(['config', '--format', 'json']);
+      if (configResult.exitCode === 0) {
+        try {
+          cachedComposeConfig = JSON.parse(configResult.stdout) as ComposeConfigDocument;
+        } catch {
+          // Ignore json parsing issues
+        }
+      }
+    }
+
+    const updatedServices = await Promise.all(
+      services.map(async (service) => {
+        let hasBuild = false;
+        let imageName: string = service.name;
+        if (cachedComposeConfig) {
+          try {
+            const resolved = resolveComposeServiceConfig(cachedComposeConfig, service.name);
+            hasBuild = resolved.hasBuild;
+            imageName = resolved.imageName;
+          } catch {
+            // Ignore if service not found in compose config
+          }
+        }
+
+        let imageExists = false;
+        if (imageName) {
+          const inspectResult = await app.deps.runDocker(['image', 'inspect', imageName]);
+          imageExists = inspectResult.exitCode === 0;
+        }
+
+        return {
+          ...service,
+          imageName,
+          hasBuild,
+          imageExists
+        };
+      })
+    );
+
+    return ok(updatedServices);
+  });
+
+  app.get('/api/services/images/prepare/stream', (request, reply) => {
+    assertActiveVersion(projectRoot);
+
+    const query = request.query as { services?: string };
+    const servicesParam = query.services || '';
+    const names = servicesParam
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((name) => assertServiceName(name));
+
+    if (names.length === 0) {
+      throw new ValidationError('Danh sách dịch vụ cần chuẩn bị không được trống.');
+    }
+
+    const abortController = new AbortController();
+    let closed = false;
+
+    reply.hijack();
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    reply.raw.write(':\n\n');
+
+    const writeEvent = (event: PrepareServiceEvent) => {
+      if (reply.raw.destroyed) {
+        return;
+      }
+      reply.raw.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+      if (event.type === 'close') {
+        closed = true;
+        reply.raw.end();
+      }
+    };
+
+    request.raw.on('close', () => {
+      if (!closed) {
+        abortController.abort();
+      }
+    });
+
+    void (async () => {
+      if (!cachedComposeConfig) {
+        const configResult = await app.deps.runCompose(['config', '--format', 'json']);
+        if (configResult.exitCode === 0) {
+          cachedComposeConfig = JSON.parse(configResult.stdout) as ComposeConfigDocument;
+        }
+      }
+
+      if (!cachedComposeConfig) {
+        throw new Error('Không đọc được cấu hình Docker Compose.');
+      }
+
+      await prepareServicesWithProgress({
+        services: names,
+        runDocker: app.deps.runDocker,
+        streamCompose: app.deps.streamCompose,
+        emit: writeEvent,
+        composeConfig: cachedComposeConfig,
+        signal: abortController.signal
+      });
+    })().catch((error: unknown) => {
+      const detail = error instanceof Error ? error.message : String(error);
+      writeEvent({
+        type: 'error',
+        service: names[0] || 'unknown',
+        message: 'Chuẩn bị image thất bại.',
+        detail
+      });
+      writeEvent({ type: 'close', exitCode: 1 });
+    });
   });
 
   app.post('/api/services/:name/start', async (request) => {

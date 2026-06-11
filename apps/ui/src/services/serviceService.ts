@@ -26,4 +26,6 @@ export const serviceService = {
   startStreamUrl: (service: string) => `/api/services/${service}/start/stream`,
   logStreamUrl: (service: string, tail: number) =>
     `/api/services/${service}/logs/stream?tail=${tail}`,
+  prepareStreamUrl: (services: string) =>
+    `/api/services/images/prepare/stream?services=${services}`,
 };
