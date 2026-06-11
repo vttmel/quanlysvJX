@@ -19,11 +19,7 @@ export type ServiceStatus = {
 
 export type GameVersion = {
   name: string;
-  displayName: string;
-  rootPath: string;
-  serverPath: string;
   path: string;
-  enabled: boolean;
   uploadedAt: string;
   isActive: boolean;
 };

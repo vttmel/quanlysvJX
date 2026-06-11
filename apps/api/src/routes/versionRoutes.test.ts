@@ -44,9 +44,8 @@ describe('version routes', () => {
       versions: [
         {
           name: 'mel',
-          displayName: 'mel',
           isActive: true,
-          serverPath: 'apps/jx-services/versions/mel/server'
+          path: path.resolve(root, 'apps/jx-services/versions/mel/server')
         }
       ]
     });
@@ -59,11 +58,11 @@ describe('version routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/versions/mel',
-      payload: { name: 'mel_2026', displayName: 'MEL 2026' }
+      payload: { name: 'mel_2026' }
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json().data).toMatchObject({ name: 'mel_2026', displayName: 'MEL 2026' });
+    expect(response.json().data).toMatchObject({ name: 'mel_2026' });
     expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/mel_2026/server') + '/');
   });
 
@@ -76,7 +75,7 @@ describe('version routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/versions/mel',
-      payload: { name: 'other', displayName: 'Other' }
+      payload: { name: 'other' }
     });
 
     expect(response.statusCode).toBe(409);

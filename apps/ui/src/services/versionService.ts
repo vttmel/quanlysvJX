@@ -35,7 +35,7 @@ export const versionService = {
     });
     return res.data;
   },
-  renameVersion: async (currentName: string, payload: { name?: string; displayName?: string }) => {
+  renameVersion: async (currentName: string, payload: { name?: string }) => {
     const res = await ApiService.fetchData<any, GameVersion>({
       url: `/api/versions/${encodeURIComponent(currentName)}`,
       method: 'PATCH',
@@ -63,7 +63,6 @@ export const versionService = {
   },
   uploadVersionWithProgress: (payload: {
     name: string;
-    displayName?: string;
     file: File;
     onProgress: (progress: number) => void;
   }) => uploadWithProgress('/api/versions/upload', payload),
@@ -73,7 +72,6 @@ function uploadWithProgress(
   url: string,
   payload: {
     name: string;
-    displayName?: string;
     file: File;
     onProgress: (progress: number) => void;
   }
@@ -81,9 +79,6 @@ function uploadWithProgress(
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append('name', payload.name);
-    if (payload.displayName) {
-      form.append('displayName', payload.displayName);
-    }
     form.append('file', payload.file);
 
     const xhr = new XMLHttpRequest();

@@ -2,14 +2,11 @@ import { chmodSync, chownSync, existsSync, mkdirSync, readdirSync, readFileSync,
 import path from 'node:path';
 import { z } from 'zod';
 
-const versionNamePattern = /^[A-Za-z0-9_-]+$/;
+const versionNamePattern = /^[A-Za-z0-9_-]{1,10}$/;
 
 const versionRecordSchema = z.object({
   name: z.string().regex(versionNamePattern),
-  displayName: z.string().trim().min(1),
-  rootPath: z.string().trim().min(1),
-  serverPath: z.string().trim().min(1),
-  enabled: z.boolean(),
+  path: z.string().trim().min(1),
   uploadedAt: z.string().datetime()
 });
 
@@ -44,7 +41,6 @@ export class InvalidVersionPathError extends Error {
 
 export type CreateVersionOptions = {
   name: string;
-  displayName?: string;
   source: 'upload' | 'clone' | 'scan';
   serverSubPath?: string;
   allowExistingDirectory?: boolean;
@@ -53,7 +49,6 @@ export type CreateVersionOptions = {
 
 export type RenameVersionOptions = {
   name?: string;
-  displayName?: string;
 };
 
 export function getVersionsDir(projectRoot: string) {
@@ -72,7 +67,17 @@ export function ensureVersionRegistry(projectRoot: string): VersionRegistry {
   try { chownSync(versionsDir, 1000, 1000); } catch { void 0; }
 
   if (existsSync(registryPath)) {
-    const parsed = versionRegistrySchema.parse(JSON.parse(readFileSync(registryPath, 'utf8')));
+    const raw = JSON.parse(readFileSync(registryPath, 'utf8'));
+    if (raw && Array.isArray(raw.versions)) {
+      raw.versions = raw.versions.map((ver: any) => {
+        if (ver && !ver.path) {
+          const serverPath = ver.serverPath || (ver.rootPath ? `${ver.rootPath}/server` : '');
+          ver.path = serverPath ? path.resolve(projectRoot, serverPath) : path.resolve(versionsDir, ver.name);
+        }
+        return ver;
+      });
+    }
+    const parsed = versionRegistrySchema.parse(raw);
     writeVersionRegistry(projectRoot, parsed);
     return parsed;
   }
@@ -121,7 +126,6 @@ export function createVersionRecord(projectRoot: string, options: CreateVersionO
 
   const record = buildRecord(projectRoot, {
     name,
-    displayName: options.displayName?.trim() || name,
     serverSubPath: options.serverSubPath,
     uploadedAt: options.uploadedAt ?? new Date()
   });
@@ -137,18 +141,19 @@ export function selectVersion(projectRoot: string, name: string, subPath?: strin
     throw new VersionNotFoundError(versionName);
   }
 
-  const nextVersion = subPath !== undefined
-    ? { ...version, serverPath: resolveServerPath(projectRoot, versionName, subPath) }
-    : version;
+  const nextPath = subPath !== undefined
+    ? path.resolve(getVersionsDir(projectRoot), versionName, subPath)
+    : version.path;
+  const nextVersion = { ...version, path: nextPath };
   const nextRegistry: VersionRegistry = {
     activeVersion: versionName,
     versions: registry.versions.map((item) => (item.name === versionName ? nextVersion : item))
   };
 
   writeVersionRegistry(projectRoot, nextRegistry);
-  const serverPath = toEnvServerPath(nextVersion.serverPath, projectRoot);
-  updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', serverPath);
-  return { activeVersion: versionName, serverPath };
+  const envServerPath = toEnvServerPath(nextVersion.path);
+  updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', envServerPath);
+  return { activeVersion: versionName, serverPath: envServerPath };
 }
 
 export function renameVersion(projectRoot: string, currentName: string, options: RenameVersionOptions): GameVersionRecord {
@@ -160,18 +165,20 @@ export function renameVersion(projectRoot: string, currentName: string, options:
   }
 
   const nextName = options.name ? normalizeVersionName(options.name) : oldName;
-  const nextDisplayName = options.displayName?.trim() || existing.displayName;
   if (nextName !== oldName) {
     assertVersionNameAvailable(projectRoot, registry, nextName);
     renameSync(path.join(getVersionsDir(projectRoot), oldName), path.join(getVersionsDir(projectRoot), nextName));
   }
 
+  const nextPath = existing.path.replace(
+    path.join(getVersionsDir(projectRoot), oldName),
+    path.join(getVersionsDir(projectRoot), nextName)
+  );
+
   const renamed: GameVersionRecord = {
     ...existing,
     name: nextName,
-    displayName: nextDisplayName,
-    rootPath: replaceVersionPathName(existing.rootPath, oldName, nextName),
-    serverPath: replaceVersionPathName(existing.serverPath, oldName, nextName)
+    path: nextPath
   };
   const nextRegistry: VersionRegistry = {
     activeVersion: registry.activeVersion === oldName ? nextName : registry.activeVersion,
@@ -180,7 +187,7 @@ export function renameVersion(projectRoot: string, currentName: string, options:
   writeVersionRegistry(projectRoot, nextRegistry);
 
   if (registry.activeVersion === oldName) {
-    updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', toEnvServerPath(renamed.serverPath, projectRoot));
+    updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', toEnvServerPath(renamed.path));
   }
 
   return renamed;
@@ -205,7 +212,7 @@ export function deleteVersionRecord(projectRoot: string, name: string) {
 export function normalizeVersionName(name: string) {
   const normalized = name.trim();
   if (!versionNamePattern.test(normalized)) {
-    throw new Error('Tên phiên bản chỉ được chứa chữ, số, dấu gạch ngang và gạch dưới');
+    throw new Error('Tên phiên bản chỉ được chứa chữ, số, dấu gạch ngang, gạch dưới và tối đa 10 ký tự');
   }
   return normalized;
 }
@@ -231,7 +238,7 @@ export function resolveServerPath(projectRoot: string, name: string, subPath = '
   if (absolute !== versionRoot && !absolute.startsWith(`${versionRoot}${path.sep}`)) {
     throw new InvalidVersionPathError();
   }
-  return toProjectRelativePath(projectRoot, absolute);
+  return absolute;
 }
 
 function buildRecordFromFolder(projectRoot: string, name: string, envServerPath?: string): GameVersionRecord {
@@ -239,23 +246,19 @@ function buildRecordFromFolder(projectRoot: string, name: string, envServerPath?
   const hasServerDir = existsSync(path.join(versionRoot, 'server'));
   const record = buildRecord(projectRoot, {
     name,
-    displayName: name,
     serverSubPath: hasServerDir ? 'server' : '',
     uploadedAt: statSync(versionRoot).mtime
   });
-  return envServerPath ? { ...record, serverPath: envServerPath } : record;
+  return envServerPath ? { ...record, path: path.resolve(projectRoot, envServerPath) } : record;
 }
 
 function buildRecord(
   projectRoot: string,
-  options: { name: string; displayName: string; serverSubPath?: string; uploadedAt: Date }
+  options: { name: string; serverSubPath?: string; uploadedAt: Date }
 ): GameVersionRecord {
   return {
     name: options.name,
-    displayName: options.displayName,
-    rootPath: toProjectRelativePath(projectRoot, path.join(getVersionsDir(projectRoot), options.name)),
-    serverPath: resolveServerPath(projectRoot, options.name, options.serverSubPath ?? 'server'),
-    enabled: true,
+    path: resolveServerPath(projectRoot, options.name, options.serverSubPath ?? ''),
     uploadedAt: options.uploadedAt.toISOString()
   };
 }
@@ -270,16 +273,8 @@ function getActiveServerPathFromEnv(projectRoot: string) {
   return { versionName: match[1], serverPath: value };
 }
 
-function replaceVersionPathName(value: string, oldName: string, nextName: string) {
-  return value.replace(`apps/jx-services/versions/${oldName}`, `apps/jx-services/versions/${nextName}`);
-}
-
-function toProjectRelativePath(projectRoot: string, absolutePath: string) {
-  return path.relative(projectRoot, absolutePath).split(path.sep).join('/');
-}
-
-function toEnvServerPath(serverPath: string, projectRoot: string) {
-  return path.resolve(projectRoot, serverPath) + '/';
+function toEnvServerPath(serverPath: string) {
+  return path.resolve(serverPath) + '/';
 }
 
 function updateEnvKey(filePath: string, key: string, value: string) {

@@ -12,11 +12,14 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { useForm, schemaResolver } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useTransition, useRef, useEffect } from 'react';
+import { z } from 'zod';
 import { useVersions, versionKeys } from '@/hooks/useVersions';
 import type { GameVersion } from '@/services/types';
 import { versionService } from '@/services/versionService';
+import { focusFirstError } from '@/utils/formUtils';
 import { BrowseFolderModal } from './BrowseFolderModal';
 
 type Props = {
@@ -24,20 +27,32 @@ type Props = {
   onError: (message: string) => void;
 };
 
+const versionNameSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,10}$/, 'Tên phiên bản phải từ 1-10 ký tự không dấu (chữ, số, -, _)');
+
+const cloneSchema = z.object({
+  url: z.string().url('GitHub URL không hợp lệ'),
+  branch: z.string().trim().min(1, 'Nhánh (Branch) không được để trống'),
+  name: versionNameSchema,
+});
+
+const uploadSchema = z.object({
+  name: versionNameSchema,
+  file: z.any().refine((file) => file !== null, 'Vui lòng chọn file game'),
+});
+
+const renameSchema = z.object({
+  name: versionNameSchema,
+});
+
 export function VersionManager({ onSuccess, onError }: Props) {
   const queryClient = useQueryClient();
-  const [gitUrl, setGitUrl] = useState('');
-  const [gitBranch, setGitBranch] = useState('main');
-  const [customName, setCustomName] = useState('');
   const [cloneModalOpened, setCloneModalOpened] = useState(false);
   const [uploadModalOpened, setUploadModalOpened] = useState(false);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'extracting'>('idle');
   const [renamingVersion, setRenamingVersion] = useState<GameVersion | null>(null);
-  const [renameName, setRenameName] = useState('');
-  const [renameDisplayName, setRenameDisplayName] = useState('');
   const [browsingVersion, setBrowsingVersion] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -51,17 +66,42 @@ export function VersionManager({ onSuccess, onError }: Props) {
   }, [onSuccess, onError]);
 
   const { versions = [] } = versionsData ?? { versions: [] };
-  const uploadNameTrimmed = uploadName.trim();
-  const uploadNameExists = versions.some((version) => version.name === uploadNameTrimmed);
-  const uploadDisabled = !uploadNameTrimmed || !uploadFile || uploadNameExists;
+
+  // 1. Clone Form
+  const cloneForm = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      url: '',
+      branch: 'main',
+      name: '',
+    },
+    validate: schemaResolver(cloneSchema),
+  });
+
+  // 2. Upload Form
+  const uploadForm = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      name: '',
+      file: null as File | null,
+    },
+    validate: schemaResolver(uploadSchema),
+  });
+
+  // 3. Rename Form
+  const renameForm = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      name: '',
+    },
+    validate: schemaResolver(renameSchema),
+  });
 
   const cloneMutation = useMutation({
     mutationFn: versionService.cloneVersion,
     onSuccess: async () => {
       onSuccessRef.current('Clone thành công phiên bản game từ GitHub');
-      setGitUrl('');
-      setGitBranch('main');
-      setCustomName('');
+      cloneForm.reset();
       setCloneModalOpened(false);
       queryClient.invalidateQueries({ queryKey: versionKeys.all });
     },
@@ -86,8 +126,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
     },
     onSuccess: async () => {
       onSuccessRef.current('Upload và giải nén phiên bản game thành công');
-      setUploadName('');
-      setUploadFile(null);
+      uploadForm.reset();
       setUploadProgress(0);
       setUploadStatus('idle');
       setUploadModalOpened(false);
@@ -135,60 +174,91 @@ export function VersionManager({ onSuccess, onError }: Props) {
     [browsingVersion, selectVersion]
   );
 
-  const handleGitClone = useCallback(() => {
-    if (!gitUrl) {
-      onErrorRef.current('Vui lòng điền URL GitHub');
-      return;
-    }
-    if (!customName) {
-      onErrorRef.current('Vui lòng điền tên phiên bản lưu trữ');
-      return;
-    }
-    cloneMutation.mutate({
-      name: customName,
-      url: gitUrl,
-      branch: gitBranch,
-    });
-  }, [gitUrl, customName, gitBranch, cloneMutation]);
+  const handleGitClone = useCallback(
+    (values: typeof cloneForm.values) => {
+      const nameExists = versions.some((version) => version.name === values.name.trim());
+      if (nameExists) {
+        cloneForm.setFieldError('name', 'Tên phiên bản đã tồn tại');
+        setTimeout(() => {
+          const input =
+            document.getElementsByName('name')[0] || document.getElementById('clone-name');
+          input?.focus();
+        }, 50);
+        return;
+      }
+      cloneMutation.mutate({
+        name: values.name,
+        url: values.url,
+        branch: values.branch,
+      });
+    },
+    [versions, cloneMutation, cloneForm]
+  );
 
-  const handleUpload = useCallback(() => {
-    if (!uploadNameTrimmed) {
-      onErrorRef.current('Vui lòng điền tên phiên bản');
-      return;
-    }
-    if (!uploadFile) {
-      onErrorRef.current('Vui lòng chọn file game');
-      return;
-    }
-    if (uploadNameExists) {
-      onErrorRef.current('Tên phiên bản đã tồn tại');
-      return;
-    }
-    uploadMutation.mutate({ name: uploadNameTrimmed, file: uploadFile });
-  }, [uploadNameTrimmed, uploadFile, uploadNameExists, uploadMutation]);
+  const handleUpload = useCallback(
+    (values: typeof uploadForm.values) => {
+      const nameExists = versions.some((version) => version.name === values.name.trim());
+      if (nameExists) {
+        uploadForm.setFieldError('name', 'Tên phiên bản đã tồn tại');
+        setTimeout(() => {
+          const input =
+            document.getElementsByName('name')[0] || document.getElementById('upload-name');
+          input?.focus();
+        }, 50);
+        return;
+      }
+      if (!values.file) {
+        uploadForm.setFieldError('file', 'Vui lòng chọn file game');
+        return;
+      }
+      uploadMutation.mutate({ name: values.name, file: values.file });
+    },
+    [versions, uploadMutation, uploadForm]
+  );
 
-  const openRenameModal = useCallback((version: GameVersion) => {
-    setRenamingVersion(version);
-    setRenameName(version.name);
-    setRenameDisplayName(version.displayName);
-  }, []);
+  const openRenameModal = useCallback(
+    (version: GameVersion) => {
+      setRenamingVersion(version);
+      renameForm.setValues({
+        name: version.name,
+      });
+    },
+    [renameForm]
+  );
 
-  const handleRename = useCallback(() => {
-    if (!renamingVersion) {
-      return;
-    }
-    renameVersion({
-      currentName: renamingVersion.name,
-      payload: { name: renameName.trim(), displayName: renameDisplayName.trim() },
-    })
-      .then(() => {
-        onSuccessRef.current('Đã đổi tên phiên bản game thành công');
-        setRenamingVersion(null);
+  const handleRename = useCallback(
+    (values: typeof renameForm.values) => {
+      if (!renamingVersion) {
+        return;
+      }
+      const targetName = values.name.trim();
+      if (targetName !== renamingVersion.name) {
+        const nameExists = versions.some((version) => version.name === targetName);
+        if (nameExists) {
+          renameForm.setFieldError('name', 'Tên phiên bản đã tồn tại');
+          setTimeout(() => {
+            const input =
+              document.getElementsByName('name')[0] || document.getElementById('rename-name');
+            input?.focus();
+          }, 50);
+          return;
+        }
+      }
+      renameVersion({
+        currentName: renamingVersion.name,
+        payload: { name: targetName },
       })
-      .catch((error) =>
-        onErrorRef.current(error instanceof Error ? error.message : 'Đổi tên phiên bản thất bại')
-      );
-  }, [renamingVersion, renameName, renameDisplayName, renameVersion]);
+        .then(() => {
+          onSuccessRef.current('Đã đổi tên phiên bản game thành công');
+          setRenamingVersion(null);
+          renameForm.reset();
+        })
+        .catch((error) =>
+          onErrorRef.current(error instanceof Error ? error.message : 'Đổi tên phiên bản thất bại')
+        );
+    },
+    [renamingVersion, renameVersion, renameForm, versions]
+  );
 
   const handleDeleteVersion = useCallback(
     (name: string) => {
@@ -252,14 +322,11 @@ export function VersionManager({ onSuccess, onError }: Props) {
               versions.map((ver) => (
                 <Table.Tr key={ver.name}>
                   <Table.Td>
-                    <Text fw={600}>{ver.displayName || ver.name}</Text>
-                    <Text size="xs" color="dimmed">
-                      {ver.name}
-                    </Text>
+                    <Text fw={600}>{ver.name}</Text>
                   </Table.Td>
                   <Table.Td>
                     <Text style={{ fontFamily: 'monospace' }} size="xs">
-                      {ver.path ?? `./${ver.serverPath}/`}
+                      {ver.path}
                     </Text>
                   </Table.Td>
                   <Table.Td>
@@ -320,130 +387,166 @@ export function VersionManager({ onSuccess, onError }: Props) {
 
       <Modal
         opened={cloneModalOpened}
-        onClose={() => setCloneModalOpened(false)}
+        onClose={() => {
+          cloneForm.reset();
+          setCloneModalOpened(false);
+        }}
         title="Tải về trực tiếp từ GitHub"
         size="md"
       >
-        <Stack gap="md">
-          <TextInput
-            placeholder="https://github.com/user/repo"
-            label="GitHub URL"
-            required
-            value={gitUrl}
-            onChange={(e) => setGitUrl(e.currentTarget.value)}
-          />
-          <TextInput
-            placeholder="main"
-            label="Nhánh (Branch)"
-            value={gitBranch}
-            onChange={(e) => setGitBranch(e.currentTarget.value)}
-          />
-          <TextInput
-            placeholder="v1.0"
-            label="Tên thư mục lưu trữ"
-            required
-            value={customName}
-            onChange={(e) => setCustomName(e.currentTarget.value)}
-          />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={() => setCloneModalOpened(false)}>
-              Hủy
-            </Button>
-            <Button onClick={handleGitClone} loading={cloneMutation.isPending}>
-              Bắt đầu tải (Clone)
-            </Button>
-          </Group>
-        </Stack>
+        <form noValidate onSubmit={cloneForm.onSubmit(handleGitClone, focusFirstError)}>
+          <Stack gap="md">
+            <TextInput
+              id="url"
+              placeholder="https://github.com/user/repo"
+              label="GitHub URL"
+              required
+              {...cloneForm.getInputProps('url')}
+              key={cloneForm.key('url')}
+            />
+            <TextInput
+              id="branch"
+              placeholder="main"
+              label="Nhánh (Branch)"
+              required
+              {...cloneForm.getInputProps('branch')}
+              key={cloneForm.key('branch')}
+            />
+            <TextInput
+              id="clone-name"
+              placeholder="v1"
+              label="Tên thư mục lưu trữ"
+              required
+              {...cloneForm.getInputProps('name')}
+              key={cloneForm.key('name')}
+            />
+            <Group justify="flex-end">
+              <Button
+                variant="default"
+                onClick={() => {
+                  cloneForm.reset();
+                  setCloneModalOpened(false);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" loading={cloneMutation.isPending}>
+                Bắt đầu tải (Clone)
+              </Button>
+            </Group>
+          </Stack>
+        </form>
       </Modal>
 
       <Modal
         opened={uploadModalOpened}
-        onClose={() => !uploadMutation.isPending && setUploadModalOpened(false)}
+        onClose={() => {
+          if (!uploadMutation.isPending) {
+            uploadForm.reset();
+            setUploadModalOpened(false);
+          }
+        }}
         title="Tải lên phiên bản game"
         size="md"
       >
-        <Stack gap="md">
-          <TextInput
-            label="Tên phiên bản"
-            required
-            placeholder="mel_2026"
-            value={uploadName}
-            error={uploadNameExists ? 'Tên phiên bản đã tồn tại' : undefined}
-            onChange={(event) => setUploadName(event.currentTarget.value)}
-          />
-          <Group gap="sm">
-            <FileButton onChange={setUploadFile} accept=".zip,.tar.gz,.tgz">
-              {(props) => (
-                <Button {...props} variant="light">
-                  Chọn file
-                </Button>
+        <form noValidate onSubmit={uploadForm.onSubmit(handleUpload, focusFirstError)}>
+          <Stack gap="md">
+            <TextInput
+              id="upload-name"
+              label="Tên phiên bản"
+              required
+              placeholder="mel2026"
+              {...uploadForm.getInputProps('name')}
+              key={uploadForm.key('name')}
+            />
+            <Stack gap="xs">
+              <Group gap="sm">
+                <FileButton
+                  onChange={(file) => uploadForm.setFieldValue('file', file)}
+                  accept=".zip,.tar.gz,.tgz"
+                >
+                  {(props) => (
+                    <Button {...props} variant="light">
+                      Chọn file
+                    </Button>
+                  )}
+                </FileButton>
+                <Text size="sm" color={uploadForm.values.file ? undefined : 'dimmed'}>
+                  {uploadForm.values.file
+                    ? (uploadForm.values.file as File).name
+                    : 'Chưa chọn file'}
+                </Text>
+              </Group>
+              {uploadForm.errors.file && (
+                <Text size="xs" color="red">
+                  {uploadForm.errors.file}
+                </Text>
               )}
-            </FileButton>
-            <Text size="sm" color={uploadFile ? undefined : 'dimmed'}>
-              {uploadFile ? uploadFile.name : 'Chưa chọn file'}
-            </Text>
-          </Group>
-          {(uploadMutation.isPending || uploadProgress > 0) && (
-            <Stack gap={4}>
-              <Progress value={uploadProgress} />
-              <Text size="xs" color="dimmed">
-                {uploadStatus === 'extracting'
-                  ? 'Đang giải nén...'
-                  : `Đang tải lên ${uploadProgress}%`}
-              </Text>
             </Stack>
-          )}
-          <Group justify="flex-end">
-            <Button
-              variant="default"
-              disabled={uploadMutation.isPending}
-              onClick={() => setUploadModalOpened(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleUpload}
-              loading={uploadMutation.isPending}
-              disabled={uploadDisabled}
-            >
-              Upload
-            </Button>
-          </Group>
-        </Stack>
+
+            {(uploadMutation.isPending || uploadProgress > 0) && (
+              <Stack gap={4}>
+                <Progress value={uploadProgress} />
+                <Text size="xs" color="dimmed">
+                  {uploadStatus === 'extracting'
+                    ? 'Đang giải nén...'
+                    : `Đang tải lên ${uploadProgress}%`}
+                </Text>
+              </Stack>
+            )}
+            <Group justify="flex-end">
+              <Button
+                variant="default"
+                disabled={uploadMutation.isPending}
+                onClick={() => {
+                  uploadForm.reset();
+                  setUploadModalOpened(false);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" loading={uploadMutation.isPending}>
+                Upload
+              </Button>
+            </Group>
+          </Stack>
+        </form>
       </Modal>
 
       <Modal
         opened={!!renamingVersion}
-        onClose={() => setRenamingVersion(null)}
+        onClose={() => {
+          renameForm.reset();
+          setRenamingVersion(null);
+        }}
         title="Đổi tên phiên bản"
         size="md"
       >
-        <Stack gap="md">
-          <TextInput
-            label="Tên phiên bản"
-            required
-            value={renameName}
-            onChange={(event) => setRenameName(event.currentTarget.value)}
-          />
-          <TextInput
-            label="Tên hiển thị"
-            required
-            value={renameDisplayName}
-            onChange={(event) => setRenameDisplayName(event.currentTarget.value)}
-          />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={() => setRenamingVersion(null)}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleRename}
-              loading={loading}
-              disabled={!renameName.trim() || !renameDisplayName.trim()}
-            >
-              Lưu
-            </Button>
-          </Group>
-        </Stack>
+        <form noValidate onSubmit={renameForm.onSubmit(handleRename, focusFirstError)}>
+          <Stack gap="md">
+            <TextInput
+              id="rename-name"
+              label="Tên phiên bản mới"
+              required
+              {...renameForm.getInputProps('name')}
+              key={renameForm.key('name')}
+            />
+            <Group justify="flex-end">
+              <Button
+                variant="default"
+                onClick={() => {
+                  renameForm.reset();
+                  setRenamingVersion(null);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" loading={loading}>
+                Lưu
+              </Button>
+            </Group>
+          </Stack>
+        </form>
       </Modal>
 
       <BrowseFolderModal

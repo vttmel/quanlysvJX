@@ -19,21 +19,19 @@ import {
 } from '../versions/versionRegistry.js';
 
 const selectVersionSchema = z.object({
-  name: z.string().regex(/^[A-Za-z0-9_-]+$/),
+  name: z.string().regex(/^[A-Za-z0-9_-]{1,10}$/),
   subPath: z.string().optional()
 });
 
 const cloneVersionSchema = z.object({
-  name: z.string().regex(/^[A-Za-z0-9_-]+$/),
+  name: z.string().regex(/^[A-Za-z0-9_-]{1,10}$/),
   url: z.string().url(),
-  branch: z.string().trim().min(1).default('main'),
-  displayName: z.string().trim().min(1).optional()
+  branch: z.string().trim().min(1).default('main')
 });
 
 const renameVersionSchema = z.object({
-  name: z.string().regex(/^[A-Za-z0-9_-]+$/).optional(),
-  displayName: z.string().trim().min(1).optional()
-}).refine((value) => value.name !== undefined || value.displayName !== undefined, 'At least one field is required');
+  name: z.string().regex(/^[A-Za-z0-9_-]{1,10}$/).optional()
+}).refine((value) => value.name !== undefined, 'Tên phiên bản mới là bắt buộc');
 
 export async function registerVersionRoutes(app: FastifyInstance) {
   const projectRoot = app.deps.config.projectRoot;
@@ -50,7 +48,6 @@ export async function registerVersionRoutes(app: FastifyInstance) {
         activeVersion: registry.activeVersion,
         versions: registry.versions.map((version) => ({
           ...version,
-          path: `./${version.serverPath.replace(/\/$/, '')}/`,
           isActive: version.name === registry.activeVersion
         }))
       });
@@ -81,7 +78,7 @@ export async function registerVersionRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/versions/clone', async (request) => {
-    const { name, url, branch, displayName } = cloneVersionSchema.parse(request.body);
+    const { name, url, branch } = cloneVersionSchema.parse(request.body);
     const targetName = normalizeVersionName(name);
     const targetDir = path.join(versionsDir, targetName);
 
@@ -94,7 +91,6 @@ export async function registerVersionRoutes(app: FastifyInstance) {
       const hasServerDir = fs.existsSync(path.join(targetDir, 'server'));
       return ok(createVersionRecord(projectRoot, {
         name: targetName,
-        displayName,
         source: 'clone',
         serverSubPath: hasServerDir ? 'server' : '',
         allowExistingDirectory: true
@@ -109,7 +105,6 @@ export async function registerVersionRoutes(app: FastifyInstance) {
 
   app.post('/api/versions/upload', async (request) => {
     let name = '';
-    let displayName: string | undefined;
     let filename = '';
     let tempArchivePath = '';
 
@@ -118,9 +113,6 @@ export async function registerVersionRoutes(app: FastifyInstance) {
         if (part.type === 'field') {
           if (part.fieldname === 'name' && typeof part.value === 'string') {
             name = part.value;
-          }
-          if (part.fieldname === 'displayName' && typeof part.value === 'string') {
-            displayName = part.value;
           }
           continue;
         }
@@ -165,13 +157,12 @@ export async function registerVersionRoutes(app: FastifyInstance) {
       const hasServerDir = fs.existsSync(path.join(targetDir, 'server'));
       return ok(createVersionRecord(projectRoot, {
         name: targetName,
-        displayName,
         source: 'upload',
         serverSubPath: hasServerDir ? 'server' : '',
         allowExistingDirectory: true
       }));
     } catch (error) {
-      if (name && /^[A-Za-z0-9_-]+$/.test(name)) {
+      if (name && /^[A-Za-z0-9_-]{1,10}$/.test(name)) {
         const targetDir = path.join(versionsDir, name);
         if (fs.existsSync(targetDir) && !(error instanceof DuplicateVersionError)) {
           fs.rmSync(targetDir, { recursive: true, force: true });
