@@ -10,6 +10,7 @@ apps/*
 !apps/api/
 apps/api/*
 !apps/api/Dockerfile
+!apps/api/docker-entrypoint.sh
 !apps/api/package.json
 !apps/api/tsconfig.json
 !apps/api/src/

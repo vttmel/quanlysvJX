@@ -41,10 +41,14 @@ COPY --from=production-deps /app/node_modules /app/node_modules
 COPY --from=production-deps /app/package.json /app/package-lock.json /app/
 COPY --from=production-deps /app/apps/api/package.json /app/apps/api/package.json
 COPY --from=build /app/apps/api/dist ./dist
+COPY apps/api/docker-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/api-entrypoint.sh
 
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3001/api/health >/dev/null || exit 1
 
+ENTRYPOINT ["/usr/local/bin/api-entrypoint.sh"]
 CMD ["node", "dist/main.js"]
