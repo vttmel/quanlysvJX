@@ -16,18 +16,23 @@ type RunDeps = {
 
 export async function runDueBackupSchedules(deps: RunDeps) {
   const config = readBackupSchedules(deps.scheduleFile);
-  await Promise.all((['mysql', 'mssql'] as const).map((kind) => runKindIfDue(kind, deps, config.schedules[kind])));
+  const results = await Promise.all((['mysql', 'mssql'] as const).map((kind) => runKindIfDue(kind, deps, config.schedules[kind])));
+  return results.filter((kind): kind is BackupKind => kind !== null);
+}
+
+export function runScheduledBackupSchedules(appDeps: AppDeps, now = new Date()) {
+  return runDueBackupSchedules({
+    now,
+    scheduleFile: appDeps.config.backupScheduleFile,
+    backupMysql: () => runScheduledJob('mysql', () => backupMysql(appDeps)),
+    backupMssql: () => runScheduledJob('mssql', () => backupMssql(appDeps)),
+    hasRunningJob: (kind) => backupJobStore.hasRunningJob(kind)
+  });
 }
 
 export function startBackupScheduler(appDeps: AppDeps) {
   return cron.schedule('* * * * *', () => {
-    void runDueBackupSchedules({
-      now: new Date(),
-      scheduleFile: appDeps.config.backupScheduleFile,
-      backupMysql: () => backupMysql(appDeps),
-      backupMssql: () => backupMssql(appDeps),
-      hasRunningJob: (kind) => backupJobStore.hasRunningJob(kind)
-    });
+    void runScheduledBackupSchedules(appDeps);
   });
 }
 
@@ -37,10 +42,10 @@ async function runKindIfDue(kind: BackupKind, deps: RunDeps, schedule: DatabaseB
   const dayOfWeek = deps.now.getDay() as BackupDayOfWeek;
   const runKey = getRunKey(kind, deps.now);
   if (!schedule.enabled || schedule.time !== `${hh}:${mm}` || !schedule.daysOfWeek.includes(dayOfWeek) || schedule.lastRunKey === runKey) {
-    return;
+    return null;
   }
   if (deps.hasRunningJob(kind)) {
-    return;
+    return null;
   }
 
   if (kind === 'mysql') {
@@ -50,4 +55,17 @@ async function runKindIfDue(kind: BackupKind, deps: RunDeps, schedule: DatabaseB
   }
 
   updateBackupSchedule(deps.scheduleFile, kind, { ...schedule, lastRunKey: runKey });
+  return kind;
+}
+
+async function runScheduledJob<T extends object>(database: BackupKind, action: () => Promise<T>) {
+  const job = backupJobStore.startJob({ kind: 'backup', database, trigger: 'schedule' });
+  try {
+    const result = await action();
+    backupJobStore.finishJob(job.id, 'succeeded');
+    return result;
+  } catch (error) {
+    backupJobStore.finishJob(job.id, 'failed', error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
 }
