@@ -32,6 +32,7 @@
     "@testing-library/react": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "^6.0.2",
     "jsdom": "latest",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.58.0",
