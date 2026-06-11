@@ -156,7 +156,7 @@ describe('App routing', () => {
     // which redirects to '/dashboard'
     render(<App />);
 
-    expect(screen.getByText('JX Compose Manager')).toBeTruthy();
+    expect(screen.getByText('JX Manager')).toBeTruthy();
     await waitFor(() => expect(mockGetServices).toHaveBeenCalled());
   });
 });

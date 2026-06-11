@@ -1,0 +1,58 @@
+.navbarColored {
+  background-color: var(--mantine-color-blue-7) !important;
+  border-right: none !important;
+}
+
+.navLinkColored {
+  border-radius: 8px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+  color: rgb(255, 255, 255, 0.85) !important;
+  background-color: transparent !important;
+}
+
+.navLinkColored:hover {
+  background-color: var(--mantine-color-blue-6) !important;
+  color: #fff !important;
+}
+
+.navLinkColoredActive {
+  background-color: var(--mantine-color-blue-9) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.navLinkColoredActive:hover {
+  background-color: var(--mantine-color-blue-9) !important;
+}
+
+.navLinkCollapsed {
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.navLinkCollapsed .mantine-NavLink-body {
+  display: none !important;
+}
+
+.navLinkCollapsed .mantine-NavLink-section {
+  margin: 0 !important;
+}
+
+.navbarToggleBtn {
+  color: rgb(255, 255, 255, 0.85) !important;
+  background-color: transparent !important;
+  border-radius: 4px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.navbarToggleBtn:hover {
+  background-color: rgb(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}

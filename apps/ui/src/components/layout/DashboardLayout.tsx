@@ -1,10 +1,15 @@
-import { AppShell, Group, NavLink, Stack, Text, Title } from '@mantine/core';
+import './Navbar.css';
+import { AppShell, Group, NavLink, Stack, Title, Burger, Tooltip, ActionIcon } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { IconSwords, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { navigationConfig } from '@/configs/routes.config';
 
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
 
   const getActiveKey = () => {
     const path = location.pathname;
@@ -26,39 +31,79 @@ export default function DashboardLayout() {
   const activeKey = getActiveKey();
 
   return (
-    <AppShell header={{ height: 60 }} navbar={{ width: 240, breakpoint: 'sm' }} padding="md">
-      <AppShell.Header px="md">
-        <Group h="100%" justify="space-between">
-          <div>
-            <Title order={3}>JX Compose Manager</Title>
-            <Text size="xs" c="dimmed">
-              docker-compose.yaml
-            </Text>
-          </div>
+    <AppShell
+      layout="alt"
+      header={{ height: 60 }}
+      navbar={{
+        width: desktopOpened ? 240 : 80,
+        breakpoint: 'sm',
+        collapsed: { mobile: !mobileOpened },
+      }}
+      padding="md"
+    >
+      <AppShell.Header px="md" style={{ display: 'flex', alignItems: 'center' }}>
+        <Group h="100%" justify="space-between" style={{ flex: 1, flexWrap: 'nowrap' }}>
+          <Group gap="xs" style={{ flexWrap: 'nowrap' }}>
+            <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="sm" size="sm" />
+            <IconSwords size={26} color="var(--mantine-color-blue-7)" />
+            <Title order={3} style={{ fontFamily: 'var(--mantine-font-family)' }}>
+              JX Manager
+            </Title>
+          </Group>
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">
-        <Stack gap="xs">
-          {navigationConfig.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeKey === item.key;
-            return (
-              <NavLink
-                key={item.key}
-                label={item.title}
-                leftSection={<Icon size={18} />}
-                active={isActive}
-                onClick={() => navigate(item.path)}
-                styles={{
-                  root: {
-                    borderRadius: '8px',
-                    fontWeight: isActive ? 600 : 400,
-                  },
-                }}
-              />
-            );
-          })}
+      <AppShell.Navbar p="md" className="navbarColored">
+        <Stack gap="md" style={{ height: '100%' }}>
+          {/* Toggle Area of Navbar */}
+          <Group
+            justify={desktopOpened ? 'flex-end' : 'center'}
+            style={{ width: '100%', paddingBottom: '10px' }}
+          >
+            <ActionIcon
+              className="navbarToggleBtn"
+              onClick={toggleDesktop}
+              visibleFrom="sm"
+              size="lg"
+            >
+              {desktopOpened ? <IconChevronLeft size={20} /> : <IconChevronRight size={20} />}
+            </ActionIcon>
+          </Group>
+
+          {/* Navigation Links */}
+          <Stack gap="xs" style={{ flex: 1 }}>
+            {navigationConfig.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeKey === item.key;
+              const navLink = (
+                <NavLink
+                  key={item.key}
+                  label={desktopOpened ? item.title : ''}
+                  leftSection={<Icon size={20} />}
+                  active={isActive}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (mobileOpened) {
+                      toggleMobile();
+                    }
+                  }}
+                  className={`navLinkColored ${isActive ? 'navLinkColoredActive' : ''} ${
+                    !desktopOpened ? 'navLinkCollapsed' : ''
+                  }`}
+                />
+              );
+
+              return desktopOpened ? (
+                navLink
+              ) : (
+                <Tooltip key={item.key} label={item.title} position="right" withArrow>
+                  <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                    {navLink}
+                  </div>
+                </Tooltip>
+              );
+            })}
+          </Stack>
         </Stack>
       </AppShell.Navbar>
 
