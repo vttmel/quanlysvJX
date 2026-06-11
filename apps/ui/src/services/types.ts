@@ -1,6 +1,8 @@
-export type ApiEnvelope<T> =
+export type ApiResponse<T> =
   | { success: true; data: T; error: null }
   | { success: false; data: null; error: string };
+
+export type ApiEnvelope<T> = ApiResponse<T>;
 
 export type ServiceStatus = {
   name: string;
