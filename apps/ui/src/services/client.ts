@@ -33,6 +33,7 @@ export const api = {
   services: () => request<ServiceStatus[]>('/api/services'),
   action: (service: string, action: 'start' | 'stop' | 'restart') =>
     request<{ message: string }>(`/api/services/${service}/${action}`, { method: 'POST' }),
+  startStreamUrl: (service: string) => `/api/services/${service}/start/stream`,
   logs: (service: string, tail: number) =>
     request<{ service: string; tail: number; logs: string }>(`/api/services/${service}/logs?tail=${tail}`),
   logStreamUrl: (service: string, tail: number) => `/api/services/${service}/logs/stream?tail=${tail}`,

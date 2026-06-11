@@ -27,7 +27,78 @@ export async function registerServiceRoutes(app: FastifyInstance) {
   app.post('/api/services/:name/start', async (request) => {
     const name = assertServiceName((request.params as { name: string }).name);
     assertActiveVersion(projectRoot);
-    return ok(await runAction(app, ['up', '-d', name], `Started ${name}`));
+    const result = await runAction(app, ['up', '-d', name], `Started ${name}`);
+    return ok(result);
+  });
+
+  app.get('/api/services/:name/start/stream', (request, reply) => {
+    const name = assertServiceName((request.params as { name: string }).name);
+    assertActiveVersion(projectRoot);
+
+    // Chạy docker compose build để stream quá trình tải image hoặc build dockerfile an toàn
+    const args = ['build', name];
+    const stream = app.deps.streamCompose(args);
+    let closed = false;
+
+    reply.hijack();
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    reply.raw.write(':\n\n');
+
+    const writeLog = (chunk: unknown) => {
+      if (!reply.raw.destroyed) {
+        reply.raw.write(`event: log\ndata: ${JSON.stringify(String(chunk))}\n\n`);
+      }
+    };
+
+    stream.stdout.on('data', writeLog);
+    stream.stderr.on('data', writeLog);
+    stream.on('error', (error: Error) => {
+      if (!reply.raw.destroyed) {
+        reply.raw.write(`event: error\ndata: ${JSON.stringify(error.message)}\n\n`);
+        reply.raw.end();
+      }
+    });
+    stream.on('close', async (code) => {
+      closed = true;
+      if (code === 0) {
+        if (!reply.raw.destroyed) {
+          reply.raw.write(`event: log\ndata: ${JSON.stringify('[Hệ thống] Chuẩn bị image hoàn tất! Đang khởi chạy container ngầm...\n')}\n\n`);
+        }
+        
+        // Chạy lệnh up -d ngầm độc lập
+        try {
+          const upResult = await runAction(app, ['up', '-d', name], `Started ${name}`);
+          if (!reply.raw.destroyed) {
+            reply.raw.write(`event: log\ndata: ${JSON.stringify(`[Hệ thống] Khởi chạy container ${name} thành công!\n`)}\n\n`);
+            reply.raw.write(`event: close\ndata: ${JSON.stringify({ exitCode: 0, stdout: upResult.stdout })}\n\n`);
+          }
+        } catch (err) {
+          if (!reply.raw.destroyed) {
+            reply.raw.write(`event: error\ndata: ${JSON.stringify(err instanceof Error ? err.message : 'Khởi chạy container thất bại')}\n\n`);
+          }
+        } finally {
+          if (!reply.raw.destroyed) {
+            reply.raw.end();
+          }
+        }
+      } else {
+        if (!reply.raw.destroyed) {
+          reply.raw.write(`event: close\ndata: ${JSON.stringify({ exitCode: code })}\n\n`);
+          reply.raw.end();
+        }
+      }
+    });
+
+    request.raw.on('close', () => {
+      if (!closed) {
+        stream.kill('SIGTERM');
+      }
+    });
   });
 
   app.post('/api/services/:name/stop', async (request) => {
@@ -77,7 +148,7 @@ async function runAction(app: FastifyInstance, args: readonly string[], message:
     throw new CommandError(formatActionError(message, result.stderr || result.stdout));
   }
 
-  return { message };
+  return { message, stdout: result.stdout, stderr: result.stderr };
 }
 
 function formatActionError(message: string, output: string) {

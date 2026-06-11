@@ -15,7 +15,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@/assets/styles/styles.css';
 
-type PendingAction = { service: string; action: 'stop' | 'restart' } | null;
+type PendingAction = { service: string; action: 'start' | 'stop' | 'restart' } | null;
 
 export function App() {
   const location = useLocation();
@@ -47,11 +47,9 @@ export function App() {
 
   const serviceActionMutation = useMutation({
     mutationFn: ({ service, action }: { service: string; action: 'start' | 'stop' | 'restart' }) => api.action(service, action),
-    onSuccess: async (result) => {
-      showSuccess(result.message);
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['services'] });
     },
-    onError: (error) => showError(error instanceof Error ? error.message : 'Service action failed'),
     onSettled: () => {
       setLoadingAction(false);
       setPendingAction(null);
@@ -59,17 +57,14 @@ export function App() {
   });
 
   async function runAction(service: string, action: 'start' | 'stop' | 'restart') {
-    if (action === 'stop' || action === 'restart') {
-      setPendingAction({ service, action });
-      return;
-    }
-
-    await submitAction(service, action);
+    setPendingAction({ service, action });
   }
 
   function submitAction(service: string, action: 'start' | 'stop' | 'restart') {
     setLoadingAction(true);
-    serviceActionMutation.mutate({ service, action });
+    if (action !== 'start') {
+      serviceActionMutation.mutate({ service, action });
+    }
   }
 
   useEffect(() => {
@@ -136,6 +131,11 @@ export function App() {
         loading={loadingAction}
         onClose={() => setPendingAction(null)}
         onConfirm={() => pendingAction && submitAction(pendingAction.service, pendingAction.action)}
+        onComplete={async () => {
+          setLoadingAction(false);
+          setPendingAction(null);
+          await queryClient.invalidateQueries({ queryKey: ['services'] });
+        }}
       />
     </MantineProvider>
   );
