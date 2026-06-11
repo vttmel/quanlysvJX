@@ -7,7 +7,13 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "vitest": "vitest run --passWithNoTests",
+    "lint": "npm run oxlint && npm run stylelint",
+    "oxlint": "oxlint .",
+    "stylelint": "stylelint \"**/*.css\" --cache",
+    "format:test": "oxfmt --check \"**/*.{ts,tsx,css}\"",
+    "format:write": "oxfmt --write \"**/*.{ts,tsx,css}\"",
+    "test": "npm run typecheck && npm run format:test && npm run lint && npm run vitest && npm run build"
   },
   "dependencies": {
     "@mantine/core": "latest",
@@ -15,7 +21,8 @@
     "@mantine/hooks": "latest",
     "@mantine/notifications": "latest",
     "@tanstack/react-query": "^5.101.0",
-    "@vitejs/plugin-react": "latest",
+    "@tabler/icons-react": "^3.43.0",
+    "axios": "^1.6.0",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "^7.17.0",
@@ -26,6 +33,13 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "jsdom": "latest",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.58.0",
+    "postcss": "^8.5.6",
+    "postcss-preset-mantine": "1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "stylelint": "^17.0.0",
+    "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "latest",
     "vitest": "latest"
   }
