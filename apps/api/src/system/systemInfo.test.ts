@@ -38,10 +38,10 @@ describe('systemInfo domain', () => {
       }
     });
 
-    expect(choices).toEqual(['10.10.10.5', '192.168.1.20']);
+    expect(choices).toEqual(['10.10.10.5', '100.65.85.5', '192.168.1.20', '192.168.192.47']);
   });
 
-  it('builds host IPv4 choices and filters loopback, docker, bridge, and VPN interfaces', () => {
+  it('builds host IPv4 choices and filters loopback, docker, and bridge interfaces', () => {
     const choices = getServerIpChoices({
       commandRunner: () => ({ stdout: '', exitCode: 1 }),
       interfaces: {
@@ -56,7 +56,7 @@ describe('systemInfo domain', () => {
       }
     });
 
-    expect(choices).toEqual(['10.10.10.5', '192.168.1.20']);
+    expect(choices).toEqual(['10.10.10.5', '100.65.85.5', '192.168.1.20', '192.168.192.47']);
   });
 
   it('replaces missing and legacy auto env values with safe defaults for the form', () => {
