@@ -25,22 +25,32 @@ function toView(row: Row): GameAccountView {
 export function createMssqlGameAccountRepository(config: MssqlConfig): GameAccountRepository {
   let poolPromise: Promise<sql.ConnectionPool> | null = null;
 
+  function connectPool(user: string, password: string) {
+    const connectionPool = new sql.ConnectionPool({
+      server: config.host,
+      port: config.port,
+      database: config.database,
+      user,
+      password,
+      options: {
+        encrypt: config.encrypt,
+        trustServerCertificate: config.trustServerCertificate
+      }
+    });
+
+    return connectionPool.connect().catch((error: unknown) => {
+      poolPromise = null;
+      const detail = error instanceof Error && error.message ? `: ${error.message}` : '';
+      throw new ServiceUnavailableError(`MSSQL database is unavailable at ${config.host}:${config.port}${detail}`);
+    });
+  }
+
   async function pool() {
     if (!config.user || !config.password) {
       throw new ServiceUnavailableError('MSSQL account credentials are not configured');
     }
 
-    poolPromise ??= new sql.ConnectionPool({
-      server: config.host,
-      port: config.port,
-      database: config.database,
-      user: config.user,
-      password: config.password,
-      options: {
-        encrypt: config.encrypt,
-        trustServerCertificate: config.trustServerCertificate
-      }
-    }).connect();
+    poolPromise ??= connectPool(config.user, config.password);
 
     return poolPromise;
   }
