@@ -124,11 +124,9 @@ services:
     build:
       context: ./dockerfiles
       dockerfile: Dockerfile.jx-centos
-      args:
-        APP_WORKDIR: /src/jxser/gateway/
-        APP_CMD: goddess_y
-    image: goddess
+    image: jx-centos
     container_name: goddess
+    working_dir: /src/jxser/gateway/
     restart: no
     tty: true
     environment:
@@ -155,11 +153,9 @@ services:
     build:
       context: ./dockerfiles
       dockerfile: Dockerfile.jx-centos
-      args:
-        APP_WORKDIR: /src/jxser/gateway/
-        APP_CMD: bishop_y
-    image: bishop
+    image: jx-centos
     container_name: bishop
+    working_dir: /src/jxser/gateway/
     restart: no
     tty: true
     environment:
@@ -186,11 +182,9 @@ services:
     build:
       context: ./dockerfiles
       dockerfile: Dockerfile.jx-centos
-      args:
-        APP_WORKDIR: /src/jxser/gateway/s3relay/
-        APP_CMD: s3relay_y
-    image: s3relay
+    image: jx-centos
     container_name: s3relay
+    working_dir: /src/jxser/gateway/s3relay/
     restart: no
     tty: true
     environment:
@@ -225,11 +219,9 @@ services:
     build:
       context: ./dockerfiles
       dockerfile: Dockerfile.jx-centos
-      args:
-        APP_WORKDIR: /src/jxser/server1/
-        APP_CMD: jx_linux_y
-    image: jxserver
+    image: jx-centos
     container_name: jxserver
+    working_dir: /src/jxser/server1/
     restart: no
     tty: true
     environment:

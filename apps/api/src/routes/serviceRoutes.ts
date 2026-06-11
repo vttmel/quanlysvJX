@@ -99,18 +99,29 @@ export async function registerServiceRoutes(app: FastifyInstance) {
     });
     reply.raw.write(':\n\n');
 
+    const heartbeat = setInterval(() => {
+      if (!reply.raw.destroyed) {
+        reply.raw.write(': heartbeat\n\n');
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 10000);
+
     const writeEvent = (event: PrepareServiceEvent) => {
       if (reply.raw.destroyed) {
+        clearInterval(heartbeat);
         return;
       }
       reply.raw.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
       if (event.type === 'close') {
+        clearInterval(heartbeat);
         closed = true;
         reply.raw.end();
       }
     };
 
     request.raw.on('close', () => {
+      clearInterval(heartbeat);
       if (!closed) {
         abortController.abort();
       }
@@ -171,18 +182,29 @@ export async function registerServiceRoutes(app: FastifyInstance) {
     });
     reply.raw.write(':\n\n');
 
+    const heartbeat = setInterval(() => {
+      if (!reply.raw.destroyed) {
+        reply.raw.write(': heartbeat\n\n');
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 10000);
+
     const writeEvent = (event: StartServiceEvent) => {
       if (reply.raw.destroyed) {
+        clearInterval(heartbeat);
         return;
       }
       reply.raw.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
       if (event.type === 'close') {
+        clearInterval(heartbeat);
         closed = true;
         reply.raw.end();
       }
     };
 
     request.raw.on('close', () => {
+      clearInterval(heartbeat);
       if (!closed) {
         abortController.abort();
       }

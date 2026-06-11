@@ -60,17 +60,19 @@ export default function Dashboard() {
     // Error notification handled globally
   }, []);
 
-  const handlePrepareSingleImage = useCallback((service: string) => {
-    setServicesToPrepare([service]);
-    setPrepareOpened(true);
-  }, []);
-
   const handlePrepareAllImages = useCallback(() => {
-    const missing = services
-      .filter((s) => !s.imageExists)
-      .map((s) => s.name);
-    if (missing.length > 0) {
-      setServicesToPrepare(missing);
+    const uniqueMissingServices: string[] = [];
+    const seenImages = new Set<string>();
+
+    services.forEach((s) => {
+      if (!s.imageExists && !seenImages.has(s.imageName)) {
+        seenImages.add(s.imageName);
+        uniqueMissingServices.push(s.name);
+      }
+    });
+
+    if (uniqueMissingServices.length > 0) {
+      setServicesToPrepare(uniqueMissingServices);
       setPrepareOpened(true);
     }
   }, [services]);
@@ -79,14 +81,19 @@ export default function Dashboard() {
     void queryClient.invalidateQueries({ queryKey: serviceKeys.all });
   }, [queryClient]);
 
-  const missingImagesCount = services.filter((s) => !s.imageExists).length;
+  const missingImagesCount = services.reduce((acc, s) => {
+    if (!s.imageExists) {
+      acc.add(s.imageName);
+    }
+    return acc;
+  }, new Set<string>()).size;
 
   return (
     <Stack gap="md">
       {missingImagesCount > 0 && (
         <Group justify="flex-start">
           <Button color="blue" onClick={handlePrepareAllImages}>
-            Tải / Build hàng loạt Docker Images ({missingImagesCount})
+            {`Tải hàng loạt docker image (${missingImagesCount})`}
           </Button>
         </Group>
       )}
@@ -97,7 +104,6 @@ export default function Dashboard() {
             selected={selectedService}
             onSelect={handleSelectService}
             onAction={handleRunAction}
-            onPrepareImage={handlePrepareSingleImage}
           />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 9 }}>

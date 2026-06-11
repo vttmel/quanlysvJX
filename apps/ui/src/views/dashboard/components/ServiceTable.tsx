@@ -7,7 +7,6 @@ type Props = {
   selected: string | null;
   onSelect: (service: string) => void;
   onAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
-  onPrepareImage: (service: string) => void;
 };
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -27,7 +26,6 @@ const ServiceRow = React.memo(
     selected,
     onSelect,
     onAction,
-    onPrepareImage,
     _isS3RelayRunning,
     areOtherServicesRunning,
     services,
@@ -36,7 +34,6 @@ const ServiceRow = React.memo(
     selected: string | null;
     onSelect: (service: string) => void;
     onAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
-    onPrepareImage: (service: string) => void;
     _isS3RelayRunning: boolean;
     areOtherServicesRunning: boolean;
     services: ServiceStatus[];
@@ -207,17 +204,6 @@ const ServiceRow = React.memo(
                 </Button>
               </span>
             </Tooltip>
-            {!service.imageExists && (
-              <Button
-                size="xs"
-                px={6}
-                color="blue"
-                variant="outline"
-                onClick={() => onPrepareImage(service.name)}
-              >
-                {service.hasBuild ? 'Build' : 'Tải'}
-              </Button>
-            )}
             <Tooltip label={stopTooltip} withArrow>
               <span>
                 <Button
@@ -254,7 +240,7 @@ const ServiceRow = React.memo(
 
 ServiceRow.displayName = 'ServiceRow';
 
-export function ServiceTable({ services, selected, onSelect, onAction, onPrepareImage }: Props) {
+export function ServiceTable({ services, selected, onSelect, onAction }: Props) {
   const isS3RelayRunning = React.useMemo(
     () =>
       services.some(
@@ -296,7 +282,6 @@ export function ServiceTable({ services, selected, onSelect, onAction, onPrepare
               selected={selected}
               onSelect={onSelect}
               onAction={onAction}
-              onPrepareImage={onPrepareImage}
               _isS3RelayRunning={isS3RelayRunning}
               areOtherServicesRunning={areOtherServicesRunning}
               services={services}
