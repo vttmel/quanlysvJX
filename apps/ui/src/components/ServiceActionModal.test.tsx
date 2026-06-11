@@ -35,7 +35,7 @@ const service = {
   health: 'none',
   image: 'paysys',
   ports: [],
-  startedAt: null
+  startedAt: null,
 };
 
 describe('ServiceActionModal structured start events', () => {
@@ -97,7 +97,7 @@ describe('ServiceActionModal structured start events', () => {
         phase: 'build',
         message: 'Build image paysys thất bại.',
         detail: 'missing package',
-        exitCode: 17
+        exitCode: 17,
       });
       emitSse('close', { type: 'close', exitCode: 17 });
     });
@@ -132,7 +132,7 @@ describe('ServiceActionModal structured start events', () => {
         service: 'paysys',
         state: 'running',
         health: 'healthy',
-        message: 'Dịch vụ paysys đã sẵn sàng.'
+        message: 'Dịch vụ paysys đã sẵn sàng.',
       })
     );
     act(() => vi.advanceTimersByTime(1500));

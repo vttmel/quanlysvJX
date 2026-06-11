@@ -31,7 +31,6 @@ type StartReadyEvent = {
   health: string;
   message: string;
 };
-type StartCloseEvent = { type: 'close'; exitCode: number };
 
 export function ServiceActionModal({
   opened,
@@ -89,7 +88,8 @@ export function ServiceActionModal({
     if (action === 'restart') {
       if (hasHealthCheck) {
         // Nếu dịch vụ cấu hình healthcheck: chỉ coi là hoàn tất khi trạng thái là running VÀ health đạt 'healthy'
-        isRestartSuccess = currentService.state === 'running' && currentService.health === 'healthy';
+        isRestartSuccess =
+          currentService.state === 'running' && currentService.health === 'healthy';
       } else {
         // Nếu không có healthcheck: chỉ cần trạng thái là running
         isRestartSuccess = currentService.state === 'running';
