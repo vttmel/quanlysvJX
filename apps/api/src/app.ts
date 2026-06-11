@@ -15,6 +15,7 @@ import { registerServiceRoutes } from './routes/serviceRoutes.js';
 import { registerEnvRoutes } from './routes/envRoutes.js';
 import { registerVersionRoutes } from './routes/versionRoutes.js';
 import {
+  runDocker,
   runDockerCompose,
   runDockerComposeStream,
   type CommandResult,
@@ -24,6 +25,7 @@ import {
 export type AppDeps = {
   config: ManagerConfig;
   runCompose: (args: readonly string[], options?: { stdin?: string | Buffer }) => Promise<CommandResult>;
+  runDocker: (args: readonly string[], options?: { stdin?: string | Buffer }) => Promise<CommandResult>;
   streamCompose: (args: readonly string[]) => ComposeStream;
   gameAccounts: GameAccountService;
 };
@@ -33,6 +35,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   const deps: AppDeps = {
     config,
     runCompose: overrides.runCompose ?? ((args, options) => runDockerCompose(args, config.projectRoot, options)),
+    runDocker: overrides.runDocker ?? ((args, options) => runDocker(args, config.projectRoot, options)),
     streamCompose: overrides.streamCompose ?? ((args) => runDockerComposeStream(args, config.projectRoot)),
     gameAccounts: overrides.gameAccounts ?? createGameAccountService(createMssqlGameAccountRepository(config.mssql))
   };

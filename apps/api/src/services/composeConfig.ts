@@ -6,7 +6,7 @@ export type ComposeServiceConfig = {
   readinessTimeoutMs: number;
 };
 
-type ComposeConfigDocument = {
+export type ComposeConfigDocument = {
   services?: Record<string, ComposeServiceDefinition>;
 };
 
