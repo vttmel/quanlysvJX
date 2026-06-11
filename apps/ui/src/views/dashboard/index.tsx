@@ -27,17 +27,22 @@ export default function Dashboard() {
       return;
     }
     setActionLoading(true);
-    runAction(
-      { service: actionTarget.service, action: actionTarget.action },
-      {
-        onSuccess: () => {
-          // Modal will auto-close when the service hits the target state (handled in Task 9)
-        },
-        onError: () => {
-          setActionLoading(false);
-        },
-      }
-    );
+
+    // Chỉ hành động stop là chạy qua POST API trực tiếp.
+    // Hành động start/restart được thực hiện và theo dõi trực tiếp qua SSE của ServiceActionModal.
+    if (actionTarget.action === 'stop') {
+      runAction(
+        { service: actionTarget.service, action: actionTarget.action },
+        {
+          onSuccess: () => {
+            // Modal tự động đóng thông qua polling trạng thái của useServices
+          },
+          onError: () => {
+            setActionLoading(false);
+          },
+        }
+      );
+    }
   }, [actionTarget, runAction]);
 
   const handleCloseModal = useCallback(() => {

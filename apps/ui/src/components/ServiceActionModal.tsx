@@ -28,6 +28,8 @@ export function ServiceActionModal({
   const [logs, setLogs] = useState('');
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const activeEventSourceRef = useRef<EventSource | null>(null);
+  const activeStreamTargetRef = useRef<{ service: string; action: string } | null>(null);
 
   const onCompleteRef = useRef(onComplete);
   const onCloseRef = useRef(onClose);
@@ -54,9 +56,23 @@ export function ServiceActionModal({
       return;
     }
 
-    const isStartSuccess =
-      (action === 'start' || action === 'restart') &&
-      (currentService.state === 'running' || currentService.health === 'healthy');
+    // Xác định xem dịch vụ có hỗ trợ healthcheck hay không
+    // Docker Compose trả về:
+    // - health: 'healthy' | 'unhealthy' | 'starting'
+    // - Hoặc rỗng/không có trường health (đối với container không cấu hình healthcheck)
+    const hasHealthCheck =
+      currentService.health && currentService.health !== '' && currentService.health !== 'none';
+
+    let isStartSuccess = false;
+    if (action === 'start' || action === 'restart') {
+      if (hasHealthCheck) {
+        // Nếu dịch vụ cấu hình healthcheck: chỉ coi là hoàn tất khi trạng thái là running VÀ health đạt 'healthy'
+        isStartSuccess = currentService.state === 'running' && currentService.health === 'healthy';
+      } else {
+        // Nếu không có healthcheck: chỉ cần trạng thái là running
+        isStartSuccess = currentService.state === 'running';
+      }
+    }
 
     const isStopSuccess =
       action === 'stop' &&
@@ -64,6 +80,13 @@ export function ServiceActionModal({
 
     if (isStartSuccess || isStopSuccess) {
       setLogs((current) => `${current}\n[Hệ thống] Tác vụ thực thi thành công!\n`);
+
+      // Đóng EventSource sớm
+      if (activeEventSourceRef.current) {
+        activeEventSourceRef.current.close();
+        activeEventSourceRef.current = null;
+        activeStreamTargetRef.current = null;
+      }
 
       // Đóng modal và hiển thị Toast thông báo
       setTimeout(() => {
@@ -82,7 +105,26 @@ export function ServiceActionModal({
   useEffect(() => {
     if (!loading || !service || !opened || !action) {
       setLogs('');
+      if (activeEventSourceRef.current) {
+        activeEventSourceRef.current.close();
+        activeEventSourceRef.current = null;
+      }
+      activeStreamTargetRef.current = null;
       return undefined;
+    }
+
+    // Nếu đã kết nối cho service và action này thì không chạy lại
+    if (
+      activeStreamTargetRef.current?.service === service &&
+      activeStreamTargetRef.current?.action === action &&
+      activeEventSourceRef.current
+    ) {
+      return undefined;
+    }
+
+    // Đóng kết nối cũ nếu có trước khi mở mới
+    if (activeEventSourceRef.current) {
+      activeEventSourceRef.current.close();
     }
 
     const initialMsg =
@@ -91,24 +133,161 @@ export function ServiceActionModal({
         : `[Hệ thống] Đang dừng/khởi động lại dịch vụ ${service}...\n`;
 
     setLogs(initialMsg);
+    activeStreamTargetRef.current = { service, action };
+
+    let connectionTimeout: NodeJS.Timeout | null = null;
+    let source: EventSource | null = null;
+    let streamEnded = false;
 
     if (action === 'start') {
-      const source = new EventSource(serviceService.startStreamUrl(service));
-
-      const appendLog = (event: MessageEvent<string>) => {
-        let chunk = event.data;
-        try {
-          chunk = JSON.parse(event.data) as string;
-        } catch {
-          void 0;
+      // Trì hoãn 250ms để tránh việc React StrictMode mount/unmount/mount liên tục khởi tạo trùng lặp
+      connectionTimeout = setTimeout(() => {
+        if (!loading || !service || !opened || !action) {
+          return;
         }
-        setLogs((current) => `${current}${chunk}`);
-      };
 
-      source.addEventListener('log', appendLog);
+        source = new EventSource(serviceService.startStreamUrl(service));
+        activeEventSourceRef.current = source;
+
+        const appendLog = (event: MessageEvent<string>) => {
+          let chunk = event.data;
+          try {
+            chunk = JSON.parse(event.data) as string;
+          } catch {
+            void 0;
+          }
+
+          setLogs((current) => {
+            // Lọc trùng lặp dòng log liên tiếp
+            const currentLines = current.split('\n');
+            const lastLine =
+              currentLines[currentLines.length - 1] || currentLines[currentLines.length - 2] || '';
+            const incomingLines = chunk.split('\n');
+
+            const filteredIncoming = incomingLines.filter((line, index) => {
+              const cleanedLine = line.trim();
+              if (!cleanedLine) {
+                return true;
+              }
+              // So sánh với dòng ngay trước đó trong cụm log mới hoặc log cũ
+              const previousItem = incomingLines[index - 1];
+              const prev = index === 0 ? lastLine.trim() : previousItem ? previousItem.trim() : '';
+              return cleanedLine !== prev;
+            });
+
+            return `${current}${filteredIncoming.join('\n')}`;
+          });
+        };
+
+        const handleCloseEvent = (event: Event) => {
+          streamEnded = true;
+          const messageEvent = event as MessageEvent;
+          let data: { exitCode?: number } = {};
+          try {
+            data = JSON.parse(messageEvent.data);
+          } catch {
+            void 0;
+          }
+
+          if (source) {
+            source.close();
+          }
+          if (activeEventSourceRef.current === source) {
+            activeEventSourceRef.current = null;
+            activeStreamTargetRef.current = null;
+          }
+
+          if (data.exitCode === 0) {
+            // Không làm gì, để useEffect auto-close theo dõi status polling từ services.
+            // Hoặc nếu dịch vụ chưa kịp polling lên healthy/running thì ta in log kết thúc.
+            setLogs(
+              (current) => `${current}\n[Hệ thống] Tiến trình khởi chạy đã kết thúc thành công!\n`
+            );
+          } else {
+            notifications.show({
+              title: 'Lỗi tiến trình',
+              message: `Tiến trình kết thúc với mã lỗi: ${data.exitCode ?? 'Không xác định'}.`,
+              color: 'red',
+            });
+            if (onCloseRef.current) {
+              onCloseRef.current();
+            }
+          }
+        };
+
+        const handleError = (_event: Event) => {
+          // Trì hoãn báo lỗi để đợi handleCloseEvent chạy trước và thiết lập streamEnded = true
+          setTimeout(() => {
+            if (streamEnded) {
+              return;
+            }
+            // Chỉ báo lỗi "Mất kết nối" nếu EventSource bị ngắt đột ngột mà KHÔNG phải do server end stream (close event)
+            if (source) {
+              source.close();
+            }
+            if (activeEventSourceRef.current === source) {
+              activeEventSourceRef.current = null;
+              activeStreamTargetRef.current = null;
+            }
+
+            notifications.show({
+              title: 'Lỗi kết nối',
+              message: `Mất kết nối theo dõi tiến trình của dịch vụ ${service}.`,
+              color: 'red',
+            });
+
+            if (onCloseRef.current) {
+              onCloseRef.current();
+            }
+          }, 150);
+        };
+
+        source.addEventListener('log', appendLog);
+        source.addEventListener('close', handleCloseEvent);
+        source.addEventListener('error', handleError);
+      }, 250);
 
       return () => {
-        source.close();
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+        }
+        if (source) {
+          source.close();
+        }
+        if (activeEventSourceRef.current === source && source !== null) {
+          activeEventSourceRef.current = null;
+          activeStreamTargetRef.current = null;
+        }
+      };
+    } else if (action === 'restart') {
+      // Vì restart không dùng stream, ta tự động chạy qua POST API trực tiếp trong modal
+      let active = true;
+      serviceService
+        .runServiceAction(service, 'restart')
+        .then(() => {
+          if (!active) {
+            return;
+          }
+          setLogs((current) => `${current}\n[Hệ thống] Đã gửi lệnh khởi động lại thành công.\n`);
+        })
+        .catch((err) => {
+          if (!active) {
+            return;
+          }
+          const errMsg = err instanceof Error ? err.message : 'Khởi động lại thất bại';
+          setLogs((current) => `${current}\n[Hệ thống Lỗi] ${errMsg}\n`);
+          notifications.show({
+            title: 'Lỗi khởi động lại',
+            message: errMsg,
+            color: 'red',
+          });
+          if (onCloseRef.current) {
+            onCloseRef.current();
+          }
+        });
+
+      return () => {
+        active = false;
       };
     }
   }, [loading, service, opened, action]);
@@ -128,6 +307,11 @@ export function ServiceActionModal({
   };
 
   const handleConfirmCloseClick = () => {
+    if (activeEventSourceRef.current) {
+      activeEventSourceRef.current.close();
+      activeEventSourceRef.current = null;
+    }
+    activeStreamTargetRef.current = null;
     if (onCloseRef.current) {
       onCloseRef.current();
     }

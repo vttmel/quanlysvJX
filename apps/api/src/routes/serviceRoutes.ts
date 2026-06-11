@@ -4,6 +4,7 @@ import { CommandError, ValidationError } from '../api/errors.js';
 import { assertServiceName } from '../services/serviceAllowlist.js';
 import { parseManagedServiceStatuses } from '../services/serviceStatus.js';
 import { readVersionRegistry } from '../versions/versionRegistry.js';
+import type { ComposeStream } from '../services/composeRunner.js';
 
 function assertActiveVersion(projectRoot: string) {
   const registry = readVersionRegistry(projectRoot);
@@ -35,8 +36,9 @@ export async function registerServiceRoutes(app: FastifyInstance) {
     const name = assertServiceName((request.params as { name: string }).name);
     assertActiveVersion(projectRoot);
 
-    // Chạy docker compose build để stream quá trình tải image hoặc build dockerfile an toàn
-    const args = ['build', name];
+    // Chạy docker compose up -d --build --no-deps để build và khởi chạy độc lập container được chỉ định,
+    // bỏ qua việc build/khởi chạy các phụ thuộc khác (ngăn chặn build kép).
+    const args = ['up', '-d', '--build', '--no-deps', name];
     const stream = app.deps.streamCompose(args);
     let closed = false;
 
@@ -63,34 +65,14 @@ export async function registerServiceRoutes(app: FastifyInstance) {
         reply.raw.end();
       }
     });
-    stream.on('close', async (code) => {
+    stream.on('close', (code) => {
       closed = true;
-      if (code === 0) {
-        if (!reply.raw.destroyed) {
-          reply.raw.write(`event: log\ndata: ${JSON.stringify('[Hệ thống] Chuẩn bị image hoàn tất! Đang khởi chạy container ngầm...\n')}\n\n`);
+      if (!reply.raw.destroyed) {
+        if (code === 0) {
+          reply.raw.write(`event: log\ndata: ${JSON.stringify(`[Hệ thống] Khởi chạy container ${name} thành công!\n`)}\n\n`);
         }
-        
-        // Chạy lệnh up -d ngầm độc lập
-        try {
-          const upResult = await runAction(app, ['up', '-d', name], `Started ${name}`);
-          if (!reply.raw.destroyed) {
-            reply.raw.write(`event: log\ndata: ${JSON.stringify(`[Hệ thống] Khởi chạy container ${name} thành công!\n`)}\n\n`);
-            reply.raw.write(`event: close\ndata: ${JSON.stringify({ exitCode: 0, stdout: upResult.stdout })}\n\n`);
-          }
-        } catch (err) {
-          if (!reply.raw.destroyed) {
-            reply.raw.write(`event: error\ndata: ${JSON.stringify(err instanceof Error ? err.message : 'Khởi chạy container thất bại')}\n\n`);
-          }
-        } finally {
-          if (!reply.raw.destroyed) {
-            reply.raw.end();
-          }
-        }
-      } else {
-        if (!reply.raw.destroyed) {
-          reply.raw.write(`event: close\ndata: ${JSON.stringify({ exitCode: code })}\n\n`);
-          reply.raw.end();
-        }
+        reply.raw.write(`event: close\ndata: ${JSON.stringify({ exitCode: code })}\n\n`);
+        reply.raw.end();
       }
     });
 

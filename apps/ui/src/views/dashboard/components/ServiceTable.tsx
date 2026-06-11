@@ -26,15 +26,17 @@ const ServiceRow = React.memo(
     selected,
     onSelect,
     onAction,
-    isS3RelayRunning,
+    _isS3RelayRunning,
     areOtherServicesRunning,
+    services,
   }: {
     service: ServiceStatus;
     selected: string | null;
     onSelect: (service: string) => void;
     onAction: (service: string, action: 'start' | 'stop' | 'restart') => void;
-    isS3RelayRunning: boolean;
+    _isS3RelayRunning: boolean;
     areOtherServicesRunning: boolean;
+    services: ServiceStatus[];
   }) => {
     const running = service.state === 'running';
     const stopped = service.state === 'stopped' || service.state === 'not created';
@@ -44,25 +46,99 @@ const ServiceRow = React.memo(
     );
     const serviceColor = matchedService ? SERVICE_COLORS[matchedService] : '#4af626';
 
+    // Lấy trạng thái của các dịch vụ khác để kiểm tra tính phụ thuộc
+    // Thứ tự chuẩn: Database (jxmysql & jxmssql) -> paysys -> s3relayserver -> goddess -> bishop -> s3relay -> jxserver
+    const isServiceHealthy = (name: string) => {
+      const s = services.find((item: ServiceStatus) => item.name === name);
+      return s ? s.state === 'running' && s.health === 'healthy' : false;
+    };
+
+    const isServiceStopped = (name: string) => {
+      const s = services.find((item: ServiceStatus) => item.name === name);
+      return s ? s.state === 'stopped' || s.state === 'not created' : true;
+    };
+
+    const isDatabaseHealthy = isServiceHealthy('jxmysql') && isServiceHealthy('jxmssql');
+
+    let startDisabled = running;
+    let startTooltip = 'Khởi chạy dịch vụ';
     let stopDisabled = !running;
     let stopTooltip = 'Dừng dịch vụ';
     let restartDisabled = stopped;
     let restartTooltip = 'Khởi động lại dịch vụ';
 
-    if (service.name === 'jxserver') {
-      if (isS3RelayRunning) {
-        stopDisabled = !running;
-        stopTooltip = 'Dừng jxserver (sẽ tự động dừng s3relay trước)';
-        restartDisabled = stopped;
-        restartTooltip = 'Khởi động lại jxserver (sẽ tự động dừng s3relay trước)';
+    // Ràng buộc thứ tự START
+    if (service.name === 'paysys') {
+      if (!isDatabaseHealthy) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu cả hai Database (jxmysql & jxmssql) phải chạy và healthy trước.';
+      }
+    } else if (service.name === 's3relayserver') {
+      if (!isServiceHealthy('paysys')) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu dịch vụ paysys phải chạy và healthy trước.';
+      }
+    } else if (service.name === 'goddess') {
+      if (!isServiceHealthy('s3relayserver')) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu dịch vụ s3relayserver phải chạy và healthy trước.';
+      }
+    } else if (service.name === 'bishop') {
+      if (!isServiceHealthy('goddess')) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu dịch vụ goddess phải chạy và healthy trước.';
+      }
+    } else if (service.name === 's3relay') {
+      if (!isServiceHealthy('bishop')) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu dịch vụ bishop phải chạy và healthy trước.';
+      }
+    } else if (service.name === 'jxserver') {
+      if (!isServiceHealthy('s3relay')) {
+        startDisabled = true;
+        startTooltip = 'Yêu cầu dịch vụ s3relay phải chạy và healthy trước.';
+      }
+    }
+
+    // Ràng buộc thứ tự STOP (Tắt ngược từ cuối lên đầu)
+    if (service.name === 's3relay') {
+      if (!isServiceStopped('jxserver')) {
+        stopDisabled = true;
+        stopTooltip = 'Cần tắt dịch vụ jxserver trước.';
+      }
+    } else if (service.name === 'bishop') {
+      if (!isServiceStopped('s3relay')) {
+        stopDisabled = true;
+        stopTooltip = 'Cần tắt dịch vụ s3relay trước.';
+      }
+    } else if (service.name === 'goddess') {
+      if (!isServiceStopped('bishop')) {
+        stopDisabled = true;
+        stopTooltip = 'Cần tắt dịch vụ bishop trước.';
+      }
+    } else if (service.name === 's3relayserver') {
+      if (!isServiceStopped('goddess')) {
+        stopDisabled = true;
+        stopTooltip = 'Cần tắt dịch vụ goddess trước.';
+      }
+    } else if (service.name === 'paysys') {
+      if (!isServiceStopped('s3relayserver')) {
+        stopDisabled = true;
+        stopTooltip = 'Cần tắt dịch vụ s3relayserver trước.';
       }
     } else if (service.name === 'jxmysql' || service.name === 'jxmssql') {
       if (areOtherServicesRunning) {
         stopDisabled = true;
-        stopTooltip = 'Cần tắt các dịch vụ JX khác trước khi dừng Database';
+        stopTooltip = 'Cần tắt toàn bộ các dịch vụ JX khác trước khi dừng Database.';
         restartDisabled = true;
-        restartTooltip = 'Cần tắt các dịch vụ JX khác trước khi khởi động lại Database';
+        restartTooltip = 'Cần tắt toàn bộ các dịch vụ JX khác trước khi khởi động lại Database.';
       }
+    }
+
+    // Restart bị disable nếu start hoặc stop bị disable để đảm bảo an toàn quy trình
+    if (startDisabled || stopDisabled) {
+      restartDisabled = true;
+      restartTooltip = 'Quy trình khởi động lại không khả dụng do ràng buộc phụ thuộc.';
     }
 
     return (
@@ -99,13 +175,13 @@ const ServiceRow = React.memo(
         </Table.Td>
         <Table.Td onClick={(e) => e.stopPropagation()}>
           <Group gap={4} wrap="nowrap">
-            <Tooltip label="Chạy dịch vụ" withArrow>
+            <Tooltip label={startTooltip} withArrow>
               <span>
                 <Button
                   size="xs"
                   px={6}
                   color="green"
-                  disabled={running}
+                  disabled={startDisabled}
                   onClick={() => onAction(service.name, 'start')}
                 >
                   Start
@@ -190,8 +266,9 @@ export function ServiceTable({ services, selected, onSelect, onAction }: Props) 
               selected={selected}
               onSelect={onSelect}
               onAction={onAction}
-              isS3RelayRunning={isS3RelayRunning}
+              _isS3RelayRunning={isS3RelayRunning}
               areOtherServicesRunning={areOtherServicesRunning}
+              services={services}
             />
           ))}
         </Table.Tbody>
