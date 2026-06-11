@@ -48,6 +48,7 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState('');
+  const [hasRunSuccess, setHasRunSuccess] = useState(false);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const activeEventSourceRef = useRef<EventSource | null>(null);
@@ -66,6 +67,7 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
       setCurrentStepIndex(-1);
       setIsRunning(false);
       setLogs('');
+      setHasRunSuccess(false);
       isCancelledRef.current = false;
     }
   }, [opened, action]);
@@ -222,12 +224,15 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
 
     setIsRunning(false);
     if (!isCancelledRef.current) {
+      setHasRunSuccess(true);
+      appendTerminalLine(
+        `\n[Hệ thống] Tất cả dịch vụ đã được khởi chạy thành công! Bạn có thể đóng cửa sổ này.\n`
+      );
       notifications.show({
         title: 'Thành công',
         message: 'Tất cả dịch vụ đã được khởi chạy!',
         color: 'green',
       });
-      onSuccess();
     }
   };
 
@@ -287,12 +292,15 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
 
     setIsRunning(false);
     if (!isCancelledRef.current) {
+      setHasRunSuccess(true);
+      appendTerminalLine(
+        `\n[Hệ thống] Đã tắt sạch các dịch vụ game thành công! Bạn có thể đóng cửa sổ này.\n`
+      );
       notifications.show({
         title: 'Thành công',
         message: 'Đã tắt sạch các dịch vụ game (chừa lại Database)!',
         color: 'green',
       });
-      onSuccess();
     }
   };
 
@@ -353,7 +361,7 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
   return (
     <Modal
       opened={opened}
-      onClose={isRunning ? handleCancel : onClose}
+      onClose={isRunning ? handleCancel : hasRunSuccess ? onSuccess : onClose}
       title={action === 'start' ? 'Khởi chạy toàn bộ dịch vụ' : 'Dừng toàn bộ dịch vụ game'}
       centered
       size="xl"
@@ -444,15 +452,17 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
             </Button>
           ) : (
             <>
-              <Button variant="default" onClick={onClose}>
+              <Button variant="default" onClick={hasRunSuccess ? onSuccess : onClose}>
                 Đóng
               </Button>
-              <Button
-                color={action === 'start' ? 'green' : 'red'}
-                onClick={action === 'start' ? handleStartAll : handleStopAll}
-              >
-                {action === 'start' ? 'Bắt đầu khởi chạy' : 'Bắt đầu dừng'}
-              </Button>
+              {!hasRunSuccess && (
+                <Button
+                  color={action === 'start' ? 'green' : 'red'}
+                  onClick={action === 'start' ? handleStartAll : handleStopAll}
+                >
+                  {action === 'start' ? 'Bắt đầu khởi chạy' : 'Bắt đầu dừng'}
+                </Button>
+              )}
             </>
           )}
         </Group>

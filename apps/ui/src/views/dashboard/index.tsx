@@ -139,7 +139,7 @@ export default function Dashboard() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 9 }}>
           <LogsPanel
-            services={services.map((s) => s.name)}
+            services={services}
             selected={selectedService}
             onSelect={handleSelectService}
             onError={handleLogsError}

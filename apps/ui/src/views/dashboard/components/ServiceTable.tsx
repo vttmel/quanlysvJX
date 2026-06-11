@@ -144,10 +144,10 @@ const ServiceRow = React.memo(
       }
     }
 
-    // Restart bị disable nếu start hoặc stop bị disable để đảm bảo an toàn quy trình
-    if (startDisabled || stopDisabled) {
+    // Restart chỉ khả dụng khi đang chạy (state === 'running')
+    if (stopped) {
       restartDisabled = true;
-      restartTooltip = 'Quy trình khởi động lại không khả dụng do ràng buộc phụ thuộc.';
+      restartTooltip = 'Dịch vụ cần phải ở trạng thái đang chạy để khởi động lại.';
     }
 
     return (
@@ -277,7 +277,10 @@ export function ServiceTable({
             size="xs"
             color="green"
             onClick={() => onBatchAction('start')}
-            disabled={missingImagesCount > 0}
+            disabled={
+              missingImagesCount > 0 ||
+              (services.length > 0 && services.every((s) => s.state === 'running'))
+            }
           >
             Start All
           </Button>

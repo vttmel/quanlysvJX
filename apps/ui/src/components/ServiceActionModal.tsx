@@ -405,10 +405,18 @@ export function ServiceActionModal({
         </>
       ) : !loading ? (
         <>
-          <Text mb="md">
-            Bạn có chắc chắn muốn thực hiện hành động <strong>{verb.toLowerCase()}</strong> dịch vụ{' '}
-            <strong>{service}</strong>?
-          </Text>
+          {service === 's3relay' && action === 'restart' ? (
+            <Text mb="md">
+              <strong>Cảnh báo:</strong> Khởi động lại <strong>s3relay</strong> sẽ làm đóng{' '}
+              <strong>jxserver</strong>. Bạn sẽ cần phải khởi động lại jxserver thủ công sau đó. Bạn
+              có chắc chắn muốn tiếp tục?
+            </Text>
+          ) : (
+            <Text mb="md">
+              Bạn có chắc chắn muốn thực hiện hành động <strong>{verb.toLowerCase()}</strong> dịch
+              vụ <strong>{service}</strong>?
+            </Text>
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose}>
               Hủy

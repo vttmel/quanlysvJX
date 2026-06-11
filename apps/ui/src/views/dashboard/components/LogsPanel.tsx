@@ -14,9 +14,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { serviceKeys } from '@/hooks/useServices';
 import { serviceService } from '@/services/serviceService';
+import type { ServiceStatus } from '@/services/types';
 
 type Props = {
-  services: string[];
+  services: ServiceStatus[];
   selected: string | null;
   onSelect: (service: string | null) => void;
   onError: (message: string) => void;
@@ -35,7 +36,7 @@ const SERVICE_COLORS: Record<string, string> = {
   jxmssql: '#ffab40', // Vàng cam
 };
 
-export function LogsPanel({ services: _services, selected, onSelect, onError }: Props) {
+export function LogsPanel({ services, selected, onSelect, onError }: Props) {
   const [tail, setTail] = useState(300);
   const [logs, setLogs] = useState('');
   const [autoFollow, setAutoFollow] = useState(true);
@@ -45,22 +46,19 @@ export function LogsPanel({ services: _services, selected, onSelect, onError }: 
   const shouldFollowRef = useRef(true);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  // Danh sách các tab động để duy trì
-  const [dynamicTabs, setDynamicTabs] = useState<string[]>([]);
-
   const activeService = selected || 'all';
 
-  // Tự động thêm tab động nếu dịch vụ được chọn không phải mặc định
+  // Tự động fallback về 'all' nếu dịch vụ đang chọn ngừng hoạt động (không còn running)
   useEffect(() => {
-    if (
-      activeService !== 'all' &&
-      activeService !== 'jxmysql' &&
-      activeService !== 'jxmssql' &&
-      !dynamicTabs.includes(activeService)
-    ) {
-      setDynamicTabs((prev) => [...prev, activeService]);
+    if (activeService !== 'all') {
+      const isStillRunning = services.some(
+        (s) => s.name === activeService && s.state === 'running'
+      );
+      if (!isStillRunning) {
+        onSelect('all');
+      }
     }
-  }, [activeService, dynamicTabs]);
+  }, [services, activeService, onSelect]);
 
   const logsQuery = useQuery({
     queryKey: serviceKeys.logs(activeService, tail),
@@ -156,15 +154,15 @@ export function LogsPanel({ services: _services, selected, onSelect, onError }: 
     shouldFollowRef.current = distanceFromBottom < 24;
   }, []);
 
-  const stripAnsi = useCallback(
-    (str: string) =>
-      // eslint-disable-next-line no-control-regex
-      str.replace(
-        /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-        ''
-      ),
-    []
-  );
+  const stripAnsi = useCallback((str: string) => {
+    const esc1 = String.fromCharCode(27);
+    const esc2 = String.fromCharCode(155);
+    const regex = new RegExp(
+      `[${esc1}${esc2}]\\[[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]`,
+      'g'
+    );
+    return str.replace(regex, '');
+  }, []);
 
   const formatTimestamp = useCallback((tsStr: string) => {
     try {
@@ -232,17 +230,15 @@ export function LogsPanel({ services: _services, selected, onSelect, onError }: 
   }, [logs, activeService, showTimestamps, formatTimestamp, stripAnsi]);
 
   const segmentOptions = useMemo(() => {
-    const defaults = [
-      { value: 'all', label: 'Tất cả' },
-      { value: 'jxmysql', label: 'MySQL (jxmysql)' },
-      { value: 'jxmssql', label: 'MSSQL (jxmssql)' },
-    ];
-    const dynamics = dynamicTabs.map((name) => ({
-      value: name,
-      label: name,
-    }));
-    return [...defaults, ...dynamics];
-  }, [dynamicTabs]);
+    const defaults = [{ value: 'all', label: 'Tất cả' }];
+    const runningOptions = services
+      .filter((s) => s.state === 'running')
+      .map((s) => ({
+        value: s.name,
+        label: s.name,
+      }));
+    return [...defaults, ...runningOptions];
+  }, [services]);
 
   const handleSelectChange = useCallback(
     (value: string) => {
