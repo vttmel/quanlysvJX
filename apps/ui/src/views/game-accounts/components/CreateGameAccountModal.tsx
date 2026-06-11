@@ -1,5 +1,6 @@
 import { Button, Group, Modal, NumberInput, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { CreateGameAccountPayload } from '@/services/types';
 
 type Props = {
@@ -61,7 +62,11 @@ export function CreateGameAccountModal({ opened, loading, onClose, onSubmit }: P
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Thêm tài khoản">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Thêm tài khoản" subtitle="Tạo tài khoản game mới" />}
+    >
       <form
         onSubmit={form.onSubmit((values) =>
           onSubmit({

@@ -1,4 +1,5 @@
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { GameAccount } from '@/services/types';
 
 type Props = {
@@ -11,7 +12,11 @@ type Props = {
 
 export function SoftDeleteAccountModal({ opened, account, loading, onClose, onConfirm }: Props) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Xóa tài khoản">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Xóa tài khoản" subtitle={account?.accountName} />}
+    >
       <Stack>
         <Text>
           Thao tác này sẽ xóa vĩnh viễn tài khoản {account?.accountName} khỏi cơ sở dữ liệu.

@@ -16,6 +16,7 @@ import { useForm, schemaResolver } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useTransition, useRef, useEffect } from 'react';
 import { z } from 'zod';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import { useVersions, versionKeys } from '@/hooks/useVersions';
 import type { GameVersion } from '@/services/types';
 import { versionService } from '@/services/versionService';
@@ -406,7 +407,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
             cloneForm.reset();
             setCloneModalOpened(false);
           }}
-          title="Tải về trực tiếp từ GitHub"
+          title={<ModalTitle title="Tải từ GitHub" subtitle="Clone phiên bản game vào máy chủ" />}
           size="md"
         >
           <form noValidate onSubmit={cloneForm.onSubmit(handleGitClone, focusFirstError)}>
@@ -461,7 +462,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
               setUploadModalOpened(false);
             }
           }}
-          title="Tải lên phiên bản game"
+          title={<ModalTitle title="Tải lên phiên bản game" subtitle="ZIP, TAR.GZ hoặc TGZ" />}
           size="md"
         >
           <form noValidate onSubmit={uploadForm.onSubmit(handleUpload, focusFirstError)}>
@@ -521,7 +522,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
                   Hủy
                 </Button>
                 <Button type="submit" loading={uploadMutation.isPending}>
-                  Upload
+                  Tải lên
                 </Button>
               </Group>
             </Stack>
@@ -534,7 +535,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
             renameForm.reset();
             setRenamingVersion(null);
           }}
-          title="Đổi tên phiên bản"
+          title={<ModalTitle title="Đổi tên phiên bản" subtitle={renamingVersion?.name} />}
           size="md"
         >
           <form noValidate onSubmit={renameForm.onSubmit(handleRename, focusFirstError)}>
@@ -571,7 +572,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
               setDeletingVersion(null);
             }
           }}
-          title="Xóa phiên bản game"
+          title={<ModalTitle title="Xóa phiên bản game" subtitle={deletingVersion?.name} />}
           size="md"
         >
           <Stack gap="md">

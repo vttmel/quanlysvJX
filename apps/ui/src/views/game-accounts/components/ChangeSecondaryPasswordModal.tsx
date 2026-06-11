@@ -1,6 +1,7 @@
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { GameAccount } from '@/services/types';
 
 type Props = {
@@ -37,7 +38,11 @@ export function ChangeSecondaryPasswordModal({
   }, [opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title={`Đổi mật khẩu cấp 2: ${account?.accountName}`}>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Đổi mật khẩu cấp 2" subtitle={account?.accountName} />}
+    >
       <form onSubmit={form.onSubmit((values) => onSubmit(values.secondaryPassword))}>
         <Stack>
           <PasswordInput

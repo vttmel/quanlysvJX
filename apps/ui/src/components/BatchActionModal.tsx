@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Text, Box, ScrollArea, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useRef, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import { serviceService } from '@/services/serviceService';
 import type { ServiceStatus } from '@/services/types';
 
@@ -362,7 +363,12 @@ export function BatchActionModal({ opened, action, services, onClose, onSuccess 
     <Modal
       opened={opened}
       onClose={isRunning ? handleCancel : hasRunSuccess ? onSuccess : onClose}
-      title={action === 'start' ? 'Khởi chạy toàn bộ dịch vụ' : 'Dừng toàn bộ dịch vụ game'}
+      title={
+        <ModalTitle
+          title={action === 'start' ? 'Khởi chạy toàn bộ dịch vụ' : 'Dừng toàn bộ dịch vụ game'}
+          subtitle={action === 'start' ? 'Chạy theo thứ tự phụ thuộc' : 'Dừng an toàn dịch vụ game'}
+        />
+      }
       centered
       size="xl"
       closeOnClickOutside={!isRunning}

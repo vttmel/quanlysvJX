@@ -1,5 +1,6 @@
 import { Modal, Button, Group, Stack, Text, ScrollArea, Box, Badge, Paper } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import { serviceService } from '@/services/serviceService';
 import type { ServiceStatus } from '@/services/types';
 
@@ -165,11 +166,7 @@ export function PrepareImagesModal({
     <Modal
       opened={opened}
       onClose={handleClose}
-      title={
-        <Text fw={700} size="lg">
-          Chuẩn bị Docker Images
-        </Text>
-      }
+      title={<ModalTitle title="Chuẩn bị Docker Images" subtitle="Tải các image còn thiếu" />}
       size="xl"
       closeOnClickOutside={isFinished}
       closeOnEscape={isFinished}

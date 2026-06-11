@@ -1,6 +1,7 @@
 import { Modal, Button, Group, Stack, Text, List, ThemeIcon, Loader, Alert } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import { versionKeys } from '@/hooks/useVersions';
 import { versionService } from '@/services/versionService';
 
@@ -55,7 +56,7 @@ export function BrowseFolderModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={`Duyệt thư mục phiên bản: ${versionName}`}
+      title={<ModalTitle title="Duyệt thư mục phiên bản" subtitle={versionName} />}
       size="lg"
     >
       <Stack gap="md">

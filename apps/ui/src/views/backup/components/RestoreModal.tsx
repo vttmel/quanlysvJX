@@ -1,5 +1,6 @@
 import { Button, Group, Modal, Text, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 
 type Props = {
   opened: boolean;
@@ -21,23 +22,28 @@ export function RestoreModal({ opened, kind, filename, loading, onClose, onConfi
   }, [opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title={`Restore ${kind.toUpperCase()}`} centered>
-      <Text mb="sm">This will overwrite current data. Type the filename to confirm.</Text>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title={`Khôi phục ${kind.toUpperCase()}`} subtitle={filename} />}
+      centered
+    >
+      <Text mb="sm">Thao tác này sẽ ghi đè dữ liệu hiện tại. Nhập đúng tên file để xác nhận.</Text>
       <Text fw={700} mb="sm">
         {filename}
       </Text>
       <TextInput
         value={confirmText}
         onChange={(event) => setConfirmText(event.currentTarget.value)}
-        placeholder="Backup filename"
+        placeholder="Tên file sao lưu"
         mb="md"
       />
       <Group justify="flex-end">
         <Button variant="default" onClick={onClose}>
-          Cancel
+          Hủy
         </Button>
         <Button color="red" disabled={!matches} loading={loading} onClick={onConfirm}>
-          Restore
+          Khôi phục
         </Button>
       </Group>
     </Modal>

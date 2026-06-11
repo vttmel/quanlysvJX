@@ -1,6 +1,7 @@
 import { Button, Group, Modal, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { GameAccount } from '@/services/types';
 
 type Props = {
@@ -34,7 +35,11 @@ export function ExtendAccountModal({ opened, account, loading, onClose, onSubmit
   }, [opened, account]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title={`Gia hạn thời gian: ${account?.accountName}`}>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Gia hạn thời gian" subtitle={account?.accountName} />}
+    >
       <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
         <Stack>
           <TextInput

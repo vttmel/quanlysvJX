@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSwords, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { navigationConfig } from '@/configs/routes.config';
 import { useSystemInfo } from '@/hooks/useSystemInfo';
@@ -33,6 +33,7 @@ export default function DashboardLayout() {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, setDesktopOpened] = useState(readDesktopNavbarOpened);
   const systemInfo = useSystemInfo({ refetchInterval: 30000 });
+  const serverClock = useServerClock(systemInfo.data?.serverTime);
 
   const toggleDesktop = useCallback(() => {
     setDesktopOpened((current) => {
@@ -86,19 +87,14 @@ export default function DashboardLayout() {
             </Title>
           </Group>
           {systemInfo.data && (
-            <Group gap="sm" visibleFrom="md" style={{ flexWrap: 'nowrap' }}>
-              <Text size="xs" c="dimmed">
-                Server: {formatServerTime(systemInfo.data.serverTime)}
-              </Text>
-              <Text size="xs" c="dimmed">
-                IP: {systemInfo.data.serverIp}
-              </Text>
-              <Text size="xs" c="dimmed">
-                MySQL: {systemInfo.data.mysqlIp}
-              </Text>
-              <Text size="xs" c="dimmed">
-                MSSQL: {systemInfo.data.mssqlIp}
-              </Text>
+            <Group gap="sm" visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
+              <HeaderMetric
+                label="Server"
+                value={formatServerTime(serverClock, systemInfo.data.timezone)}
+              />
+              <HeaderMetric label="IP" value={systemInfo.data.serverIp} />
+              <HeaderMetric label="MySQL" value={systemInfo.data.mysqlIp} />
+              <HeaderMetric label="MSSQL" value={systemInfo.data.mssqlIp} />
             </Group>
           )}
         </Group>
@@ -166,10 +162,54 @@ export default function DashboardLayout() {
   );
 }
 
-function formatServerTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+function HeaderMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+      <Text span fw={700} c="gray.7">
+        {label}
+      </Text>{' '}
+      {value}
+    </Text>
+  );
+}
+
+function useServerClock(serverTime?: string) {
+  const [clock, setClock] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!serverTime) {
+      setClock(null);
+      return undefined;
+    }
+
+    const baseServerMs = Date.parse(serverTime);
+    if (Number.isNaN(baseServerMs)) {
+      setClock(null);
+      return undefined;
+    }
+
+    const receivedAtMs = Date.now();
+    const tick = () => setClock(new Date(baseServerMs + Date.now() - receivedAtMs));
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [serverTime]);
+
+  return clock;
+}
+
+function formatServerTime(date: Date | null, timezone?: string) {
+  if (!date || Number.isNaN(date.getTime())) {
     return '-';
   }
-  return date.toLocaleString('vi-VN', { hour12: false });
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: timezone,
+  });
 }

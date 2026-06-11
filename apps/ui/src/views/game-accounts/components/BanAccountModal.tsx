@@ -1,4 +1,5 @@
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { GameAccount } from '@/services/types';
 
 type Props = {
@@ -11,7 +12,11 @@ type Props = {
 
 export function BanAccountModal({ opened, account, loading, onClose, onConfirm }: Props) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Khóa tài khoản">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Khóa tài khoản" subtitle={account?.accountName} />}
+    >
       <Stack>
         <Text>
           Bạn có chắc chắn muốn khóa tài khoản <strong>{account?.accountName}</strong> không?

@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Text, Box, ScrollArea, Loader } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useRef, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import { serviceService } from '@/services/serviceService';
 import type { ServiceStatus } from '@/services/types';
 
@@ -382,7 +383,7 @@ export function ServiceActionModal({
     <Modal
       opened={opened}
       onClose={handleCloseClick}
-      title="Xác nhận hành động dịch vụ"
+      title={<ModalTitle title={`${verb} dịch vụ`} subtitle={service ?? undefined} />}
       centered
       size={loading ? 'lg' : 'md'}
       closeOnClickOutside={!loading}

@@ -1,5 +1,6 @@
 import { Button, FileInput, Group, Modal, Select } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { BackupKind } from '@/services/types';
 
 type Props = {
@@ -21,7 +22,12 @@ export function BackupUploadModal({ opened, loading, onClose, onUpload }: Props)
   }, [opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Upload backup" centered>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Tải lên bản sao lưu" subtitle="MySQL hoặc MSSQL" />}
+      centered
+    >
       <Select
         label="Database"
         data={[
@@ -33,18 +39,18 @@ export function BackupUploadModal({ opened, loading, onClose, onUpload }: Props)
         mb="md"
       />
       <FileInput
-        label="Backup file"
+        label="File sao lưu"
         value={file}
         onChange={setFile}
-        placeholder="Choose backup file"
+        placeholder="Chọn file sao lưu"
         mb="md"
       />
       <Group justify="flex-end">
         <Button variant="default" onClick={onClose}>
-          Cancel
+          Hủy
         </Button>
         <Button disabled={!file} loading={loading} onClick={() => file && onUpload(kind, file)}>
-          Upload
+          Tải lên
         </Button>
       </Group>
     </Modal>

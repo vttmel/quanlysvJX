@@ -1,5 +1,6 @@
 import { Button, Group, Modal, Textarea, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { BackupFile } from '@/services/types';
 
 type Props = {
@@ -22,15 +23,20 @@ export function BackupEditModal({ opened, file, loading, onClose, onSave }: Prop
   }, [file, opened]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit backup" centered>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Sửa bản sao lưu" subtitle={file?.filename} />}
+      centered
+    >
       <TextInput
-        label="Filename"
+        label="Tên file"
         value={filename}
         onChange={(event) => setFilename(event.currentTarget.value)}
         mb="md"
       />
       <Textarea
-        label="Note"
+        label="Ghi chú"
         value={note}
         onChange={(event) => setNote(event.currentTarget.value)}
         minRows={3}
@@ -38,14 +44,14 @@ export function BackupEditModal({ opened, file, loading, onClose, onSave }: Prop
       />
       <Group justify="flex-end">
         <Button variant="default" onClick={onClose}>
-          Cancel
+          Hủy
         </Button>
         <Button
           disabled={!filename.trim()}
           loading={loading}
           onClick={() => onSave(filename.trim(), note.trim() === '' ? null : note.trim())}
         >
-          Save
+          Lưu
         </Button>
       </Group>
     </Modal>

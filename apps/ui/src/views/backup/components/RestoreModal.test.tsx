@@ -23,11 +23,11 @@ function renderModal() {
 describe('RestoreModal', () => {
   it('requires typing the exact filename before restore', () => {
     const { onConfirm } = renderModal();
-    const restoreButton = screen.getByRole('button', { name: 'Restore' }) as HTMLButtonElement;
+    const restoreButton = screen.getByRole('button', { name: 'Khôi phục' }) as HTMLButtonElement;
 
     expect(restoreButton.disabled).toBe(true);
 
-    fireEvent.change(screen.getByPlaceholderText('Backup filename'), {
+    fireEvent.change(screen.getByPlaceholderText('Tên file sao lưu'), {
       target: { value: 'mysql-20260609-030405.sql.gz' },
     });
     fireEvent.click(restoreButton);

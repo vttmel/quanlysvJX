@@ -1,6 +1,7 @@
 import { Button, Group, Modal, NumberInput, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect } from 'react';
+import { ModalTitle } from '@/components/common/ModalTitle';
 import type { GameAccount, UpdateGameAccountPayload } from '@/services/types';
 
 type Props = {
@@ -62,7 +63,11 @@ export function EditGameAccountModal({ opened, account, loading, onClose, onSubm
   }, [opened, account?.accountName]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Sửa tài khoản">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={<ModalTitle title="Sửa tài khoản" subtitle={account?.accountName} />}
+    >
       <form
         onSubmit={form.onSubmit((values) =>
           onSubmit({
