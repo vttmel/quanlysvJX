@@ -1,10 +1,21 @@
 import './Navbar.css';
-import { AppShell, Group, NavLink, Stack, Title, Burger, Tooltip, ActionIcon } from '@mantine/core';
+import {
+  AppShell,
+  Group,
+  NavLink,
+  Stack,
+  Title,
+  Burger,
+  Tooltip,
+  ActionIcon,
+  Text,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSwords, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { navigationConfig } from '@/configs/routes.config';
+import { useSystemInfo } from '@/hooks/useSystemInfo';
 
 const navbarCollapsedStorageKey = 'jx-manager-navbar-collapsed';
 
@@ -21,6 +32,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, setDesktopOpened] = useState(readDesktopNavbarOpened);
+  const systemInfo = useSystemInfo({ refetchInterval: 30000 });
 
   const toggleDesktop = useCallback(() => {
     setDesktopOpened((current) => {
@@ -73,6 +85,22 @@ export default function DashboardLayout() {
               JX Manager
             </Title>
           </Group>
+          {systemInfo.data && (
+            <Group gap="sm" visibleFrom="md" style={{ flexWrap: 'nowrap' }}>
+              <Text size="xs" c="dimmed">
+                Server: {formatServerTime(systemInfo.data.serverTime)}
+              </Text>
+              <Text size="xs" c="dimmed">
+                IP: {systemInfo.data.serverIp}
+              </Text>
+              <Text size="xs" c="dimmed">
+                MySQL: {systemInfo.data.mysqlIp}
+              </Text>
+              <Text size="xs" c="dimmed">
+                MSSQL: {systemInfo.data.mssqlIp}
+              </Text>
+            </Group>
+          )}
         </Group>
       </AppShell.Header>
 
@@ -136,4 +164,12 @@ export default function DashboardLayout() {
       </AppShell.Main>
     </AppShell>
   );
+}
+
+function formatServerTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  return date.toLocaleString('vi-VN', { hour12: false });
 }
