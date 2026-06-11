@@ -18,13 +18,34 @@ export function buildComposeArgs(args: readonly string[]) {
   return ['compose', '--env-file', '.env', '-f', 'apps/jx-services/docker-compose.yaml', ...args];
 }
 
+export function buildDockerArgs(args: readonly string[]) {
+  return [...args];
+}
+
 export async function runDockerCompose(
   args: readonly string[],
   cwd: string,
   options?: { stdin?: string | Buffer }
 ): Promise<CommandResult> {
+  return runCommand('docker', buildComposeArgs(args), cwd, options);
+}
+
+export async function runDocker(
+  args: readonly string[],
+  cwd: string,
+  options?: { stdin?: string | Buffer }
+): Promise<CommandResult> {
+  return runCommand('docker', buildDockerArgs(args), cwd, options);
+}
+
+function runCommand(
+  command: string,
+  args: readonly string[],
+  cwd: string,
+  options?: { stdin?: string | Buffer }
+): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn('docker', buildComposeArgs(args), { cwd, shell: false });
+    const child = spawn(command, args, { cwd, shell: false });
     let stdout = '';
     let stderr = '';
 
@@ -52,4 +73,8 @@ export async function runDockerCompose(
 
 export function runDockerComposeStream(args: readonly string[], cwd: string): ComposeStream {
   return spawn('docker', buildComposeArgs(args), { cwd, shell: false });
+}
+
+export function runDockerStream(args: readonly string[], cwd: string): ComposeStream {
+  return spawn('docker', buildDockerArgs(args), { cwd, shell: false });
 }

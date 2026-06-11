@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildComposeArgs } from './composeRunner.js';
+import { buildComposeArgs, buildDockerArgs } from './composeRunner.js';
 import { assertServiceName, serviceNames } from './serviceAllowlist.js';
 
 describe('service allowlist', () => {
@@ -33,5 +33,11 @@ describe('buildComposeArgs', () => {
       '--format',
       'json'
     ]);
+  });
+});
+
+describe('buildDockerArgs', () => {
+  it('passes docker subcommands without shell interpolation', () => {
+    expect(buildDockerArgs(['image', 'inspect', 'paysys'])).toEqual(['image', 'inspect', 'paysys']);
   });
 });
