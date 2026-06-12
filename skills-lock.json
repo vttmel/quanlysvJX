@@ -13,6 +13,12 @@
       "skillPath": "skills/caveman/SKILL.md",
       "computedHash": "dfbf85749fd474feeb0bbe60c779795ecd5dbec0083299b56e68916bc3ddd8c9"
     },
+    "create-readme": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/create-readme/SKILL.md",
+      "computedHash": "d0ece1b2164ce1376e4ab6e98d6ac079df3a2a94f5f02224362b6a1ce2516ae9"
+    },
     "design-an-interface": {
       "source": "mattpocock/skills",
       "sourceType": "github",
