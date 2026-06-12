@@ -59,11 +59,11 @@ describe('scheduled backup worker', () => {
   it('runs backup and marks succeeded if backup succeeds', async () => {
     enqueueScheduledBackupRun(config.scheduledBackupRunsFile, {
       jobId: 'job_1',
-      jobDisplayName: 'MySQL #1',
+      jobDisplayName: 'MySQL · Hàng giờ #1',
       database: 'mysql',
       trigger: 'schedule',
       scheduledFor: '2026-06-12T03:00:00.000Z',
-      scheduleSnapshot: null
+      scheduleSnapshot: { type: 'hourly', everyHours: 2, minute: 0 }
     });
 
     const isDatabaseHealthy = vi.fn().mockResolvedValue(true);
@@ -80,7 +80,15 @@ describe('scheduled backup worker', () => {
     expect(result).not.toBeNull();
     expect(result?.status).toBe('succeeded');
     expect(result?.backupFilename).toBe('mysql-backup.sql.gz');
-    expect(runBackup).toHaveBeenCalled();
+    expect(runBackup).toHaveBeenCalledWith('mysql', {
+      trigger: 'schedule',
+      runId: result!.runId,
+      jobId: 'job_1',
+      jobDisplayName: 'MySQL · Hàng giờ #1',
+      batchId: null,
+      scheduledFor: '2026-06-12T03:00:00.000Z',
+      scheduleSnapshot: { type: 'hourly', everyHours: 2, minute: 0 }
+    });
 
     const runs = readScheduledBackupRuns(config.scheduledBackupRunsFile).runs;
     expect(runs[0]!.status).toBe('succeeded');

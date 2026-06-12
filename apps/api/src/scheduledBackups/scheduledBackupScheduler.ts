@@ -16,7 +16,7 @@ import {
   markStaleRunningRunsFailed
 } from './scheduledBackupRuns.js';
 import { isScheduleDue } from './scheduledBackupTime.js';
-import { processNextScheduledBackupRun } from './scheduledBackupWorker.js';
+import { processNextScheduledBackupRun, type BackupRunContext } from './scheduledBackupWorker.js';
 
 export function performScheduledBackupStartupInit(
   config: ManagerConfig,
@@ -119,12 +119,12 @@ export function startScheduledBackupScheduler(deps: AppDeps, logger: any) {
 
   const runBackup = async (
     database: 'mysql' | 'mssql',
-    context: { trigger: 'schedule' | 'manual' | 'retry'; runId: string }
+    context: BackupRunContext
   ) => {
     if (database === 'mysql') {
-      return backupMysql(deps, context as any);
+      return backupMysql(deps, context);
     } else {
-      return backupMssql(deps, context as any);
+      return backupMssql(deps, context);
     }
   };
 

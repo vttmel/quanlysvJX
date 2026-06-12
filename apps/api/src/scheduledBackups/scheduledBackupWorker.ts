@@ -1,9 +1,20 @@
 import type { ManagerConfig } from '../config.js';
 import type { ScheduledBackupRun } from './scheduledBackupTypes.js';
+import type { BackupScheduleRule } from './scheduledBackupTypes.js';
 import {
   startNextQueuedRunForDatabase,
   finishScheduledBackupRun
 } from './scheduledBackupRuns.js';
+
+export type BackupRunContext = {
+  trigger: 'schedule' | 'manual' | 'retry';
+  runId: string;
+  jobId: string | null;
+  jobDisplayName: string | null;
+  batchId: string | null;
+  scheduledFor: string;
+  scheduleSnapshot: BackupScheduleRule | null;
+};
 
 export type WorkerDeps = {
   config: ManagerConfig;
@@ -11,7 +22,7 @@ export type WorkerDeps = {
   isDatabaseHealthy: (database: 'mysql' | 'mssql') => Promise<boolean>;
   runBackup: (
     database: 'mysql' | 'mssql',
-    context: { trigger: 'schedule' | 'manual' | 'retry'; runId: string }
+    context: BackupRunContext
   ) => Promise<{ filename: string | null }>;
   logger: { info: (msg: string) => void; error: (msg: string) => void };
   now?: Date;
@@ -40,7 +51,15 @@ export async function processNextScheduledBackupRun(
 
   try {
     // 3. Execute backup callback
-    const result = await runBackup(database, { trigger: run.trigger, runId: run.runId });
+    const result = await runBackup(database, {
+      trigger: run.trigger,
+      runId: run.runId,
+      jobId: run.jobId,
+      jobDisplayName: run.jobDisplayName,
+      batchId: run.batchId,
+      scheduledFor: run.scheduledFor,
+      scheduleSnapshot: run.scheduleSnapshot
+    });
 
     // 4. Record success
     const finishedRun = finishScheduledBackupRun(
