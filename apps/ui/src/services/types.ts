@@ -50,8 +50,12 @@ export type BackupFile = {
   generatedBy?: {
     runId: string | null;
     jobId: string | null;
-    trigger: 'schedule' | 'manual';
+    jobDisplayName?: string | null;
+    trigger: 'schedule' | 'manual' | 'retry';
     batchId: string | null;
+    scheduledFor?: string | null;
+    generatedAt?: string | null;
+    scheduleSnapshot?: BackupScheduleRule | null;
   } | null;
 };
 
@@ -107,7 +111,7 @@ export type ScheduledBackupRun = {
   jobId: string;
   jobDisplayName: string;
   database: BackupKind;
-  trigger: 'schedule' | 'manual';
+  trigger: 'schedule' | 'manual' | 'retry';
   scheduledFor: string;
   queuedAt: string;
   startedAt: string | null;
@@ -115,7 +119,7 @@ export type ScheduledBackupRun = {
   status: 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
   error: string | null;
   backupFilename: string | null;
-  scheduleSnapshot: BackupScheduleRule;
+  scheduleSnapshot: BackupScheduleRule | null;
 };
 
 export type BackupSettings = {
