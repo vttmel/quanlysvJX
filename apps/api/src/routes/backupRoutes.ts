@@ -7,7 +7,7 @@ import { ok } from '../api/envelope.js';
 import { deleteBackupFile, listBackupFiles, renameBackupFile, writeUploadedBackupFile } from '../backups/backupFiles.js';
 import { backupJobStore, type StartJobInput } from '../backups/backupJobs.js';
 import { getBackupDirectory, assertBackupFile } from '../backups/backupPaths.js';
-import { readBackupSchedules, updateBackupSchedule } from '../backups/backupSchedules.js';
+import { getBackupScheduleRuntimeStatus, readBackupSchedules, updateBackupSchedule } from '../backups/backupSchedules.js';
 import { backupMssql, restoreMssql } from '../backups/mssqlBackup.js';
 import { backupMysql, restoreMysql } from '../backups/mysqlBackup.js';
 
@@ -99,7 +99,13 @@ export async function registerBackupRoutes(app: FastifyInstance) {
     return ok(await runJob({ kind: 'restore', database: 'mssql', trigger: 'restore' }, () => restoreMssql(app.deps, filename)));
   });
 
-  app.get('/api/backup-schedules', async () => ok(readBackupSchedules(app.deps.config.backupScheduleFile)));
+  app.get('/api/backup-schedules', async () =>
+    ok(
+      getBackupScheduleRuntimeStatus(readBackupSchedules(app.deps.config.backupScheduleFile), {
+        schedulerEnabled: app.deps.config.schedulerEnabled
+      })
+    )
+  );
 
   app.put('/api/backup-schedules/:kind', async (request) => {
     const { kind } = request.params as { kind: string };

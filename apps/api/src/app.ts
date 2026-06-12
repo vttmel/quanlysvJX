@@ -75,10 +75,13 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerVersionRoutes(app);
 
   if (config.schedulerEnabled) {
-    const scheduledTask = startBackupScheduler(deps);
+    app.log.info({ scheduleFile: config.backupScheduleFile }, 'Backup scheduler enabled');
+    const scheduledTask = startBackupScheduler(deps, app.log);
     app.addHook('onClose', () => {
       scheduledTask.stop();
     });
+  } else {
+    app.log.info('Backup scheduler disabled');
   }
 
   return app;

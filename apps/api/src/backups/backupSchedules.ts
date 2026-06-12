@@ -22,6 +22,22 @@ export type DatabaseBackupSchedule = z.infer<typeof scheduleSchema>;
 export type BackupScheduleConfig = z.infer<typeof schedulesSchema>;
 export type BackupDayOfWeek = z.infer<typeof daySchema>;
 
+export type BackupScheduleRuntimeStatus = BackupScheduleConfig & {
+  scheduler: {
+    enabled: boolean;
+    serverTime: string;
+  };
+  status: Record<
+    BackupKind,
+    {
+      lastRunAt: string | null;
+      nextRunAt: string | null;
+      scheduledToday: boolean;
+      runsToday: boolean;
+    }
+  >;
+};
+
 export function defaultBackupSchedules(): BackupScheduleConfig {
   const disabled: DatabaseBackupSchedule = {
     enabled: false,
@@ -65,4 +81,106 @@ export function getRunKey(kind: BackupKind, date: Date) {
   const hh = String(date.getHours()).padStart(2, '0');
   const min = String(date.getMinutes()).padStart(2, '0');
   return `${kind}:${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+export function getBackupScheduleRuntimeStatus(
+  config: BackupScheduleConfig,
+  options: { schedulerEnabled: boolean; now?: Date }
+): BackupScheduleRuntimeStatus {
+  const now = options.now ?? new Date();
+
+  return {
+    ...config,
+    scheduler: {
+      enabled: options.schedulerEnabled,
+      serverTime: now.toISOString()
+    },
+    status: {
+      mysql: getScheduleStatus('mysql', config.schedules.mysql, now),
+      mssql: getScheduleStatus('mssql', config.schedules.mssql, now)
+    }
+  };
+}
+
+function getScheduleStatus(kind: BackupKind, schedule: DatabaseBackupSchedule, now: Date) {
+  const scheduledToday = schedule.enabled && schedule.daysOfWeek.includes(now.getDay() as BackupDayOfWeek);
+  return {
+    lastRunAt: getLastRunAt(kind, schedule.lastRunKey),
+    nextRunAt: getNextRunAt(schedule, now),
+    scheduledToday,
+    runsToday: scheduledToday && isFutureToday(schedule, now)
+  };
+}
+
+function getLastRunAt(kind: BackupKind, lastRunKey: string | null) {
+  const match = lastRunKey?.match(new RegExp(`^${kind}:(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})$`));
+  if (!match) {
+    return null;
+  }
+
+  const [, rawYear, rawMonth, rawDay, rawHour, rawMinute] = match;
+  if (!rawYear || !rawMonth || !rawDay || !rawHour || !rawMinute) {
+    return null;
+  }
+
+  const year = Number(rawYear);
+  const month = Number(rawMonth);
+  const day = Number(rawDay);
+  const hour = Number(rawHour);
+  const minute = Number(rawMinute);
+  return new Date(year, month - 1, day, hour, minute, 0, 0).toISOString();
+}
+
+function getNextRunAt(schedule: DatabaseBackupSchedule, now: Date) {
+  if (!schedule.enabled || schedule.daysOfWeek.length === 0) {
+    return null;
+  }
+
+  const time = parseScheduleTime(schedule.time);
+  if (!time) {
+    return null;
+  }
+
+  for (let dayOffset = 0; dayOffset <= 7; dayOffset += 1) {
+    const candidate = new Date(now);
+    candidate.setDate(now.getDate() + dayOffset);
+    candidate.setHours(time.hour, time.minute, 0, 0);
+
+    if (schedule.daysOfWeek.includes(candidate.getDay() as BackupDayOfWeek) && candidate > now) {
+      return candidate.toISOString();
+    }
+  }
+
+  return null;
+}
+
+function isFutureToday(schedule: DatabaseBackupSchedule, now: Date) {
+  const time = parseScheduleTime(schedule.time);
+  if (!time) {
+    return false;
+  }
+
+  const candidate = new Date(now);
+  candidate.setHours(time.hour, time.minute, 0, 0);
+  return candidate > now;
+}
+
+function parseScheduleTime(value: string) {
+  const match = value.match(/^(\d{2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, rawHour, rawMinute] = match;
+  if (!rawHour || !rawMinute) {
+    return null;
+  }
+
+  const hour = Number(rawHour);
+  const minute = Number(rawMinute);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour > 23 || minute > 59) {
+    return null;
+  }
+
+  return { hour, minute };
 }

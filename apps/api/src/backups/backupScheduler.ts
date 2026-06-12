@@ -14,6 +14,11 @@ type RunDeps = {
   hasRunningJob: (kind: BackupKind) => boolean;
 };
 
+type SchedulerLogger = {
+  info: (context: object, message: string) => void;
+  error: (context: object, message: string) => void;
+};
+
 export async function runDueBackupSchedules(deps: RunDeps) {
   const config = readBackupSchedules(deps.scheduleFile);
   const results = await Promise.all((['mysql', 'mssql'] as const).map((kind) => runKindIfDue(kind, deps, config.schedules[kind])));
@@ -30,9 +35,17 @@ export function runScheduledBackupSchedules(appDeps: AppDeps, now = new Date()) 
   });
 }
 
-export function startBackupScheduler(appDeps: AppDeps) {
+export function startBackupScheduler(appDeps: AppDeps, logger?: SchedulerLogger) {
   return cron.schedule('* * * * *', () => {
-    void runScheduledBackupSchedules(appDeps);
+    void runScheduledBackupSchedules(appDeps)
+      .then((kinds) => {
+        if (kinds.length > 0) {
+          logger?.info({ kinds }, 'Scheduled backup completed');
+        }
+      })
+      .catch((error) => {
+        logger?.error({ err: error }, 'Scheduled backup failed');
+      });
   });
 }
 

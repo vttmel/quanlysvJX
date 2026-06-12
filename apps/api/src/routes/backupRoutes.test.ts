@@ -100,6 +100,23 @@ describe('backup routes', () => {
     expect(get.json().data.schedules.mysql.enabled).toBe(true);
   });
 
+  it('returns backup scheduler runtime status with schedules', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'manager-'));
+    const config = { ...testConfig(root), schedulerEnabled: true };
+    const app = await buildApp({ config });
+
+    const response = await app.inject({ method: 'GET', url: '/api/backup-schedules' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data).toMatchObject({
+      scheduler: { enabled: true },
+      status: {
+        mysql: { lastRunAt: null, nextRunAt: null, scheduledToday: false, runsToday: false },
+        mssql: { lastRunAt: null, nextRunAt: null, scheduledToday: false, runsToday: false }
+      }
+    });
+  });
+
   it('returns readonly backup settings', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'manager-'));
     const config = testConfig(root);

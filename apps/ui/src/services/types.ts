@@ -61,7 +61,20 @@ export type DatabaseBackupSchedule = {
 
 export type BackupScheduleConfig = {
   version: 1;
+  scheduler?: {
+    enabled: boolean;
+    serverTime: string;
+  };
   schedules: Record<BackupKind, DatabaseBackupSchedule>;
+  status?: Record<
+    BackupKind,
+    {
+      lastRunAt: string | null;
+      nextRunAt: string | null;
+      scheduledToday?: boolean;
+      runsToday: boolean;
+    }
+  >;
 };
 
 export type BackupJob = {

@@ -5,6 +5,10 @@ import { BackupPanel } from './BackupPanel';
 
 const mockSchedules = {
   version: 1,
+  scheduler: {
+    enabled: true,
+    serverTime: '2026-06-12T01:00:00.000Z',
+  },
   schedules: {
     mysql: {
       enabled: false,
@@ -19,6 +23,20 @@ const mockSchedules = {
       time: '03:30',
       retentionDays: 14,
       lastRunKey: null,
+    },
+  },
+  status: {
+    mysql: {
+      lastRunAt: '2026-06-11T20:00:00.000Z',
+      nextRunAt: '2026-06-18T20:00:00.000Z',
+      scheduledToday: true,
+      runsToday: false,
+    },
+    mssql: {
+      lastRunAt: null,
+      nextRunAt: null,
+      scheduledToday: false,
+      runsToday: false,
     },
   },
 };
@@ -94,6 +112,8 @@ describe('BackupPanel routing', () => {
     expect(screen.getByRole('tab', { name: 'Schedule' }).getAttribute('aria-selected')).toBe(
       'true'
     );
+    expect(screen.getByText('Bộ lập lịch đang bật')).toBeTruthy();
+    expect(screen.getAllByText('Lần chạy kế tiếp').length).toBeGreaterThan(0);
   });
 
   it('navigates to jobs when Jobs tab is clicked', async () => {
