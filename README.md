@@ -1,121 +1,172 @@
-# Hướng Dẫn Cài Đặt & Chạy Trình Quản Lý JX (Dành Cho Người Mới)
+# Quan ly server JX
 
-Tài liệu này hướng dẫn chi tiết từng bước để bạn tải mã nguồn, cấu hình môi trường và khởi chạy hệ thống quản lý tài khoản/dịch vụ game JX bằng Docker. Hướng dẫn được thiết kế dễ hiểu cho người ít am hiểu về IT.
+Huong dan nay danh cho nguoi moi, khong can biet nhieu ve IT. Ban chi can cai Docker, tai ma nguon, chay lenh khoi dong, sau do cau hinh va dieu khien server tren giao dien Web.
 
----
+## Luu y truoc khi cai
 
-## Các Bước Chuẩn Bị & Cài Đặt
+- Uu tien chay tren Ubuntu/Linux server.
+- Windows/macOS Docker Desktop chua duoc test day du. Co the gap loi do co che network, Docker socket va duong dan file khac Linux.
+- File `.env` da co san trong repo va co the sua tren Web o muc Cai dat. File nay co mat khau mac dinh, can doi truoc khi dung ngoai may ca nhan hoac mang LAN tin cay.
+- Web Manager co quyen dieu khien Docker tren may chu. Chi dung trong mang LAN tin cay, khong mo cong ra Internet cong cong.
 
-### Bước 1: Tải mã nguồn về máy (Git Clone)
-Mở cửa sổ Terminal/Command Line trên máy tính của bạn và chạy lệnh sau để tải dự án về:
+## 1. Cai Docker
+
+Vao trang chu Docker, tai ban phu hop voi he dieu hanh cua ban va cai dat theo huong dan cua Docker.
+
+Sau khi cai xong, mo Terminal va kiem tra:
+
+```bash
+docker --version
+docker compose version
+```
+
+Neu hai lenh tren hien version, Docker da san sang.
+
+## 2. Tai ma nguon
+
+Mo Terminal, chay:
+
 ```bash
 git clone https://github.com/hungnt87/quanlysvJX.git
 cd quanlysvJX
 ```
 
----
+## 3. Kiem tra file cau hinh `.env`
 
-### Bước 2: Tạo các thư mục và phân quyền tự động
+Repo da co file `.env` o thu muc goc. Ban co the mo file nay bang text editor neu muon xem nhanh.
 
-Hệ thống cần một số thư mục để chứa dữ liệu cơ sở dữ liệu và chứng chỉ bảo mật. An đã tạo sẵn file script `setup.sh` để tự động hóa toàn bộ việc này.
+Nhung cach de sua de nhat la sau khi Web chay:
 
-Hãy mở Terminal tại thư mục gốc của dự án, cấp quyền thực thi cho file và khởi chạy bằng các lệnh sau:
+1. Vao `http://localhost`.
+2. Mo `Cai dat`.
+3. Chon tab `Bien moi truong (.env)`.
+4. Sua cau hinh can thiet va bam luu.
+
+Cac muc thuong can quan tam:
+
+- `JX_IP`: IP cua may chay server game trong mang LAN.
+- `JX_MYSQL_IP`, `JX_PAYSYS_IP`, `JX_MSSQL_IP`: IP ket noi giua cac dich vu JX.
+- `MSSQL_USER`, `MSSQL_PASSWORD`, `MSSQL_DATABASE`: tai khoan database cho Web Manager.
+- `BACKUP_SCHEDULER_ENABLED`: bat/tat lich sao luu tu dong.
+
+`SERVER_PATH` se duoc Web tu cap nhat khi ban kich hoat phien ban game, khong can sua tay luc moi cai.
+
+## 4. Khoi dong Web Manager
+
+Tai thu muc goc cua repo, chay:
 
 ```bash
-# 1. Cấp quyền thực thi cho file setup.sh
-chmod +x setup.sh
-
-# 2. Chạy file script để tự động tạo thư mục và phân quyền
-./setup.sh
-```
-
----
-
-### Bước 3: Lấy IP của máy chủ (Host IP)
-Để các dịch vụ trong Docker và máy chủ giao tiếp được với nhau, bạn cần biết IP mạng LAN của máy mình.
-* Chạy lệnh sau trong Terminal để tìm IP:
-  ```bash
-  hostname -I
-  ```
-* Hệ thống sẽ trả về danh sách các địa chỉ IP (ví dụ: `192.168.10.4`). Hãy ghi nhớ địa chỉ IP đầu tiên này để điền vào cấu hình ở Bước 4.
-
----
-
-### Bước 4: Tạo và điền file cấu hình môi trường (.env)
-1. Tạo một file mới tên là `.env` ở ngay thư mục gốc của dự án (nằm cùng thư mục với file `docker-compose.yaml`).
-2. Sao chép nội dung bên dưới, dán vào file `.env` và chỉnh sửa các dòng tương ứng:
-
-```env
-# 1. Đường dẫn thư mục chứa server JX trên máy của bạn (Hãy đổi sang đường dẫn thực tế của bạn)
-SERVER_PATH=/home/hungnt/dev/jxser_vozer/server/
-
-# 2. IP của máy chạy dịch vụ JX (Đặt 'auto' để tự động nhận dạng hoặc điền IP ở Bước 3)
-JX_IP=auto
-
-# 3. IP kết nối của các dịch vụ database (mặc định là auto -> tự nhận diện 127.0.0.1)
-JX_MYSQL_IP=auto
-JX_PAYSYS_IP=auto
-JX_MSSQL_IP=auto
-
-# 4. Cấu hình Database kết nối MSSQL dạng mã hóa (Dùng để chạy dịch vụ Paysys)
-JX_MSSQL_IP_ENCRYPTED=v0vee0yAi0HkrLNs0SAM0AwAXCDdfo0y
-JX_MSSQL_DB_ENCRYPTED=q0n8oitJqQQsfARc__0UCLAbwKw1FwNH
-JX_MSSQL_USER_ENCRYPTED=q5wdvorvzRYp5dfxjDEjLRylzTRh9vpY
-JX_MSSQL_PASS_ENCRYPTED=Zn0A_X0BcQBettvBSfzG5vXiBfwJXihZ
-
-# 5. Cấu hình kết nối cơ sở dữ liệu MSSQL cho Trình quản lý (Manager API)
-# IP kết nối từ trong Docker ra ngoài host
-MSSQL_HOST=host.docker.internal
-MSSQL_PORT=1433
-MSSQL_DATABASE=account_tong
-MSSQL_USER=sa
-MSSQL_PASSWORD=SAJx123456
-```
-
----
-
-### Bước 5: Khởi chạy hệ thống bằng Docker
-
-Hệ thống được thiết kế tối giản và dễ sử dụng nhất. Bạn chỉ cần khởi chạy **Trình Quản trị (Web Manager)** tại thư mục gốc của dự án. Tất cả các dịch vụ game JX (Paysys, Bishop, Goddess, Gameserver, Database...) sau đó sẽ được quản lý và khởi chạy trực tiếp trên giao diện Web mà bạn không cần phải vào thư mục `apps/jx-services` để chạy lệnh nữa.
-
-Chạy lệnh duy nhất sau tại thư mục gốc:
-```bash
+cd quanlysvJX
 docker compose up -d --build
 ```
 
----
+Lenh nay se build va chay:
 
-### Bước 6: Truy cập giao diện quản trị và sử dụng
-Mở trình duyệt web (Chrome, Edge, Firefox, v.v.) và truy cập vào một trong hai địa chỉ:
-* **`http://localhost`** (nếu dùng trực tiếp trên máy chạy server).
-* **`http://<IP-may-host>`** (ví dụ: `http://192.168.10.4` lấy ở Bước 3 nếu bạn truy cập từ máy khác trong cùng mạng LAN).
+- API quan ly o cong `3001`
+- Giao dien Web o cong `80`
 
-Giao diện Web cung cấp đầy đủ các tính năng:
-1. **Bảng điều khiển & Logs**: Bật/tắt dịch vụ JX trực tiếp trên Web và theo dõi logs thời gian thực.
-2. **Quản lý Tài khoản game**: Thêm tài khoản mới, thay đổi mật khẩu/hạn dùng hoặc xóa tài khoản vĩnh viễn khỏi Database một cách trực quan mà không cần gõ lệnh SQL.
-3. **Sao lưu (Backup)**: Quản lý sao lưu cơ sở dữ liệu (xem chi tiết bên dưới).
+Mo trinh duyet:
 
----
+- Tren may dang chay server: `http://localhost`
+- Tu may khac cung LAN: `http://<IP-may-chu>`
 
-## Tính Năng Sao Lưu (Backup) & Phục Hồi
+Vi du: `http://192.168.10.4`
 
-Trình quản trị tích hợp sẵn công cụ quản lý Sao lưu tự động và thủ công cho cả MySQL (chứa dữ liệu game) và MSSQL (chứa tài khoản):
+## 5. Cai dat va kich hoat phien ban game
 
-### 1. Sao lưu tự động (Scheduled Backup)
-* Mặc định hệ thống tự động chạy tác vụ sao lưu vào lúc **3:00 sáng mỗi ngày** (cấu hình qua biến `BACKUP_SCHEDULE` trong file `.env` nếu cần đổi).
-* Hệ thống sẽ tự động dọn dẹp và chỉ lưu giữ bản sao lưu trong vòng **14 ngày gần nhất** (`BACKUP_RETENTION_DAYS`) để tránh làm đầy ổ cứng.
+Sau khi mo Web, can cai dat phien ban game truoc khi chay service.
 
-### 2. Các thư mục lưu trữ bản sao lưu trên máy Host:
-* Dữ liệu MySQL: `apps/jx-services/mount/database/backups/mysql/`
-* Dữ liệu MSSQL: `apps/jx-services/mount/database/mssql/data/database_backups/`
+1. Vao `Cai dat`.
+2. Chon tab `Phien ban game`.
+3. Tai len file `.zip`, `.tar.gz`, `.tgz` hoac clone tu GitHub.
+4. Chon dung thu muc server neu Web yeu cau.
+5. Bam kich hoat phien ban.
 
-### 3. Thao tác trên Web:
-Tại tab **Sao lưu** trên giao diện quản trị:
-* **Tạo bản sao lưu ngay lập tức**: Nhấn nút "Tạo sao lưu" để hệ thống chụp nhanh dữ liệu hiện tại của game.
-* **Phục hồi (Restore)**: Chọn một bản sao lưu trong danh sách lịch sử và nhấn nút "Phục hồi" để đưa dữ liệu game quay về thời điểm sao lưu đó chỉ trong vài giây.
+Neu chua kich hoat phien ban game, Dashboard se khong cho chay cac dich vu game.
 
----
+## 6. Cau hinh IP game
 
-## Một Số Lưu Ý Quan Trọng
-* **Khôi phục dữ liệu mẫu**: Ở lần chạy đầu tiên, hệ thống sẽ tự động khôi phục (Restore) dữ liệu từ file backup mẫu [account_tong_seed.bak](file:///home/hungnt/dev/quanlysvJX/apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak) nằm trong thư mục `seed`.
-* **Bảo mật**: Hệ thống này hiện tại chưa tích hợp trang đăng nhập bảo mật và có gắn trực tiếp quyền điều khiển Docker của máy chủ qua socket. **Chỉ sử dụng dự án này trong mạng LAN gia đình tin cậy, tuyệt đối không mở cổng (Public Port) hoặc đưa trang quản trị này lên Internet công cộng.**
+Vao `Cai dat` de cau hinh IP game.
+
+- `Game server IP`: chon IP that cua may chu trong mang LAN.
+- `MySQL IP`, `Paysys IP`, `MSSQL IP`: thuong de `127.0.0.1` khi chay tat ca tren cung may.
+
+Sau khi luu cau hinh IP, restart cac dich vu dang chay de cau hinh moi co hieu luc.
+
+## 7. Chay va quan ly dich vu JX
+
+Vao `Bang dieu khien`.
+
+Tai day co the:
+
+- Xem trang thai dich vu.
+- Chuan bi image neu dich vu chua co image.
+- Bat/tat tung dich vu JX.
+- Xem log truc tiep khi service dang khoi dong.
+
+Nen khoi dong theo giao dien Web thay vi tu go lenh trong `apps/jx-services`.
+
+## 8. Quan ly tai khoan game
+
+Vao `Tai khoan`.
+
+Tai day co the:
+
+- Tao tai khoan game.
+- Doi mat khau.
+- Doi mat khau cap 2.
+- Gia han tai khoan.
+- Khoa/mo khoa tai khoan.
+- Xoa mem tai khoan.
+
+Tinh nang nay can MSSQL chay dung va thong tin MSSQL trong `.env` phai chinh xac.
+
+## 9. Sao luu va phuc hoi
+
+Vao `Sao luu`.
+
+Tai day co the:
+
+- Tao ban sao luu thu cong.
+- Xem danh sach file sao luu.
+- Ghi chu/chinh sua thong tin file sao luu.
+- Phuc hoi du lieu tu ban sao luu.
+- Cau hinh lich sao luu tu dong.
+
+Sao luu tu dong duoc bat/tat bang `BACKUP_SCHEDULER_ENABLED` trong `.env` va cau hinh chi tiet trong tab sao luu tren Web.
+
+## Loi thuong gap
+
+### Docker chua chay
+
+Neu `docker compose up -d --build` bao loi ket noi Docker, hay mo Docker Desktop hoac khoi dong Docker service tren Linux.
+
+### Khong mo duoc Web
+
+Kiem tra container:
+
+```bash
+docker compose ps
+```
+
+Neu UI/API chua chay, xem log:
+
+```bash
+docker compose logs -f
+```
+
+### Web bao chua kich hoat phien ban game
+
+Vao `Cai dat` -> `Phien ban game`, tai len hoac clone phien ban game, sau do kich hoat.
+
+### Khong quan ly duoc tai khoan
+
+Kiem tra MSSQL da chay va thong tin `MSSQL_USER`, `MSSQL_PASSWORD`, `MSSQL_DATABASE` trong `.env` dung.
+
+### Chay tren Windows/macOS bi loi
+
+Moi truong Windows/macOS Docker Desktop chua test day du. Neu gap loi network, duong dan volume, hoac Docker socket, hay chay tren Ubuntu/Linux server.
+
+## Bao mat
+
+Du an hien phu hop dung trong LAN/noi bo. Khong public Web Manager ra Internet khi chua co dang nhap, phan quyen, HTTPS va cau hinh firewall phu hop.
