@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
+import type { Multipart, MultipartValue } from '@fastify/multipart';
 import { z } from 'zod';
 import { ok } from '../api/envelope.js';
 import { deleteBackupFile, listBackupFiles, renameBackupFile, writeUploadedBackupFile } from '../backups/backupFiles.js';
@@ -66,7 +67,8 @@ export async function registerBackupRoutes(app: FastifyInstance) {
       writeUploadedBackupFile({
         ...app.deps.config,
         kind: parsedKind,
-        filename: part.filename,
+        filename: normalizeUploadFilename(readMultipartTextField(part.fields.filename), part.filename),
+        note: normalizeOptionalNote(readMultipartTextField(part.fields.note)),
         data: Buffer.concat(chunks)
       })
     );
@@ -114,6 +116,24 @@ export async function registerBackupRoutes(app: FastifyInstance) {
       backupScheduleFile: app.deps.config.backupScheduleFile
     })
   );
+}
+
+function readMultipartTextField(field: Multipart | Multipart[] | undefined) {
+  const value = Array.isArray(field) ? field[0] : field;
+  if (!value || value.type !== 'field') {
+    return null;
+  }
+
+  const fieldValue = (value as MultipartValue).value;
+  return typeof fieldValue === 'string' ? fieldValue.trim() : null;
+}
+
+function normalizeOptionalNote(value: string | null) {
+  return value && value.length > 0 ? value : null;
+}
+
+function normalizeUploadFilename(value: string | null, fallback: string) {
+  return value && value.length > 0 ? value : fallback;
 }
 
 async function runJob<T extends object>(input: StartJobInput, action: () => Promise<T>) {

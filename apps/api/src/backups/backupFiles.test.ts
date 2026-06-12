@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../api/errors.js';
-import { deleteBackupFile, listBackupFiles, renameBackupFile, validateBackupExtension } from './backupFiles.js';
+import { deleteBackupFile, listBackupFiles, renameBackupFile, validateBackupExtension, writeUploadedBackupFile } from './backupFiles.js';
 
 function makeRoot() {
   const root = mkdtempSync(path.join(tmpdir(), 'backup-files-'));
@@ -65,6 +65,26 @@ describe('backup files', () => {
     expect(renamed.filename).toBe('renamed.sql.gz');
     expect(renamed.note).toBe('renamed file');
     expect(files.some((file) => file.filename === 'old.sql.gz')).toBe(false);
+  });
+
+  it('stores uploaded backups with the requested server filename and note', () => {
+    const root = makeRoot();
+
+    const uploaded = writeUploadedBackupFile({
+      kind: 'mysql',
+      filename: 'uploaded-from-old-server.sql.gz',
+      note: 'Data before migration',
+      data: Buffer.from('backup'),
+      mysqlBackupDir: root.mysql,
+      mssqlBackupDir: root.mssql,
+      backupMetadataFile: root.metadata,
+      now: () => new Date('2026-06-12T01:00:00.000Z')
+    });
+
+    expect(uploaded?.filename).toBe('uploaded-from-old-server.sql.gz');
+    expect(uploaded?.note).toBe('Data before migration');
+    expect(uploaded?.source).toBe('uploaded');
+    expect(uploaded?.uploadedAt).toBe('2026-06-12T01:00:00.000Z');
   });
 
   it('blocks deleting the latest backup', () => {

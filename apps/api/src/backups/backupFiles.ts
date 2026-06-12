@@ -35,7 +35,9 @@ export function listBackupFiles(deps: FileDeps): BackupFileView[] {
   return (['mysql', 'mssql'] as const).flatMap((kind) => listKindFiles(kind, deps, metadata.files));
 }
 
-export function writeUploadedBackupFile(args: FileDeps & { kind: BackupKind; filename: string; data: Buffer; now?: () => Date }) {
+export function writeUploadedBackupFile(
+  args: FileDeps & { kind: BackupKind; filename: string; note: string | null; data: Buffer; now?: () => Date }
+) {
   validateBackupExtension(args.kind, args.filename);
   const directory = getBackupDirectory(args.kind, args);
   mkdirSync(directory, { recursive: true });
@@ -53,7 +55,7 @@ export function writeUploadedBackupFile(args: FileDeps & { kind: BackupKind; fil
   upsertBackupMetadata(args.backupMetadataFile, {
     kind: args.kind,
     filename: args.filename,
-    note: null,
+    note: args.note,
     createdByUpload: true,
     uploadedAt: now.toISOString(),
     updatedAt: now.toISOString()

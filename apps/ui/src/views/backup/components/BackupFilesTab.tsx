@@ -10,9 +10,9 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 import { useBackups, backupKeys } from '@/hooks/useBackups';
-import type { BackupFile, BackupKind } from '@/services/types';
+import type { BackupFile, BackupKind, UploadBackupPayload } from '@/services/types';
 import { BackupEditModal } from './BackupEditModal';
 import { BackupUploadModal } from './BackupUploadModal';
 import { DeleteBackupModal } from './DeleteBackupModal';
@@ -34,6 +34,11 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
   const [editingFile, setEditingFile] = useState<BackupFile | null>(null);
   const [deletingFile, setDeletingFile] = useState<BackupFile | null>(null);
   const [restoringFile, setRestoringFile] = useState<BackupFile | null>(null);
+  const [highlightedFile, setHighlightedFile] = useState<Pick<
+    BackupFile,
+    'kind' | 'filename'
+  > | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     backups: files,
@@ -42,13 +47,21 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
     updateBackup,
     deleteBackup,
     restoreBackup,
-    isLoading,
+    isActionLoading,
   } = useBackups();
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleBackupNow = useCallback(
     (kind: BackupKind | 'all') => {
       createBackup(kind)
-        .then(() => onSuccess('Backup completed'))
+        .then(() => onSuccess('Đã bắt đầu sao lưu'))
         .catch((error) => onError(error instanceof Error ? error.message : 'Backup action failed'));
     },
     [createBackup, onSuccess, onError]
@@ -75,11 +88,18 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
   const handleBackupMssql = useCallback(() => handleBackupNow('mssql'), [handleBackupNow]);
 
   const handleUpload = useCallback(
-    (kind: BackupKind, file: File) => {
-      uploadBackup({ kind, file })
-        .then(() => {
-          onSuccess('Backup uploaded');
+    (payload: UploadBackupPayload) => {
+      uploadBackup(payload)
+        .then((uploaded) => {
+          onSuccess('Đã tải file backup lên');
           setUploadOpened(false);
+          if (uploaded) {
+            setHighlightedFile({ kind: uploaded.kind, filename: uploaded.filename });
+            if (highlightTimerRef.current) {
+              clearTimeout(highlightTimerRef.current);
+            }
+            highlightTimerRef.current = setTimeout(() => setHighlightedFile(null), 3500);
+          }
         })
         .catch((error) => onError(error instanceof Error ? error.message : 'Upload failed'));
     },
@@ -97,7 +117,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
         payload: { filename, note },
       })
         .then(() => {
-          onSuccess('Backup updated');
+          onSuccess('Đã cập nhật file backup');
           setEditingFile(null);
         })
         .catch((error) => onError(error instanceof Error ? error.message : 'Update failed'));
@@ -111,7 +131,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
     }
     deleteBackup({ kind: deletingFile.kind, filename: deletingFile.filename })
       .then(() => {
-        onSuccess('Backup deleted');
+        onSuccess('Đã xóa file backup');
         setDeletingFile(null);
       })
       .catch((error) => onError(error instanceof Error ? error.message : 'Delete failed'));
@@ -123,7 +143,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
     }
     restoreBackup({ kind: restoringFile.kind, filename: restoringFile.filename })
       .then(() => {
-        onSuccess('Restore completed');
+        onSuccess('Đã khôi phục dữ liệu');
         setRestoringFile(null);
       })
       .catch((error) => onError(error instanceof Error ? error.message : 'Restore failed'));
@@ -181,17 +201,17 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
               getDatabaseDisabledReason('mssql')
             )}
             <Button variant="light" onClick={() => setUploadOpened(true)}>
-              Upload
+              Tải file backup lên
             </Button>
             <Button variant="default" onClick={handleRefresh}>
-              Refresh
+              Làm mới
             </Button>
           </Group>
           <Group align="flex-end">
             <Select
               label="Database"
               data={[
-                { value: 'all', label: 'All' },
+                { value: 'all', label: 'Tất cả' },
                 { value: 'mysql', label: 'MySQL' },
                 { value: 'mssql', label: 'MSSQL' },
               ]}
@@ -199,10 +219,10 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
               onChange={(value) => setFilterKind((value ?? 'all') as FilterKind)}
             />
             <TextInput
-              label="Search"
+              label="Tìm kiếm"
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
-              placeholder="Filename or note"
+              placeholder="Tên file hoặc ghi chú"
             />
           </Group>
         </Group>
@@ -211,78 +231,90 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Database</Table.Th>
-              <Table.Th>Filename</Table.Th>
-              <Table.Th>Size</Table.Th>
-              <Table.Th>Modified</Table.Th>
-              <Table.Th>Note</Table.Th>
-              <Table.Th>Source</Table.Th>
-              <Table.Th>Actions</Table.Th>
+              <Table.Th>Tên file</Table.Th>
+              <Table.Th>Dung lượng</Table.Th>
+              <Table.Th>Cập nhật</Table.Th>
+              <Table.Th>Ghi chú</Table.Th>
+              <Table.Th>Nguồn</Table.Th>
+              <Table.Th>Thao tác</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {filteredFiles.length === 0 ? (
               <Table.Tr>
                 <Table.Td colSpan={7}>
-                  <Text c="dimmed">No backup files found</Text>
+                  <Text c="dimmed">Chưa có file backup</Text>
                 </Table.Td>
               </Table.Tr>
             ) : (
-              filteredFiles.map((file) => (
-                <Table.Tr key={`${file.kind}/${file.filename}`}>
-                  <Table.Td>
-                    <Badge variant="light" color={file.kind === 'mysql' ? 'blue' : 'red'}>
-                      {file.kind.toUpperCase()}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Text fw={600}>{file.filename}</Text>
-                      {file.isLatest ? <Badge color="green">Latest</Badge> : null}
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>{formatBytes(file.size)}</Table.Td>
-                  <Table.Td>{formatDate(file.modifiedAt)}</Table.Td>
-                  <Table.Td>{file.note ?? '-'}</Table.Td>
-                  <Table.Td>{file.source}</Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      {wrapDisabled(
+              filteredFiles.map((file) => {
+                const isHighlighted =
+                  highlightedFile?.kind === file.kind && highlightedFile.filename === file.filename;
+                return (
+                  <Table.Tr
+                    key={`${file.kind}/${file.filename}`}
+                    style={{
+                      backgroundColor: isHighlighted ? 'var(--mantine-color-yellow-0)' : undefined,
+                      transition: 'background-color 300ms ease',
+                    }}
+                  >
+                    <Table.Td>
+                      <Badge variant="light" color={file.kind === 'mysql' ? 'blue' : 'red'}>
+                        {file.kind.toUpperCase()}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        <Text fw={600}>{file.filename}</Text>
+                        {file.isLatest ? <Badge color="green">Mới nhất</Badge> : null}
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>{formatBytes(file.size)}</Table.Td>
+                    <Table.Td>{formatDate(file.modifiedAt)}</Table.Td>
+                    <Table.Td>{file.note ?? '-'}</Table.Td>
+                    <Table.Td>
+                      {file.source === 'uploaded' ? 'Tải lên' : 'Tạo bởi hệ thống'}
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        {wrapDisabled(
+                          <Button
+                            size="xs"
+                            variant="light"
+                            disabled={!databaseReadiness[file.kind]}
+                            onClick={() => setRestoringFile(file)}
+                          >
+                            Khôi phục
+                          </Button>,
+                          !databaseReadiness[file.kind],
+                          getDatabaseDisabledReason(file.kind)
+                        )}
+                        <Button size="xs" variant="default" onClick={() => setEditingFile(file)}>
+                          Sửa
+                        </Button>
                         <Button
                           size="xs"
                           variant="light"
-                          disabled={!databaseReadiness[file.kind]}
-                          onClick={() => setRestoringFile(file)}
+                          component="a"
+                          href={`/api/backups/${file.kind}/${encodeURIComponent(file.filename)}/download`}
+                          download
                         >
-                          Restore
-                        </Button>,
-                        !databaseReadiness[file.kind],
-                        getDatabaseDisabledReason(file.kind)
-                      )}
-                      <Button size="xs" variant="default" onClick={() => setEditingFile(file)}>
-                        Edit
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="light"
-                        component="a"
-                        href={`/api/backups/${file.kind}/${encodeURIComponent(file.filename)}/download`}
-                        download
-                      >
-                        Download
-                      </Button>
-                      <Button
-                        size="xs"
-                        color="red"
-                        variant="light"
-                        disabled={file.isLatest}
-                        onClick={() => setDeletingFile(file)}
-                      >
-                        Delete
-                      </Button>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))
+                          Tải xuống
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="red"
+                          variant="light"
+                          disabled={file.isLatest}
+                          onClick={() => setDeletingFile(file)}
+                        >
+                          Xóa
+                        </Button>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })
             )}
           </Table.Tbody>
         </Table>
@@ -290,21 +322,21 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
 
       <BackupUploadModal
         opened={uploadOpened}
-        loading={isLoading}
+        loading={isActionLoading}
         onClose={() => setUploadOpened(false)}
         onUpload={handleUpload}
       />
       <BackupEditModal
         opened={editingFile !== null}
         file={editingFile}
-        loading={isLoading}
+        loading={isActionLoading}
         onClose={() => setEditingFile(null)}
         onSave={handleSaveEdit}
       />
       <DeleteBackupModal
         opened={deletingFile !== null}
         file={deletingFile}
-        loading={isLoading}
+        loading={isActionLoading}
         onClose={() => setDeletingFile(null)}
         onConfirm={handleDeleteConfirm}
       />
@@ -312,7 +344,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
         opened={restoringFile !== null}
         kind={restoringFile?.kind ?? 'mysql'}
         filename={restoringFile?.filename ?? null}
-        loading={isLoading}
+        loading={isActionLoading}
         onClose={() => setRestoringFile(null)}
         onConfirm={handleRestoreConfirm}
       />

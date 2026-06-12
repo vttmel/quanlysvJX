@@ -31,6 +31,13 @@ export type VersionListResponse = {
 
 export type BackupKind = 'mysql' | 'mssql';
 
+export type UploadBackupPayload = {
+  kind: BackupKind;
+  file: File;
+  filename: string;
+  note: string | null;
+};
+
 export type BackupFile = {
   kind: BackupKind;
   filename: string;

@@ -7,6 +7,7 @@ import type {
   DatabaseBackupSchedule,
   BackupSettings,
   BackupKind,
+  UploadBackupPayload,
 } from './types';
 
 export const backupService = {
@@ -24,13 +25,16 @@ export const backupService = {
     });
     return res.data;
   },
-  uploadBackup: async (kind: BackupKind, file: File) => {
+  uploadBackup: async ({ kind, file, filename, note }: UploadBackupPayload) => {
     const form = new FormData();
+    form.append('filename', filename);
+    form.append('note', note ?? '');
     form.append('file', file);
     const res = await ApiService.fetchData<FormData, BackupFile>({
       url: `/api/backups/${kind}/upload`,
       method: 'POST',
       data: form,
+      timeout: 0,
     });
     return res.data;
   },

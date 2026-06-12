@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { backupService } from '@/services/backupService';
-import type { BackupKind, DatabaseBackupSchedule } from '@/services/types';
+import type { BackupKind, DatabaseBackupSchedule, UploadBackupPayload } from '@/services/types';
 
 export const backupKeys = {
   all: ['backups'] as const,
@@ -41,8 +41,7 @@ export const useBackups = () => {
   });
 
   const uploadBackupMutation = useMutation({
-    mutationFn: ({ kind, file }: { kind: BackupKind; file: File }) =>
-      backupService.uploadBackup(kind, file),
+    mutationFn: (payload: UploadBackupPayload) => backupService.uploadBackup(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: backupKeys.all });
     },
@@ -90,6 +89,13 @@ export const useBackups = () => {
     schedules: schedulesQuery.data,
     settings: settingsQuery.data,
     isLoading: backupsQuery.isLoading || jobsQuery.isLoading,
+    isActionLoading:
+      createBackupMutation.isPending ||
+      uploadBackupMutation.isPending ||
+      updateBackupMutation.isPending ||
+      deleteBackupMutation.isPending ||
+      restoreBackupMutation.isPending ||
+      saveScheduleMutation.isPending,
     createBackup: createBackupMutation.mutateAsync,
     uploadBackup: uploadBackupMutation.mutateAsync,
     updateBackup: updateBackupMutation.mutateAsync,
