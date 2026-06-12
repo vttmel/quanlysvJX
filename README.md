@@ -56,7 +56,6 @@ Cac muc thuong can quan tam:
 Tai thu muc goc cua repo, chay:
 
 ```bash
-cd quanlysvJX
 docker compose up -d --build
 ```
 
