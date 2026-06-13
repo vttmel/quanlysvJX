@@ -29,7 +29,9 @@ export function getServiceBuildReadiness(
   }
 
   const state = readBuildState(projectRoot);
-  const savedSignature = state.services[serviceName]?.signature ?? null;
+  const serviceConfig = resolveComposeServiceConfig(composeConfig, serviceName);
+  const savedSignature =
+    state.services[serviceConfig.imageName]?.signature ?? state.services[serviceName]?.signature ?? null;
   if (!imageExists) {
     return { needsRebuild: false, buildReason: null, buildSignature: signature };
   }
@@ -64,11 +66,12 @@ export function markServiceImagePrepared(
   }
 
   const state = readBuildState(projectRoot);
+  const serviceConfig = resolveComposeServiceConfig(composeConfig, serviceName);
   writeBuildState(projectRoot, {
     version: 1,
     services: {
       ...state.services,
-      [serviceName]: {
+      [serviceConfig.imageName]: {
         signature,
         updatedAt: new Date().toISOString()
       }
@@ -93,7 +96,7 @@ export function calculateServiceBuildSignature(
 
   const buildPaths = resolveBuildInputPaths(projectRoot, service);
   const hash = createHash('sha256');
-  hash.update(serviceName);
+  hash.update(serviceConfig.imageName);
 
   for (const filePath of buildPaths) {
     if (!existsSync(filePath)) {

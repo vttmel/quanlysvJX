@@ -17,6 +17,10 @@ const composeConfig = {
       image: 'jx-centos',
       build: { context: './dockerfiles', dockerfile: 'Dockerfile.jx-centos' }
     },
+    jxserver: {
+      image: 'jx-centos',
+      build: { context: './dockerfiles', dockerfile: 'Dockerfile.jx-centos' }
+    },
     jxmysql: {
       image: 'mysql:5.6'
     }
@@ -81,6 +85,9 @@ describe('service image build state', () => {
 
     markServiceImagePrepared(root, composeConfig, 'paysys');
     markServiceImagePrepared(root, composeConfig, 'goddess');
+    expect(getServiceBuildReadiness(root, composeConfig, 'jxserver', true)).toMatchObject({
+      needsRebuild: false
+    });
 
     writeFileSync(
       path.join(root, 'apps/jx-services/dockerfiles/paysys-entrypoint.sh'),
@@ -102,6 +109,9 @@ describe('service image build state', () => {
     );
 
     expect(getServiceBuildReadiness(root, composeConfig, 'goddess', true)).toMatchObject({
+      needsRebuild: true
+    });
+    expect(getServiceBuildReadiness(root, composeConfig, 'jxserver', true)).toMatchObject({
       needsRebuild: true
     });
   });
