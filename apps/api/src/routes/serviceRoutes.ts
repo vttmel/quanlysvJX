@@ -73,22 +73,9 @@ export async function registerServiceRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/services/images/prepare/stream', (request, reply) => {
-    assertActiveVersion(projectRoot);
-
-    const query = request.query as { services?: string };
-    const servicesParam = query.services || '';
-    const names = servicesParam
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((name) => assertServiceName(name));
-
-    if (names.length === 0) {
-      throw new ValidationError('Danh sách dịch vụ cần chuẩn bị không được trống.');
-    }
-
     const abortController = new AbortController();
     let closed = false;
+    let names: string[] = [];
 
     reply.hijack();
     reply.raw.writeHead(200, {
@@ -128,6 +115,20 @@ export async function registerServiceRoutes(app: FastifyInstance) {
     });
 
     void (async () => {
+      assertActiveVersion(projectRoot);
+
+      const query = request.query as { services?: string };
+      const servicesParam = query.services || '';
+      names = servicesParam
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => assertServiceName(name));
+
+      if (names.length === 0) {
+        throw new ValidationError('Danh sách dịch vụ cần chuẩn bị không được trống.');
+      }
+
       if (!cachedComposeConfig) {
         const configResult = await app.deps.runCompose(['config', '--format', 'json']);
         if (configResult.exitCode === 0) {

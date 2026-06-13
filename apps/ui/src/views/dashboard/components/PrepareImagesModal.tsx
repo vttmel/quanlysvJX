@@ -1,4 +1,5 @@
 import { Modal, Button, Group, Stack, Text, ScrollArea, Box, Badge, Paper } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useRef, useState } from 'react';
 import { ModalTitle } from '@/components/common/ModalTitle';
 import { serviceService } from '@/services/serviceService';
@@ -89,6 +90,15 @@ export function PrepareImagesModal({
         try {
           const data = JSON.parse(event.data);
           const imgName = getImageName(data.service);
+          const message =
+            typeof data.detail === 'string' && data.detail.trim().length > 0
+              ? data.detail
+              : data.message;
+          notifications.show({
+            color: 'red',
+            title: 'Lỗi',
+            message,
+          });
           setStatuses((prev) => ({ ...prev, [data.service]: 'error' }));
           setLogs((prev) => `${prev}\n>>> LỖI [${imgName}]: ${data.message}\n${data.detail}\n`);
           setHasError(true);
@@ -104,7 +114,13 @@ export function PrepareImagesModal({
       });
 
       source.onerror = () => {
-        setLogs((prev) => `${prev}\n>>> Kết nối bị ngắt quãng hoặc lỗi server.\n`);
+        const message = 'Không kết nối được tới máy chủ. Kiểm tra API/Web Manager rồi thử lại.';
+        notifications.show({
+          color: 'red',
+          title: 'Lỗi',
+          message,
+        });
+        setLogs((prev) => `${prev}\n>>> ${message}\n`);
         setHasError(true);
         setIsFinished(true);
         source.close();
