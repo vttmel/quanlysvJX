@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { ComposeConfigDocument, ComposeServiceDefinition } from './composeConfig.js';
 import { resolveComposeServiceConfig } from './composeConfig.js';
@@ -121,23 +121,27 @@ function resolveBuildInputPaths(projectRoot: string, service: ComposeServiceDefi
     isBuildObject(build) && typeof build.dockerfile === 'string' ? build.dockerfile : 'Dockerfile';
   const contextDir = path.resolve(composeDir, context);
   const dockerfilePath = path.resolve(contextDir, dockerfile);
-  const dockerfilesDir = path.join(contextDir, 'dockerfiles');
-
-  return [dockerfilePath, ...listShellFiles(dockerfilesDir)].sort();
+  return [dockerfilePath, ...resolveEntrypointPaths(contextDir, dockerfile)].sort();
 }
 
 function isBuildObject(value: unknown): value is { context?: unknown; dockerfile?: unknown } {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function listShellFiles(dir: string): string[] {
-  if (!existsSync(dir)) {
-    return [];
-  }
+function resolveEntrypointPaths(contextDir: string, dockerfile: string) {
+  const dockerfileName = path.basename(dockerfile);
+  const dockerfilesDir = path.basename(contextDir) === 'dockerfiles'
+    ? contextDir
+    : path.join(contextDir, 'dockerfiles');
 
-  return readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.sh'))
-    .map((entry) => path.join(dir, entry.name));
+  const entrypointNames =
+    dockerfileName === 'Dockerfile.paysys'
+      ? ['paysys-entrypoint.sh', 's3relay-entrypoint.sh', 'paysys-setup-mdac.sh']
+      : dockerfileName === 'Dockerfile.jx-centos'
+        ? ['entrypoint.sh']
+        : [];
+
+  return entrypointNames.map((name) => path.join(dockerfilesDir, name));
 }
 
 function readBuildState(projectRoot: string): BuildStateIndex {

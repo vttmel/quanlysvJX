@@ -13,6 +13,10 @@ const composeConfig = {
       image: 'paysys',
       build: { context: '.', dockerfile: './dockerfiles/Dockerfile.paysys' }
     },
+    goddess: {
+      image: 'jx-centos',
+      build: { context: './dockerfiles', dockerfile: 'Dockerfile.jx-centos' }
+    },
     jxmysql: {
       image: 'mysql:5.6'
     }
@@ -24,7 +28,11 @@ function createProject() {
   const dockerfilesDir = path.join(root, 'apps/jx-services/dockerfiles');
   mkdirSync(dockerfilesDir, { recursive: true });
   writeFileSync(path.join(dockerfilesDir, 'Dockerfile.paysys'), 'FROM ubuntu:22.04\n', 'utf8');
+  writeFileSync(path.join(dockerfilesDir, 'Dockerfile.jx-centos'), 'FROM centos:7\n', 'utf8');
   writeFileSync(path.join(dockerfilesDir, 'paysys-entrypoint.sh'), '#!/bin/sh\n', 'utf8');
+  writeFileSync(path.join(dockerfilesDir, 's3relay-entrypoint.sh'), '#!/bin/sh\n', 'utf8');
+  writeFileSync(path.join(dockerfilesDir, 'paysys-setup-mdac.sh'), '#!/bin/sh\n', 'utf8');
+  writeFileSync(path.join(dockerfilesDir, 'entrypoint.sh'), '#!/bin/sh\n', 'utf8');
   return root;
 }
 
@@ -65,6 +73,36 @@ describe('service image build state', () => {
     expect(getServiceBuildReadiness(root, composeConfig, 'paysys', true)).toMatchObject({
       needsRebuild: true,
       buildReason: 'Dockerfile hoặc entrypoint đã thay đổi sau lần build gần nhất.'
+    });
+  });
+
+  it('scopes entrypoint changes to the matching Dockerfile family', () => {
+    const root = createProject();
+
+    markServiceImagePrepared(root, composeConfig, 'paysys');
+    markServiceImagePrepared(root, composeConfig, 'goddess');
+
+    writeFileSync(
+      path.join(root, 'apps/jx-services/dockerfiles/paysys-entrypoint.sh'),
+      '#!/bin/sh\necho changed\n',
+      'utf8'
+    );
+
+    expect(getServiceBuildReadiness(root, composeConfig, 'paysys', true)).toMatchObject({
+      needsRebuild: true
+    });
+    expect(getServiceBuildReadiness(root, composeConfig, 'goddess', true)).toMatchObject({
+      needsRebuild: false
+    });
+
+    writeFileSync(
+      path.join(root, 'apps/jx-services/dockerfiles/entrypoint.sh'),
+      '#!/bin/sh\necho jx-centos changed\n',
+      'utf8'
+    );
+
+    expect(getServiceBuildReadiness(root, composeConfig, 'goddess', true)).toMatchObject({
+      needsRebuild: true
     });
   });
 });
