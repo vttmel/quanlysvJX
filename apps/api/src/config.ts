@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 
 export type MssqlConfig = {
   host: string;
@@ -12,6 +13,7 @@ export type MssqlConfig = {
 
 export type ManagerConfig = {
   projectRoot: string;
+  hostProjectRoot?: string;
   mysqlBackupDir: string;
   mssqlBackupDir: string;
   backupSchedule: string;
@@ -28,12 +30,25 @@ export type ManagerConfig = {
   mssql: MssqlConfig;
 };
 
+
+
 export function loadConfig(env = process.env): ManagerConfig {
-  const projectRoot = path.resolve(env.MANAGER_PROJECT_ROOT ?? process.cwd());
+  let projectRoot = env.MANAGER_PROJECT_ROOT ?? '/workspace';
+  if (env.VITEST || (!fs.existsSync(projectRoot) && projectRoot === '/workspace')) {
+    const cwd = process.cwd();
+    if (cwd.includes('apps/api')) {
+      projectRoot = path.resolve(cwd, '../..');
+    } else {
+      projectRoot = cwd;
+    }
+  }
+
+  const hostProjectRoot = projectRoot;
   const backupRoot = path.resolve(projectRoot, env.BACKUP_ROOT_DIR ?? 'apps/jx-services/mount/database/backups');
 
   return {
     projectRoot,
+    hostProjectRoot,
     mysqlBackupDir: path.resolve(projectRoot, env.MYSQL_BACKUP_DIR ?? 'apps/jx-services/mount/database/backups/mysql'),
     mssqlBackupDir: path.resolve(projectRoot, env.MSSQL_BACKUP_DIR ?? 'apps/jx-services/mount/database/mssql/data/database_backups'),
     backupSchedule: env.BACKUP_SCHEDULE ?? '0 3 * * *',

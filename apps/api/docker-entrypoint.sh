@@ -1,7 +1,14 @@
 #!/usr/bin/env sh
 set -eu
 
-PROJECT_ROOT="${MANAGER_PROJECT_ROOT:-/workspace}"
+if [ -n "${MANAGER_PROJECT_ROOT:-}" ] && [ "$MANAGER_PROJECT_ROOT" != "/workspace" ]; then
+  echo "[setup] creating symlink from ${MANAGER_PROJECT_ROOT} to /workspace"
+  mkdir -p "$(dirname "$MANAGER_PROJECT_ROOT")"
+  rm -rf "$MANAGER_PROJECT_ROOT"
+  ln -sf /workspace "$MANAGER_PROJECT_ROOT"
+fi
+
+PROJECT_ROOT="/workspace"
 
 mode_of() {
   stat -c '%a' "$1" 2>/dev/null || echo ""

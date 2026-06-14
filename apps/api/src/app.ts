@@ -37,11 +37,11 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
     config,
     runCompose:
       overrides.runCompose ??
-      ((args, options) => runDockerCompose(args, config.projectRoot, options, { projectRoot: config.projectRoot })),
+      ((args, options) => runDockerCompose(args, config.projectRoot, options, { projectRoot: config.hostProjectRoot ?? config.projectRoot })),
     runDocker: overrides.runDocker ?? ((args, options) => runDocker(args, config.projectRoot, options)),
     streamCompose:
       overrides.streamCompose ??
-      ((args) => runDockerComposeStream(args, config.projectRoot, { projectRoot: config.projectRoot })),
+      ((args) => runDockerComposeStream(args, config.projectRoot, { projectRoot: config.hostProjectRoot ?? config.projectRoot })),
     gameAccounts: overrides.gameAccounts ?? createGameAccountService(createMssqlGameAccountRepository(config.mssql))
   };
 
