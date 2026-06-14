@@ -43,7 +43,7 @@ COPY --from=production-deps /app/apps/api/package.json /app/apps/api/package.jso
 COPY --from=build /app/apps/api/dist ./dist
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/api-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/api-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/api-entrypoint.sh && chmod +x /usr/local/bin/api-entrypoint.sh
 
 EXPOSE 3001
 
