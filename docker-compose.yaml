@@ -10,11 +10,14 @@ services:
       COMPOSE_PROJECT_NAME: quanlysvjx
       MANAGER_API_HOST: 127.0.0.1
       MANAGER_API_PORT: 3001
-      MANAGER_PROJECT_ROOT: /workspace
+      MANAGER_PROJECT_ROOT: ${MANAGER_PROJECT_ROOT:-${PWD}}
     volumes:
       - type: bind
-        source: ${MANAGER_HOST_PROJECT_ROOT:-${PWD}}
-        target: /workspace
+        source: ./apps/jx-services
+        target: ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services
+      - type: bind
+        source: ./.env
+        target: ${MANAGER_PROJECT_ROOT:-${PWD}}/.env
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - /etc/localtime:/etc/localtime:ro

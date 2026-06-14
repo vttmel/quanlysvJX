@@ -68,6 +68,19 @@ describe('buildComposeArgs', () => {
       'paysys'
     ]);
   });
+
+  it('uses the project directory for child compose path resolution', () => {
+    expect(buildComposeArgs(['ps'], { projectRoot: '/srv/quanlysvJX' })).toEqual([
+      'compose',
+      '--project-directory',
+      '/srv/quanlysvJX/apps/jx-services',
+      '--env-file',
+      '.env',
+      '-f',
+      'apps/jx-services/docker-compose.yaml',
+      'ps'
+    ]);
+  });
 });
 
 describe('buildDockerArgs', () => {

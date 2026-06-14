@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { EventEmitter } from 'node:events';
+import path from 'node:path';
 import { CommandError } from '../utils/errors.js';
 
 export type CommandResult = {
@@ -14,11 +15,20 @@ export type ComposeStream = EventEmitter & {
   kill: (signal?: NodeJS.Signals) => boolean;
 };
 
-export function buildComposeArgs(args: readonly string[]) {
+export type ComposeRunnerOptions = {
+  projectRoot?: string;
+};
+
+export function buildComposeArgs(args: readonly string[], options: ComposeRunnerOptions = {}) {
   const progressArgs = shouldUsePlainProgress(args) ? ['--ansi', 'never', '--progress', 'plain'] : [];
+  const projectDirectoryArgs = options.projectRoot
+    ? ['--project-directory', path.join(options.projectRoot, 'apps/jx-services')]
+    : [];
+
   return [
     'compose',
     ...progressArgs,
+    ...projectDirectoryArgs,
     '--env-file',
     '.env',
     '-f',
@@ -38,9 +48,10 @@ function shouldUsePlainProgress(args: readonly string[]) {
 export async function runDockerCompose(
   args: readonly string[],
   cwd: string,
-  options?: { stdin?: string | Buffer }
+  options?: { stdin?: string | Buffer },
+  runnerOptions: ComposeRunnerOptions = {}
 ): Promise<CommandResult> {
-  return runCommand('docker', buildComposeArgs(args), cwd, options);
+  return runCommand('docker', buildComposeArgs(args, runnerOptions), cwd, options);
 }
 
 export async function runDocker(
@@ -84,8 +95,12 @@ function runCommand(
   });
 }
 
-export function runDockerComposeStream(args: readonly string[], cwd: string): ComposeStream {
-  return spawn('docker', buildComposeArgs(args), { cwd, shell: false });
+export function runDockerComposeStream(
+  args: readonly string[],
+  cwd: string,
+  runnerOptions: ComposeRunnerOptions = {}
+): ComposeStream {
+  return spawn('docker', buildComposeArgs(args, runnerOptions), { cwd, shell: false });
 }
 
 export function runDockerStream(args: readonly string[], cwd: string): ComposeStream {

@@ -35,9 +35,13 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   const config = overrides.config ?? loadConfig();
   const deps: AppDeps = {
     config,
-    runCompose: overrides.runCompose ?? ((args, options) => runDockerCompose(args, config.projectRoot, options)),
+    runCompose:
+      overrides.runCompose ??
+      ((args, options) => runDockerCompose(args, config.projectRoot, options, { projectRoot: config.projectRoot })),
     runDocker: overrides.runDocker ?? ((args, options) => runDocker(args, config.projectRoot, options)),
-    streamCompose: overrides.streamCompose ?? ((args) => runDockerComposeStream(args, config.projectRoot)),
+    streamCompose:
+      overrides.streamCompose ??
+      ((args) => runDockerComposeStream(args, config.projectRoot, { projectRoot: config.projectRoot })),
     gameAccounts: overrides.gameAccounts ?? createGameAccountService(createMssqlGameAccountRepository(config.mssql))
   };
 
