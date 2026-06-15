@@ -10,6 +10,7 @@ services:
       MANAGER_API_HOST: 127.0.0.1
       MANAGER_API_PORT: 3001
       MANAGER_PROJECT_ROOT: ${MANAGER_PROJECT_ROOT:-${PWD}}
+      BACKUP_SCHEDULER_ENABLED: true
     volumes:
       - ./apps/jx-services:/workspace/apps/jx-services
       - ./.env:/workspace/.env

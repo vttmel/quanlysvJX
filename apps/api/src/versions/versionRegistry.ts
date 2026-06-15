@@ -158,7 +158,7 @@ export function selectVersion(projectRoot: string, name: string, subPath?: strin
   writeVersionRegistry(projectRoot, nextRegistry);
   const envServerPath = toEnvServerPath(nextVersion.path);
 
-  updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', envServerPath);
+  updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', envServerPath);
   return { activeVersion: versionName, serverPath: envServerPath };
 }
 
@@ -193,7 +193,7 @@ export function renameVersion(projectRoot: string, currentName: string, options:
   writeVersionRegistry(projectRoot, nextRegistry);
 
   if (registry.activeVersion === oldName) {
-    updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', toEnvServerPath(renamed.path));
+    updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', toEnvServerPath(renamed.path));
   }
 
   return renamed;
@@ -233,7 +233,7 @@ export function deleteVersionRecord(projectRoot: string, name: string, options: 
     versions: registry.versions.filter((item) => item.name !== versionName)
   });
   if (isActive) {
-    updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', '');
+    updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', '');
   }
 }
 
@@ -292,7 +292,7 @@ function buildRecord(
 }
 
 function getActiveServerPathFromEnv(projectRoot: string) {
-  const envFilePath = path.join(projectRoot, '.env');
+  const envFilePath = path.join(projectRoot, 'apps/jx-services/.env');
   if (!existsSync(envFilePath)) return null;
   const line = readFileSync(envFilePath, 'utf8').split(/\r?\n/).find((item) => item.trim().startsWith('SERVER_PATH='));
   const value = line?.split('=')[1]?.trim().replace(/^\.\//, '').replace(/\/$/, '');

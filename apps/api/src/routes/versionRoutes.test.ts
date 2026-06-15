@@ -25,7 +25,7 @@ function testConfig(projectRoot: string): ManagerConfig {
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'version-routes-'));
   mkdirSync(path.join(root, 'apps/jx-services/versions/mel/server'), { recursive: true });
-  writeFileSync(path.join(root, '.env'), 'SERVER_PATH=./apps/jx-services/versions/mel/server/\n', 'utf8');
+  writeFileSync(path.join(root, 'apps/jx-services/.env'), 'SERVER_PATH=./apps/jx-services/versions/mel/server/\n', 'utf8');
 });
 
 afterEach(() => {
@@ -63,7 +63,7 @@ describe('version routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().data).toMatchObject({ name: 'mel_2026' });
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/mel_2026/server') + '/');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/mel_2026/server') + '/');
   });
 
   it('rejects renaming a version to an existing version name', async () => {
@@ -104,7 +104,7 @@ describe('version routes', () => {
     expect(response.statusCode).toBe(200);
     expect(existsSync(path.join(getVersionsDir(root), 'mel'))).toBe(false);
     expect(readVersionRegistry(root)).toMatchObject({ activeVersion: null, versions: [] });
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('SERVER_PATH=');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('SERVER_PATH=');
   });
 
   it('rejects deleting the active version while a core game service is running', async () => {

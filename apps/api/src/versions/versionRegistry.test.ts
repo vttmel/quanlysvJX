@@ -17,7 +17,7 @@ let root: string;
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'version-registry-'));
   mkdirSync(path.join(root, 'apps/jx-services/versions/mel/server'), { recursive: true });
-  writeFileSync(path.join(root, '.env'), 'SERVER_PATH=./apps/jx-services/versions/mel/server/\n', 'utf8');
+  writeFileSync(path.join(root, 'apps/jx-services/.env'), 'SERVER_PATH=./apps/jx-services/versions/mel/server/\n', 'utf8');
 });
 
 afterEach(() => {
@@ -79,7 +79,7 @@ describe('version registry', () => {
     expect(result.activeVersion).toBe('new_ver');
     expect(result.serverPath).toBe(path.resolve(root, 'apps/jx-services/versions/new_ver') + '/');
     expect(readVersionRegistry(root).activeVersion).toBe('new_ver');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/new_ver') + '/');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/new_ver') + '/');
   });
 
   it('renames an active version folder and keeps SERVER_PATH synchronized', () => {
@@ -94,6 +94,6 @@ describe('version registry', () => {
     });
     expect(statSync(path.join(getVersionsDir(root), 'mel_2026')).mtimeMs).toBeGreaterThanOrEqual(oldStat.mtimeMs);
     expect(readVersionRegistry(root).activeVersion).toBe('mel_2026');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/mel_2026/server') + '/');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('SERVER_PATH=' + path.resolve(root, 'apps/jx-services/versions/mel_2026/server') + '/');
   });
 });

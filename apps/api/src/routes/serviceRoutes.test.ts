@@ -27,7 +27,7 @@ function testConfig(projectRoot: string): ManagerConfig {
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'service-routes-'));
   mkdirSync(path.join(root, 'apps/jx-services/versions/mel/server'), { recursive: true });
-  writeFileSync(path.join(root, '.env'), `SERVER_PATH=${path.resolve(root, 'apps/jx-services/versions/mel/server')}/\n`, 'utf8');
+  writeFileSync(path.join(root, 'apps/jx-services/.env'), `SERVER_PATH=${path.resolve(root, 'apps/jx-services/versions/mel/server')}/\n`, 'utf8');
 });
 
 afterEach(() => {

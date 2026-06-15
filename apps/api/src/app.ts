@@ -38,10 +38,6 @@ import { existsSync, copyFileSync, mkdirSync } from 'node:fs';
 function ensureConfigFiles(projectRoot: string) {
   const configsToCopy = [
     {
-      example: path.join(projectRoot, '.env.example'),
-      target: path.join(projectRoot, '.env')
-    },
-    {
       example: path.join(projectRoot, 'apps/jx-services/.env.example'),
       target: path.join(projectRoot, 'apps/jx-services/.env')
     },
