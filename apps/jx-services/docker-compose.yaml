@@ -9,7 +9,7 @@ services:
     command: --explicit_defaults_for_timestamp=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     mem_limit: 1g
     volumes:
-      - ./mount/database/mysql_server1/data:/var/lib/mysql
+      - jxmysql_data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     networks:
       - jxnet
@@ -32,7 +32,7 @@ services:
       ACCEPT_EULA: "Y"
       TZ: "Asia/Ho_Chi_Minh"
     volumes:
-      - ./mount/database/mssql/data:/var/opt/mssql/data
+      - jxmssql_data:/var/opt/mssql/data
       - ./mount/database/mssql/seed:/var/opt/mssql/seed:ro
       - ./mount/database/mssql/certs:/var/opt/mssql/certs:ro
       - ./mount/database/mssql/mssql.conf:/var/opt/mssql/mssql.conf:ro
@@ -258,3 +258,7 @@ services:
 networks:
   jxnet:
     driver: bridge
+
+volumes:
+  jxmysql_data:
+  jxmssql_data:
