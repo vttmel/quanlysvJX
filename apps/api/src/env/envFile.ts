@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export function readEnvFile(envFilePath: string) {
@@ -25,9 +25,7 @@ export function readEnvMap(envFilePath: string) {
 export function writeEnvFile(envFilePath: string, content: string) {
   mkdirSync(path.dirname(envFilePath), { recursive: true });
   const normalized = content.endsWith('\n') ? content : `${content}\n`;
-  const tempPath = `${envFilePath}.tmp`;
-  writeFileSync(tempPath, normalized, 'utf8');
-  renameSync(tempPath, envFilePath);
+  writeFileSync(envFilePath, normalized, 'utf8');
 }
 
 export function updateEnvKey(envFilePath: string, key: string, value: string) {

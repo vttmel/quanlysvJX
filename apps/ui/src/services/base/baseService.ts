@@ -58,6 +58,13 @@ BaseService.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response) {
+      const apiResponse = error.response.data as ApiResponse<unknown>;
+      if (apiResponse && typeof apiResponse === 'object' && apiResponse.status === 'error') {
+        const errorMsg = apiResponse.message || 'Yêu cầu thất bại';
+        error.message = errorMsg;
+      }
+    }
     return Promise.reject(error);
   }
 );
