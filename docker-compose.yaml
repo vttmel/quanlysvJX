@@ -18,8 +18,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     privileged: true
-    network_mode: host
+    ports:
+      - "3001:3001"
     restart: unless-stopped
+    networks:
+      - ui
 
   ui:
     build:

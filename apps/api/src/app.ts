@@ -32,8 +32,8 @@ export type AppDeps = {
   gameAccounts: GameAccountService;
 };
 
-import { autoUpdateEnvIp } from './env/envFile.js';
-import { existsSync, copyFileSync, mkdirSync } from 'node:fs';
+import { autoUpdateEnvIp, updateEnvKey } from './env/envFile.js';
+import { existsSync, copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 
 function ensureConfigFiles(projectRoot: string) {
   const configsToCopy = [
@@ -71,6 +71,25 @@ function ensureConfigFiles(projectRoot: string) {
     if (!existsSync(config.target) && existsSync(config.example)) {
       mkdirSync(path.dirname(config.target), { recursive: true });
       copyFileSync(config.example, config.target);
+
+      // Nếu config.target là file .env mới được tạo, đồng bộ activeVersion từ versions.json sang
+      if (config.target.endsWith('apps/jx-services/.env')) {
+        const registryPath = path.join(projectRoot, 'apps/jx-services/versions/versions.json');
+        if (existsSync(registryPath)) {
+          try {
+            const raw = JSON.parse(readFileSync(registryPath, 'utf8'));
+            if (raw && raw.activeVersion && Array.isArray(raw.versions)) {
+              const activeVer = raw.versions.find((v: any) => v.name === raw.activeVersion);
+              if (activeVer && activeVer.path) {
+                const envServerPath = activeVer.path.endsWith('/') ? activeVer.path : `${activeVer.path}/`;
+                updateEnvKey(config.target, 'SERVER_PATH', envServerPath);
+              }
+            }
+          } catch {
+            // Bỏ qua lỗi parse registry
+          }
+        }
+      }
     }
   }
 }
