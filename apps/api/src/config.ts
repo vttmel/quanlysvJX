@@ -50,7 +50,7 @@ export function loadConfig(env = process.env): ManagerConfig {
     projectRoot,
     hostProjectRoot,
     mysqlBackupDir: path.resolve(projectRoot, env.MYSQL_BACKUP_DIR ?? 'apps/jx-services/mount/database/backups/mysql'),
-    mssqlBackupDir: path.resolve(projectRoot, env.MSSQL_BACKUP_DIR ?? 'apps/jx-services/mount/database/mssql/data/database_backups'),
+    mssqlBackupDir: path.resolve(projectRoot, env.MSSQL_BACKUP_DIR ?? 'apps/jx-services/mount/database/backups/mssql'),
     backupSchedule: env.BACKUP_SCHEDULE ?? '0 3 * * *',
     backupRetentionDays: Number(env.BACKUP_RETENTION_DAYS ?? '14'),
     backupMetadataFile: path.resolve(projectRoot, env.BACKUP_METADATA_FILE ?? path.join(backupRoot, 'backup-metadata.json')),

@@ -56,16 +56,19 @@ ensure_file_mode() {
 echo "[setup] preparing JX runtime directories under ${PROJECT_ROOT}"
 
 ensure_dir "apps/jx-services/mount/config" "755"
-ensure_dir "apps/jx-services/mount/database/mysql_server1/data" "777" "1000:1000"
 ensure_dir "apps/jx-services/mount/database/backups/mysql" "777" "1000:1000"
-ensure_dir "apps/jx-services/mount/database/mssql/data" "777" "1000:1000"
+ensure_dir "apps/jx-services/mount/database/backups/mssql" "777" "1000:1000"
 ensure_dir "apps/jx-services/mount/database/mssql/seed" "755"
 ensure_dir "apps/jx-services/mount/database/mssql/certs" "755"
 ensure_dir "apps/jx-services/mount/logs" "777" "1000:1000"
 ensure_dir "apps/jx-services/versions" "777" "1000:1000"
-ensure_dir "apps/jx-services/mount/paysyswin" "777" "1000:1000"
+ensure_dir "apps/jx-services/mount/paysyswin" "755"
+ensure_dir "apps/jx-services/mount/paysyswin/payserver_log" "777" "1000:1000"
+ensure_dir "apps/jx-services/mount/paysyswin/relayserver_log" "777" "1000:1000"
 
 ensure_file_mode "apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak" "644"
+ensure_file_mode "apps/jx-services/mount/database/mssql/seed/init-account-tong.sh" "755"
+ensure_file_mode "apps/jx-services/mount/database/mssql/seed/mssql-entrypoint.sh" "755"
 
 echo "[setup] directory preparation completed"
 

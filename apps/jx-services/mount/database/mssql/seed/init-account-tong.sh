@@ -19,7 +19,7 @@ if [ ! -x "$SQLCMD" ]; then
 fi
 
 run_sql() {
-  "$SQLCMD" -C -b -S jxmssql -U sa -P "$SA_PASSWORD" "$@"
+  "$SQLCMD" -C -b -S "${MSSQL_HOST:-jxmssql}" -U sa -P "$SA_PASSWORD" "$@"
 }
 
 echo "Waiting for SQL Server to accept connections..."

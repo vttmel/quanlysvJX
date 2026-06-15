@@ -50,4 +50,11 @@ describe('loadConfig MSSQL settings', () => {
 
     expect(config.mssql.host).toBe('localhost');
   });
+
+  it('keeps all backup directories under the shared database backups root', () => {
+    const config = loadConfig({ MANAGER_PROJECT_ROOT: '/repo' });
+
+    expect(config.mysqlBackupDir).toBe('/repo/apps/jx-services/mount/database/backups/mysql');
+    expect(config.mssqlBackupDir).toBe('/repo/apps/jx-services/mount/database/backups/mssql');
+  });
 });

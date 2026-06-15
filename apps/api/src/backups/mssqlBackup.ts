@@ -8,6 +8,7 @@ import { upsertBackupMetadata } from './backupMetadata.js';
 import type { BackupRunContext } from '../scheduledBackups/scheduledBackupWorker.js';
 
 const databaseName = 'account_tong';
+const containerBackupDir = '/var/opt/mssql/backups';
 
 export async function backupMssql(
   deps: AppDeps,
@@ -21,7 +22,7 @@ export async function backupMssql(
   }
   const filename = buildBackupFilename('mssql');
   const hostPath = path.join(deps.config.mssqlBackupDir, filename);
-  const sql = `BACKUP DATABASE [${databaseName}] TO DISK = N'/var/opt/mssql/data/database_backups/${filename}' WITH INIT`;
+  const sql = `BACKUP DATABASE [${databaseName}] TO DISK = N'${containerBackupDir}/${filename}' WITH INIT`;
   const result = await runSqlcmd(deps, sql);
 
   if (result.exitCode !== 0) {
@@ -63,7 +64,7 @@ export async function restoreMssql(deps: AppDeps, filename: string) {
     IF DB_ID('${databaseName}') IS NOT NULL
       ALTER DATABASE [${databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     
-    RESTORE DATABASE [${databaseName}] FROM DISK = N'/var/opt/mssql/data/database_backups/${filename}' WITH REPLACE;
+    RESTORE DATABASE [${databaseName}] FROM DISK = N'${containerBackupDir}/${filename}' WITH REPLACE;
     
     IF DB_ID('${databaseName}') IS NOT NULL
       ALTER DATABASE [${databaseName}] SET MULTI_USER;
