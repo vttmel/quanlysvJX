@@ -198,6 +198,8 @@ export function renameVersion(projectRoot: string, currentName: string, options:
   return renamed;
 }
 
+import { spawnSync } from 'node:child_process';
+
 export function deleteVersionRecord(projectRoot: string, name: string, options: DeleteVersionOptions = {}) {
   const versionName = normalizeVersionName(name);
   const registry = ensureVersionRegistry(projectRoot);
@@ -208,7 +210,22 @@ export function deleteVersionRecord(projectRoot: string, name: string, options: 
   if (isActive && !options.allowActive) {
     throw new Error('Cannot delete active game version');
   }
-  rmSync(path.join(getVersionsDir(projectRoot), versionName), { recursive: true, force: true });
+  
+  const dirPath = path.join(getVersionsDir(projectRoot), versionName);
+  try {
+    rmSync(dirPath, { recursive: true, force: true });
+  } catch {
+    try {
+      spawnSync('chmod', ['-R', '777', dirPath]);
+      rmSync(dirPath, { recursive: true, force: true });
+    } catch {
+      const res = spawnSync('rm', ['-rf', dirPath]);
+      if (res.status !== 0) {
+        throw new Error(`Failed to delete version directory: ${(res.stderr || res.stdout || 'Unknown error').toString().trim()}`);
+      }
+    }
+  }
+
   writeVersionRegistry(projectRoot, {
     ...registry,
     activeVersion: isActive ? null : registry.activeVersion,
