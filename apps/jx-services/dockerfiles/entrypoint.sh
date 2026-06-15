@@ -127,18 +127,33 @@ fi
 if [ $# -gt 0 ]; then
     exec "$@"
 else
+    # Tự động tìm kiếm file thực thi trong thư mục hiện tại và các thư mục con (sâu tối đa 3 cấp)
     if [ ! -f "./${APP_CMD}" ]; then
-        ALT_CMD=$(echo "$APP_CMD" | sed 's/_y$//')
-        if [ -f "./$ALT_CMD" ]; then
-            echo "-> [Warning] '${APP_CMD}' not found, fallback to '${ALT_CMD}'"
-            APP_CMD="$ALT_CMD"
+        echo "-> '${APP_CMD}' not found in current directory. Searching in subdirectories..."
+        FOUND_PATH=$(find . -maxdepth 3 -type f -name "${APP_CMD}" -print -quit 2>/dev/null)
+        if [ -n "$FOUND_PATH" ]; then
+            DIR_PATH=$(dirname "$FOUND_PATH")
+            echo "-> Found '${APP_CMD}' in '${DIR_PATH}', switching directory..."
+            cd "$DIR_PATH"
+        else
+            # Thử tìm phiên bản không có đuôi _y (fallback)
+            ALT_CMD=$(echo "$APP_CMD" | sed 's/_y$//')
+            FOUND_ALT_PATH=$(find . -maxdepth 3 -type f -name "$ALT_CMD" -print -quit 2>/dev/null)
+            if [ -n "$FOUND_ALT_PATH" ]; then
+                DIR_PATH=$(dirname "$FOUND_ALT_PATH")
+                echo "-> Found '${ALT_CMD}' in '${DIR_PATH}', switching directory & falling back..."
+                cd "$DIR_PATH"
+                APP_CMD="$ALT_CMD"
+            fi
         fi
     fi
 
     # Đảm bảo file có quyền thực thi trước khi khởi chạy
     if [ -f "./${APP_CMD}" ]; then
         chmod +x "./${APP_CMD}"
+        exec "./${APP_CMD}"
+    else
+        echo "-> [ERROR] Could not find '${APP_CMD}' anywhere in $(pwd) or its subdirectories!" >&2
+        exit 1
     fi
-
-    exec "./${APP_CMD}"
 fi
