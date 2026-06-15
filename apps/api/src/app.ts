@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import path from 'node:path';
 import multipart from '@fastify/multipart';
 import sensible from '@fastify/sensible';
 import { getErrorHandler } from './middleware/errorHandler.js';
@@ -31,7 +32,26 @@ export type AppDeps = {
   gameAccounts: GameAccountService;
 };
 
+import { autoUpdateEnvIp } from './env/envFile.js';
+import { existsSync } from 'node:fs';
+
 export async function buildApp(overrides: Partial<AppDeps> = {}) {
+  // Tự động phát hiện và ghi đè IP host vào .env nếu đang là auto
+  let projectRoot = process.env.MANAGER_PROJECT_ROOT || '/workspace';
+  if (process.env.VITEST || (!existsSync(projectRoot) && projectRoot === '/workspace')) {
+    const cwd = process.cwd();
+    if (cwd.includes('apps/api')) {
+      projectRoot = path.resolve(cwd, '../..');
+    } else {
+      projectRoot = cwd;
+    }
+  }
+  const envFilePath = path.join(projectRoot, '.env');
+  const updatedIp = autoUpdateEnvIp(envFilePath);
+  if (updatedIp) {
+    process.env.JX_IP = updatedIp;
+  }
+
   const config = overrides.config ?? loadConfig();
   const deps: AppDeps = {
     config,

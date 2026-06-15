@@ -72,3 +72,34 @@ function getUpdatableKey(line: string) {
   }
   return rawKey;
 }
+
+import { networkInterfaces } from 'node:os';
+
+export function detectHostIp(): string {
+  const nets = networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] ?? []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
+export function autoUpdateEnvIp(envFilePath: string): string | null {
+  try {
+    const envMap = readEnvMap(envFilePath);
+    if (envMap['JX_IP'] === 'auto') {
+      const ip = detectHostIp();
+      if (ip && ip !== '127.0.0.1') {
+        updateEnvKeys(envFilePath, { JX_IP: ip });
+        return ip;
+      }
+    }
+  } catch {
+    // Bỏ qua lỗi
+  }
+  return null;
+}
+
