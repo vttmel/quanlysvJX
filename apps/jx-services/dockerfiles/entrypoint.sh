@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# 0. Tự động làm sạch các biến môi trường khỏi ký tự \r ẩn (do CRLF khi clone ở máy khác)
+export APP_CMD=$(echo -n "$APP_CMD" | tr -d '\r')
+export JX_IP=$(echo -n "$JX_IP" | tr -d '\r')
+export JX_MYSQL_IP=$(echo -n "$JX_MYSQL_IP" | tr -d '\r')
+export JX_PAYSYS_IP=$(echo -n "$JX_PAYSYS_IP" | tr -d '\r')
+export CONFIG_FILE=$(echo -n "$CONFIG_FILE" | tr -d '\r')
+
 # 1. Xác định IP máy chạy JX
 if [ -z "$JX_IP" ] || [ "$JX_IP" = "auto" ]; then
     JX_IP=$(hostname -I | awk '{print $1}')
