@@ -19,6 +19,7 @@ versions/*
 
 # Cấu hình JX config
 mount/config/**/*
+!mount/config/**/
 !mount/config/**/*.example
 
 # State files
