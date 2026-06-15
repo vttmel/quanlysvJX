@@ -28,6 +28,8 @@ export const versionService = {
     });
     return res.data;
   },
+  cloneStreamUrl: (name: string, url: string, branch = 'main') =>
+    `/api/versions/clone/stream?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}&branch=${encodeURIComponent(branch)}`,
   uploadVersion: async (file: File) => {
     const form = new FormData();
     form.append('file', file);

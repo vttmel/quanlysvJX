@@ -1,11 +1,14 @@
 import {
   Badge,
+  Box,
   Button,
   Card,
   FileButton,
   Group,
+  Loader,
   Modal,
   Progress,
+  ScrollArea,
   Stack,
   Table,
   Text,
@@ -59,6 +62,24 @@ export function VersionManager({ onSuccess, onError }: Props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [browsingVersion, setBrowsingVersion] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  const [cloneLogs, setCloneLogs] = useState('');
+  const [isCloning, setIsCloning] = useState(false);
+  const cloneViewportRef = useRef<HTMLDivElement | null>(null);
+
+  // Cuộn tự động xuống cuối terminal log clone
+  useEffect(() => {
+    if (cloneViewportRef.current) {
+      cloneViewportRef.current.scrollTop = cloneViewportRef.current.scrollHeight;
+    }
+  }, [cloneLogs]);
+
+  const cleanLogs = (str: string) => {
+    // eslint-disable-next-line no-control-regex
+    const stripped = str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+    const lines = stripped.replace(/\r/g, '\n').split('\n');
+    return lines.join('\n');
+  };
 
   const { versionsData, selectVersion, deleteVersion, renameVersion, isLoading } = useVersions();
 
@@ -190,13 +211,63 @@ export function VersionManager({ onSuccess, onError }: Props) {
         }, 50);
         return;
       }
-      cloneMutation.mutate({
-        name: values.name,
-        url: values.url,
-        branch: values.branch,
+
+      setIsCloning(true);
+      setCloneLogs('[Hệ thống] Đang chuẩn bị kết nối tới Git...\n');
+
+      const url = versionService.cloneStreamUrl(values.name, values.url, values.branch);
+      const source = new EventSource(url);
+
+      const appendLog = (event: MessageEvent<string>) => {
+        let chunk = event.data;
+        try {
+          chunk = JSON.parse(event.data) as string;
+        } catch {
+          void 0;
+        }
+        setCloneLogs((current) => current + chunk);
+      };
+
+      source.addEventListener('log', appendLog);
+
+      source.addEventListener('close', () => {
+        source.close();
+        setTimeout(() => {
+          setIsCloning(false);
+          setCloneLogs('');
+          cloneForm.reset();
+          setCloneModalOpened(false);
+          onSuccessRef.current('Clone thành công phiên bản game từ GitHub');
+          queryClient.invalidateQueries({ queryKey: versionKeys.all });
+        }, 1500);
       });
+
+      source.addEventListener('error', (event: any) => {
+        source.close();
+        let errorMsg = 'Git clone thất bại';
+        try {
+          if (event.data) {
+            errorMsg = JSON.parse(event.data) as string;
+          }
+        } catch {
+          void 0;
+        }
+        setTimeout(() => {
+          setIsCloning(false);
+          setCloneLogs('');
+          onErrorRef.current(errorMsg);
+        }, 1500);
+      });
+
+      source.onerror = () => {
+        source.close();
+        setTimeout(() => {
+          setIsCloning(false);
+          setCloneLogs('');
+        }, 1500);
+      };
     },
-    [versions, cloneMutation, cloneForm]
+    [versions, cloneForm, queryClient]
   );
 
   const handleUpload = useCallback(
@@ -404,54 +475,100 @@ export function VersionManager({ onSuccess, onError }: Props) {
         <Modal
           opened={cloneModalOpened}
           onClose={() => {
-            cloneForm.reset();
-            setCloneModalOpened(false);
+            if (!isCloning) {
+              cloneForm.reset();
+              setCloneLogs('');
+              setCloneModalOpened(false);
+            }
           }}
           title={<ModalTitle title="Tải từ GitHub" subtitle="Clone phiên bản game vào máy chủ" />}
-          size="md"
+          size={isCloning ? 'lg' : 'md'}
         >
-          <form noValidate onSubmit={cloneForm.onSubmit(handleGitClone, focusFirstError)}>
+          {isCloning ? (
             <Stack gap="md">
-              <TextInput
-                id="url"
-                placeholder="https://github.com/user/repo"
-                label="GitHub URL"
-                required
-                {...cloneForm.getInputProps('url')}
-                key={cloneForm.key('url')}
-              />
-              <TextInput
-                id="branch"
-                placeholder="main"
-                label="Nhánh (Branch)"
-                required
-                {...cloneForm.getInputProps('branch')}
-                key={cloneForm.key('branch')}
-              />
-              <TextInput
-                id="clone-name"
-                placeholder="v1"
-                label="Tên thư mục lưu trữ"
-                required
-                {...cloneForm.getInputProps('name')}
-                key={cloneForm.key('name')}
-              />
-              <Group justify="flex-end">
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    cloneForm.reset();
-                    setCloneModalOpened(false);
+              <Text mb="sm" fw={700} c="blue">
+                Đang tải game repository từ GitHub... Vui lòng đợi.
+              </Text>
+              <Box style={{ position: 'relative' }} mb="md">
+                <ScrollArea
+                  viewportRef={cloneViewportRef}
+                  h={250}
+                  type="auto"
+                  offsetScrollbars
+                  style={{
+                    backgroundColor: '#0a0a0a',
+                    borderRadius: '4px',
+                    border: '1px solid #333',
                   }}
                 >
-                  Hủy
-                </Button>
-                <Button type="submit" loading={cloneMutation.isPending}>
-                  Bắt đầu tải (Clone)
+                  <Box
+                    p="sm"
+                    style={{
+                      fontFamily: 'JetBrains Mono, Courier New, Courier, monospace',
+                      fontSize: '12px',
+                      lineHeight: '1.4',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-all',
+                      color: '#4af626'
+                    }}
+                  >
+                    {cleanLogs(cloneLogs) || 'Đang kết nối tới Git terminal...'}
+                  </Box>
+                </ScrollArea>
+              </Box>
+              <Group justify="space-between" align="center">
+                <Text size="xs" c="dimmed" style={{ fontStyle: 'italic' }}>
+                  Tiến trình clone có thể mất vài phút tùy dung lượng repository...
+                </Text>
+                <Button variant="default" disabled leftSection={<Loader size="xs" color="blue" />}>
+                  Đang tải, vui lòng chờ...
                 </Button>
               </Group>
             </Stack>
-          </form>
+          ) : (
+            <form noValidate onSubmit={cloneForm.onSubmit(handleGitClone, focusFirstError)}>
+              <Stack gap="md">
+                <TextInput
+                  id="url"
+                  placeholder="https://github.com/user/repo"
+                  label="GitHub URL"
+                  required
+                  {...cloneForm.getInputProps('url')}
+                  key={cloneForm.key('url')}
+                />
+                <TextInput
+                  id="branch"
+                  placeholder="main"
+                  label="Nhánh (Branch)"
+                  required
+                  {...cloneForm.getInputProps('branch')}
+                  key={cloneForm.key('branch')}
+                />
+                <TextInput
+                  id="clone-name"
+                  placeholder="v1"
+                  label="Tên thư mục lưu trữ"
+                  required
+                  {...cloneForm.getInputProps('name')}
+                  key={cloneForm.key('name')}
+                />
+                <Group justify="flex-end">
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      cloneForm.reset();
+                      setCloneModalOpened(false);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" loading={cloneMutation.isPending}>
+                    Bắt đầu tải (Clone)
+                  </Button>
+                </Group>
+              </Stack>
+            </form>
+          )}
         </Modal>
 
         <Modal
