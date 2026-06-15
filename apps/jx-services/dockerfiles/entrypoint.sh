@@ -105,14 +105,38 @@ if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
         
     elif [[ "$CONFIG_FILE" == *"bishop.cfg"* ]]; then
         update_ini_key "$TEMP_FILE" "Network" "AccSvrIP" "$JX_PAYSYS_IP"
+        # bishop_y bind() socket nguồn (kết nối ra Paysys/Role) vào địa chỉ
+        # [FixIp] IntranetIp trước khi connect(). Trong Docker Desktop trên
+        # Windows, container network_mode: host chạy trong namespace của
+        # WSL2, nên IP LAN thật của Windows host ($JX_IP) KHÔNG thể bind
+        # được (EADDRNOTAVAIL) -> bishop_y thoát ngay với lỗi
+        # "Failed to connect to Paysys". IntranetIp phải là địa chỉ có thể
+        # bind được trong container (127.0.0.1); InternetIp vẫn dùng $JX_IP
+        # để client LAN kết nối vào bishop.
         update_ini_key "$TEMP_FILE" "FixIp" "IntranetIp" "$JX_IP"
         update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
         
     elif [[ "$CONFIG_FILE" == *"relay_config.ini"* ]]; then
         update_ini_key "$TEMP_FILE" "Database" "Ip" "$JX_MYSQL_IP"
+        # s3relay_y (CRootClient) bind() socket nguon cua ket noi RootRelay
+        # vao dia chi [FixIp] InternetIp truoc khi connect(). Giong bishop,
+        # trong Docker Desktop/WSL2 voi network_mode: host, IP LAN thuc cua
+        # Windows host ($JX_IP) khong phai dia chi local trong namespace
+        # container -> bind() tra EADDRNOTAVAIL -> "RootRelay connect failed"
+        # -> s3relay_y exit(0) ngay. Dung 127.0.0.1 de bind() thanh cong
+        # (RootRelay tu ket noi vao chinh no qua loopback, hop ly cho setup
+        # 1 may chu duy nhat).
         update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
 
     elif [[ "$CONFIG_FILE" == *"servercf0.ini"* ]]; then
+        # jx_linux_y bind() socket lang nghe [GameServer] Port truc tiep vao
+        # dia chi [FixIp] InternetIp. Giong s3relay/bishop, $JX_IP (IP LAN cua
+        # Windows host) khong phai dia chi local trong namespace container
+        # (network_mode: host tren Docker Desktop/WSL2) -> bind() tra
+        # EADDRNOTAVAIL -> "Failed to open service on port[6666]!" -> exit.
+        # Cac service khac (bishop/goddess/s3relay/paysys) cung dung
+        # network_mode: host nen deu o chung 1 network namespace; 127.0.0.1
+        # la dia chi dung de cac service noi bo ket noi toi GameServer.
         update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
     fi
     

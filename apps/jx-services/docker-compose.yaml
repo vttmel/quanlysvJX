@@ -45,11 +45,7 @@ services:
     networks:
       - jxnet
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "SQLCMD=/opt/mssql-tools18/bin/sqlcmd; if [ ! -x \"$$SQLCMD\" ]; then SQLCMD=/opt/mssql-tools/bin/sqlcmd; fi; \"$$SQLCMD\" -C -b -S localhost -U sa -P \"$$SA_PASSWORD\" -h -1 -W -Q \"SET NOCOUNT ON; SELECT CASE WHEN DB_ID(N'$${MSSQL_ACCOUNT_DATABASE:-account_tong}') IS NULL THEN 0 ELSE 1 END\" | grep -q '^1$'"
-        ]
+      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/1433'" ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -82,7 +78,7 @@ services:
       jxmssql:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5002'" ]
+      test: [ "CMD-SHELL", "bash -ec 'grep -qE \"[0-9A-Fa-f]{8}:138A [0-9A-Fa-f]{8}:[0-9A-Fa-f]{4} 0A\" /proc/net/tcp'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -110,7 +106,7 @@ services:
       paysys:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/7777'" ]
+      test: [ "CMD-SHELL", "bash -ec 'grep -qE \"[0-9A-Fa-f]{8}:1E61 [0-9A-Fa-f]{8}:[0-9A-Fa-f]{4} 0A\" /proc/net/tcp'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -141,7 +137,7 @@ services:
       s3relayserver:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5001'" ]
+      test: [ "CMD-SHELL", "bash -ec 'grep -qE \"[0-9A-Fa-f]{8}:1389 [0-9A-Fa-f]{8}:[0-9A-Fa-f]{4} 0A\" /proc/net/tcp'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -171,7 +167,7 @@ services:
       goddess:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/5622'" ]
+      test: [ "CMD-SHELL", "bash -ec 'grep -qE \"[0-9A-Fa-f]{8}:15F6 [0-9A-Fa-f]{8}:[0-9A-Fa-f]{4} 0A\" /proc/net/tcp'" ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -240,7 +236,7 @@ services:
       s3relay:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "ip=$$(hostname -I | awk '{print $$1}'); bash -ec \"</dev/tcp/$${ip}/6666\"" ]
+      test: [ "CMD-SHELL", "bash -ec 'grep -qE \"[0-9A-Fa-f]{8}:1A0A [0-9A-Fa-f]{8}:[0-9A-Fa-f]{4} 0A\" /proc/net/tcp'" ]
       interval: 10s
       timeout: 5s
       retries: 30
