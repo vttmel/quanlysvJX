@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export function readEnvFile(envFilePath: string) {
@@ -25,20 +25,6 @@ export function readEnvMap(envFilePath: string) {
 export function writeEnvFile(envFilePath: string, content: string) {
   mkdirSync(path.dirname(envFilePath), { recursive: true });
   const normalized = content.endsWith('\n') ? content : `${content}\n`;
-  const tempPath = `${envFilePath}.tmp`;
-  writeFileSync(tempPath, normalized, 'utf8');
-  try {
-    renameSync(tempPath, envFilePath);
-  } catch (error) {
-    // .env is often bind-mounted as a single file (e.g. Docker Desktop on Windows),
-    // which puts it on a different filesystem than its sibling .tmp file and makes
-    // rename() fail with EXDEV. Fall back to a direct write in that case.
-    if ((error as NodeJS.ErrnoException).code !== 'EXDEV') {
-      throw error;
-    }
-    writeFileSync(envFilePath, normalized, 'utf8');
-    rmSync(tempPath, { force: true });
-  }
   writeFileSync(envFilePath, normalized, 'utf8');
 }
 
