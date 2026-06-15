@@ -120,5 +120,18 @@ fi
 if [ $# -gt 0 ]; then
     exec "$@"
 else
+    if [ ! -f "./${APP_CMD}" ]; then
+        ALT_CMD=$(echo "$APP_CMD" | sed 's/_y$//')
+        if [ -f "./$ALT_CMD" ]; then
+            echo "-> [Warning] '${APP_CMD}' not found, fallback to '${ALT_CMD}'"
+            APP_CMD="$ALT_CMD"
+        fi
+    fi
+
+    # Đảm bảo file có quyền thực thi trước khi khởi chạy
+    if [ -f "./${APP_CMD}" ]; then
+        chmod +x "./${APP_CMD}"
+    fi
+
     exec "./${APP_CMD}"
 fi

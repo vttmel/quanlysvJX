@@ -157,6 +157,7 @@ export function selectVersion(projectRoot: string, name: string, subPath?: strin
 
   writeVersionRegistry(projectRoot, nextRegistry);
   const envServerPath = toEnvServerPath(nextVersion.path);
+
   updateEnvKey(path.join(projectRoot, '.env'), 'SERVER_PATH', envServerPath);
   return { activeVersion: versionName, serverPath: envServerPath };
 }
