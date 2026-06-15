@@ -138,12 +138,9 @@ export function normalizeGameNetworkConfig(
   };
 }
 
-export function validateGameNetworkPayload(payload: unknown, ipChoices: string[]) {
+export function validateGameNetworkPayload(payload: unknown) {
   const parsed = gameNetworkPayloadSchema.parse(payload);
-  if (!ipChoices.includes(parsed.jxIp)) {
-    throw new Error('IP không hợp lệ. Vui lòng chọn IP thật của máy chủ.');
-  }
-  for (const value of [parsed.mysqlIp, parsed.paysysIp, parsed.mssqlIp]) {
+  for (const value of [parsed.jxIp, parsed.mysqlIp, parsed.paysysIp, parsed.mssqlIp]) {
     assertIpv4(value);
   }
   return parsed;
@@ -191,7 +188,7 @@ export function buildSystemInfo(options: {
 }
 
 function normalizeHostIp(value: string | undefined, ipChoices: string[]) {
-  if (value && ipChoices.includes(value)) {
+  if (value && isIpv4(value)) {
     return value;
   }
   return ipChoices[0] ?? '';

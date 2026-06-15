@@ -33,7 +33,7 @@ export type ManagerConfig = {
 
 
 export function loadConfig(env = process.env): ManagerConfig {
-  let projectRoot = env.MANAGER_PROJECT_ROOT ?? '/workspace';
+  let projectRoot = env.MANAGER_PROJECT_ROOT || '/workspace';
   if (env.VITEST || (!fs.existsSync(projectRoot) && projectRoot === '/workspace')) {
     const cwd = process.cwd();
     if (cwd.includes('apps/api')) {

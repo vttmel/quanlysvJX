@@ -46,7 +46,7 @@ describe('GameNetworkConfigPanel', () => {
     vi.clearAllMocks();
   });
 
-  it('uses host choices for game IP and free IPv4 inputs for other IPs', async () => {
+  it('shows the saved game network config and allows free IPv4 input for all fields', async () => {
     const onSuccess = vi.fn();
     const onError = vi.fn();
 
@@ -58,7 +58,7 @@ describe('GameNetworkConfigPanel', () => {
     expect(await screen.findByText(/jxserver/)).toBeTruthy();
     expect(screen.queryByText('auto')).toBeNull();
     expect((screen.getAllByLabelText('Game server IP')[0] as HTMLInputElement).value).toBe(
-      'eth0 - 192.168.1.20 (Host)'
+      '192.168.1.20'
     );
     expect(screen.queryByText('127.0.0.1')).toBeNull();
 
@@ -78,6 +78,27 @@ describe('GameNetworkConfigPanel', () => {
       expect(onSuccess).toHaveBeenCalledWith(
         'Đã lưu cấu hình IP game vào .env. Restart dịch vụ để áp dụng.'
       );
+    });
+  });
+
+  it('allows typing a LAN IP for Game server IP that is not in the suggestion list', async () => {
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+
+    renderWithProviders(<GameNetworkConfigPanel onSuccess={onSuccess} onError={onError} />, {
+      route: '/settings/versions',
+    });
+
+    await screen.findByText(/jxserver/);
+
+    fireEvent.change(screen.getAllByLabelText('Game server IP')[0], {
+      target: { value: '192.168.1.50' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
+
+    await waitFor(() => {
+      expect(mockSaveGameNetwork.mock.calls[0]?.[0]).toMatchObject({ jxIp: '192.168.1.50' });
+      expect(onSuccess).toHaveBeenCalled();
     });
   });
 
@@ -113,7 +134,7 @@ describe('GameNetworkConfigPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
 
     await waitFor(() => {
-      expect(screen.getAllByText('Vui lòng nhập đúng IPv4.')).toHaveLength(3);
+      expect(screen.getAllByText('Vui lòng nhập đúng IPv4.')).toHaveLength(4);
       expect(onError).not.toHaveBeenCalled();
     });
   });

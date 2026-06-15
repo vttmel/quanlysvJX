@@ -60,7 +60,7 @@ describe('system routes', () => {
     ]);
   });
 
-  it('saves host JX IP and free IPv4 network values while rejecting auto', async () => {
+  it('saves host JX IP and free IPv4 network values while rejecting invalid IPv4', async () => {
     const app = await buildApp({ config: testConfig(root) });
 
     const badResponse = await app.inject({
@@ -73,7 +73,7 @@ describe('system routes', () => {
     const badJxResponse = await app.inject({
       method: 'PUT',
       url: '/api/system/game-network',
-      payload: { jxIp: '127.0.0.1', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' }
+      payload: { jxIp: '999.1.1.1', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' }
     });
     expect(badJxResponse.statusCode).toBe(400);
 
@@ -90,5 +90,15 @@ describe('system routes', () => {
     expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_MSSQL_IP=8.8.8.8');
     expect(readFileSync(path.join(root, '.env'), 'utf8')).not.toContain('MSSQL_HOST=');
     expect(response.json().data.message).toBe('Đã lưu cấu hình IP game vào .env. Restart dịch vụ để áp dụng.');
+
+    // jxIp does not have to be one of the detected ipChoices (e.g. a real LAN IP on
+    // Docker Desktop for Windows, where only the internal VM IP is detectable).
+    const lanResponse = await app.inject({
+      method: 'PUT',
+      url: '/api/system/game-network',
+      payload: { jxIp: '192.168.10.50', mysqlIp: '127.0.0.1', paysysIp: '127.0.0.1', mssqlIp: '127.0.0.1' }
+    });
+    expect(lanResponse.statusCode).toBe(200);
+    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_IP=192.168.10.50');
   });
 });

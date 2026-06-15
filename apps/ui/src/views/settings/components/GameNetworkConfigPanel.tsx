@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Autocomplete, Button, Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { schemaResolver, useForm } from '@mantine/form';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
@@ -19,29 +19,22 @@ const fallbackConfig: GameNetworkConfig = {
 
 const ipv4Pattern = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 const invalidIpv4Message = 'Vui lòng nhập đúng IPv4.';
-const invalidHostIpMessage = 'Vui lòng chọn IP thật của máy chủ.';
 
 const ipv4Schema = z.string().regex(ipv4Pattern, invalidIpv4Message);
 
-function createGameNetworkSchema(ipChoices: string[]) {
-  return z.object({
-    jxIp: z
-      .string()
-      .min(1, invalidHostIpMessage)
-      .refine((value) => ipChoices.includes(value), invalidHostIpMessage),
-    mysqlIp: ipv4Schema,
-    paysysIp: ipv4Schema,
-    mssqlIp: ipv4Schema,
-  });
-}
+const gameNetworkSchema = z.object({
+  jxIp: ipv4Schema,
+  mysqlIp: ipv4Schema,
+  paysysIp: ipv4Schema,
+  mssqlIp: ipv4Schema,
+});
 
 export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
   const { data, isLoading } = useSystemInfo();
   const saveMutation = useSaveGameNetwork();
   const form = useForm<GameNetworkConfig>({
     initialValues: fallbackConfig,
-    validate: (values) =>
-      schemaResolver(createGameNetworkSchema(data?.ipChoices ?? []), { sync: true })(values),
+    validate: schemaResolver(gameNetworkSchema, { sync: true }),
   });
 
   useEffect(() => {
@@ -103,13 +96,13 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
         )}
 
         <Group grow align="flex-start">
-          <Select
+          <Autocomplete
             label="Game server IP"
             data={ipOptions}
             value={form.values.jxIp}
             onChange={(value) => setField('jxIp', value)}
             disabled={isLoading || saveMutation.isPending}
-            placeholder="Chưa tìm thấy IP host"
+            placeholder="Nhập IP LAN của máy chủ"
             error={form.errors.jxIp}
           />
           <TextInput
@@ -156,14 +149,11 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
 function getServerFieldErrors(message: string): Partial<Record<keyof GameNetworkConfig, string>> {
   if (message.includes('IPv4')) {
     return {
+      jxIp: invalidIpv4Message,
       mysqlIp: invalidIpv4Message,
       paysysIp: invalidIpv4Message,
       mssqlIp: invalidIpv4Message,
     };
-  }
-
-  if (message.includes('IP thật') || message.includes('chọn IP')) {
-    return { jxIp: invalidHostIpMessage };
   }
 
   return {};

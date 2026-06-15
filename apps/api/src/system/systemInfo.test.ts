@@ -92,26 +92,39 @@ describe('systemInfo domain', () => {
     });
   });
 
-  it('requires JX IP to be a host choice and allows other valid IPv4 addresses', () => {
-    expect(() =>
-      validateGameNetworkPayload(
-        { jxIp: 'auto', mysqlIp: '127.0.0.1', paysysIp: '127.0.0.1', mssqlIp: '127.0.0.1' },
-        ['192.168.1.20']
-      )
-    ).toThrow('IP không hợp lệ');
+  it('keeps a saved JX IP that is a valid IPv4 even when it is not in ipChoices', () => {
+    // On Docker Desktop for Windows, ipChoices only ever contains the internal VM IP
+    // (e.g. 192.168.65.3), but JX_IP is set to the real Windows LAN IP. Reloading the
+    // page must not silently revert it back to ipChoices[0].
+    expect(
+      normalizeGameNetworkConfig({ JX_IP: '192.168.1.50', JX_MYSQL_IP: '127.0.0.1' }, [
+        '192.168.65.3'
+      ])
+    ).toEqual({
+      jxIp: '192.168.1.50',
+      mysqlIp: '127.0.0.1',
+      paysysIp: '127.0.0.1',
+      mssqlIp: '127.0.0.1'
+    });
+  });
 
+  it('requires every IP field to be a valid IPv4 address and allows IPs outside ipChoices', () => {
     expect(() =>
-      validateGameNetworkPayload(
-        { jxIp: '127.0.0.1', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
-        ['192.168.1.20']
-      )
+      validateGameNetworkPayload({
+        jxIp: 'auto',
+        mysqlIp: '127.0.0.1',
+        paysysIp: '127.0.0.1',
+        mssqlIp: '127.0.0.1'
+      })
     ).toThrow('IP không hợp lệ');
 
     expect(
-      validateGameNetworkPayload(
-        { jxIp: '192.168.1.20', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
-        ['192.168.1.20']
-      )
+      validateGameNetworkPayload({
+        jxIp: '192.168.1.20',
+        mysqlIp: '10.0.0.8',
+        paysysIp: '172.18.0.1',
+        mssqlIp: '8.8.8.8'
+      })
     ).toEqual({
       jxIp: '192.168.1.20',
       mysqlIp: '10.0.0.8',
@@ -119,11 +132,30 @@ describe('systemInfo domain', () => {
       mssqlIp: '8.8.8.8'
     });
 
+    // jxIp may be a real LAN IP that the host namespace never reports (e.g. Docker
+    // Desktop on Windows only exposes its internal VM IP), so it must not be
+    // restricted to ipChoices membership.
+    expect(
+      validateGameNetworkPayload({
+        jxIp: '192.168.1.50',
+        mysqlIp: '10.0.0.8',
+        paysysIp: '172.18.0.1',
+        mssqlIp: '8.8.8.8'
+      })
+    ).toEqual({
+      jxIp: '192.168.1.50',
+      mysqlIp: '10.0.0.8',
+      paysysIp: '172.18.0.1',
+      mssqlIp: '8.8.8.8'
+    });
+
     expect(() =>
-      validateGameNetworkPayload(
-        { jxIp: '192.168.1.20', mysqlIp: '999.1.1.1', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
-        ['192.168.1.20']
-      )
+      validateGameNetworkPayload({
+        jxIp: '192.168.1.20',
+        mysqlIp: '999.1.1.1',
+        paysysIp: '172.18.0.1',
+        mssqlIp: '8.8.8.8'
+      })
     ).toThrow('IP không hợp lệ');
   });
 

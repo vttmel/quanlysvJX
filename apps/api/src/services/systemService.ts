@@ -3,7 +3,6 @@ import { ValidationError } from '../utils/errors.js';
 import {
   buildSystemInfo,
   getServerIpChoiceDetails,
-  getServerIpChoices,
   saveGameNetworkConfig,
   validateGameNetworkPayload
 } from '../system/systemInfo.js';
@@ -33,7 +32,7 @@ export class SystemService {
   saveGameNetwork(body: unknown) {
     let payload;
     try {
-      payload = validateGameNetworkPayload(body, getServerIpChoices());
+      payload = validateGameNetworkPayload(body);
     } catch (error) {
       throw new ValidationError(error instanceof Error ? error.message : 'IP không hợp lệ.');
     }

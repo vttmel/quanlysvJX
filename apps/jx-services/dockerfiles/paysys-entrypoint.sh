@@ -30,6 +30,14 @@ fi
 export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-mscoree,mshtml,winevulkan=d}"
 export WINEDEBUG="${WINEDEBUG:--vulkan,-ntoskrnl,-service,-ole,-ntdll,-sync}"
 
+# Giá trị "Server" đã mã hóa trong database.ini luôn giải mã ra IP placeholder
+# gốc 192.168.10.4. SQL Server trên Linux (container jxmssql) không hỗ trợ
+# Named Pipes nên SQLOLEDB sẽ không kết nối được tới host đó. Đăng ký alias
+# trong SQL Server Client Network Utility để SQLOLEDB dùng TCP/IP tới MSSQL
+# thật (cổng host được publish 1433:1433).
+wine reg add 'HKLM\SOFTWARE\Microsoft\MSSQLServer\Client\ConnectTo' \
+    /v "192.168.10.4" /t REG_SZ /d "DBMSSOCN,${JX_MSSQL_IP:-127.0.0.1},1433" /f >/dev/null 2>&1 || true
+
 update_ini_key() {
     file="$1"
     section="$2"
