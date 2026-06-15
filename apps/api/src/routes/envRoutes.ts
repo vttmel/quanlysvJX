@@ -11,7 +11,7 @@ const saveEnvSchema = z.object({
 });
 
 export async function registerEnvRoutes(app: FastifyInstance) {
-  const envFilePath = path.join(app.deps.config.projectRoot, '.env');
+  const envFilePath = path.join(app.deps.config.projectRoot, 'apps/jx-services/.env');
   const envRepository = new EnvRepository(envFilePath);
   const envService = new EnvService(envRepository);
   const envController = new EnvController(envService);

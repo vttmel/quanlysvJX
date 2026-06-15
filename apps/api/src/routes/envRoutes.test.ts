@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -23,7 +23,8 @@ function testConfig(projectRoot: string): ManagerConfig {
 
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'env-routes-'));
-  writeFileSync(path.join(root, '.env'), 'TEST_VAR=true\n', 'utf8');
+  mkdirSync(path.join(root, 'apps/jx-services'), { recursive: true });
+  writeFileSync(path.join(root, 'apps/jx-services/.env'), 'TEST_VAR=true\n', 'utf8');
 });
 
 afterEach(() => {
@@ -62,7 +63,7 @@ describe('env routes', () => {
       }
     });
 
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toBe('TEST_VAR=false\nNEW_VAR=hello\n');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toBe('TEST_VAR=false\nNEW_VAR=hello\n');
   });
 
   it('báo lỗi khi gửi dữ liệu body không hợp lệ (Zod validation)', async () => {

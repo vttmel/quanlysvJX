@@ -42,6 +42,10 @@ function ensureConfigFiles(projectRoot: string) {
       target: path.join(projectRoot, '.env')
     },
     {
+      example: path.join(projectRoot, 'apps/jx-services/.env.example'),
+      target: path.join(projectRoot, 'apps/jx-services/.env')
+    },
+    {
       example: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/bishop.cfg.example'),
       target: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/bishop.cfg')
     },
@@ -89,7 +93,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   
   ensureConfigFiles(projectRoot);
 
-  const envFilePath = path.join(projectRoot, '.env');
+  const envFilePath = path.join(projectRoot, 'apps/jx-services/.env');
   const updatedIp = autoUpdateEnvIp(envFilePath);
   if (updatedIp) {
     process.env.JX_IP = updatedIp;

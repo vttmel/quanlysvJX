@@ -32,6 +32,8 @@ export function buildComposeArgs(args: readonly string[], options: ComposeRunner
     ...projectDirectoryArgs,
     '--env-file',
     '.env',
+    '--env-file',
+    'apps/jx-services/.env',
     '-f',
     'apps/jx-services/docker-compose.yaml',
     ...args
@@ -49,14 +51,16 @@ function shouldUsePlainProgress(args: readonly string[]) {
 function getSpawnEnv(cwd: string, args: readonly string[]): NodeJS.ProcessEnv {
   const env = { ...process.env };
   if (args[0] === 'compose') {
-    try {
-      const envFilePath = path.join(cwd, '.env');
-      const envMap = readEnvMap(envFilePath);
-      for (const key of Object.keys(envMap)) {
-        delete env[key];
+    for (const file of ['.env', 'apps/jx-services/.env']) {
+      try {
+        const envFilePath = path.join(cwd, file);
+        const envMap = readEnvMap(envFilePath);
+        for (const key of Object.keys(envMap)) {
+          delete env[key];
+        }
+      } catch {
+        // Bỏ qua lỗi
       }
-    } catch {
-      // Bỏ qua lỗi
     }
   }
   return env;

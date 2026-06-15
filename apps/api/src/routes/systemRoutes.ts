@@ -5,7 +5,7 @@ import { SystemService } from '../services/systemService.js';
 import { SystemController } from '../controllers/systemController.js';
 
 export async function registerSystemRoutes(app: FastifyInstance) {
-  const envFilePath = path.join(app.deps.config.projectRoot, '.env');
+  const envFilePath = path.join(app.deps.config.projectRoot, 'apps/jx-services/.env');
   const systemRepository = new SystemRepository({ runCompose: app.deps.runCompose });
   const systemService = new SystemService(systemRepository, envFilePath);
   const systemController = new SystemController(systemService);

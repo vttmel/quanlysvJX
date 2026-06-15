@@ -23,3 +23,6 @@ mount/config/**/*
 
 # State files
 .image-build-state.json
+
+# Cấu hình môi trường JX cục bộ
+.env

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -24,7 +24,8 @@ function testConfig(projectRoot: string): ManagerConfig {
 
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'system-routes-'));
-  writeFileSync(root + '/.env', 'JX_IP=auto\nJX_MYSQL_IP=auto\nJX_PAYSYS_IP=auto\nJX_MSSQL_IP=auto\n', 'utf8');
+  mkdirSync(root + '/apps/jx-services', { recursive: true });
+  writeFileSync(root + '/apps/jx-services/.env', 'JX_IP=auto\nJX_MYSQL_IP=auto\nJX_PAYSYS_IP=auto\nJX_MSSQL_IP=auto\n', 'utf8');
   vi.spyOn(os, 'networkInterfaces').mockReturnValue({
     eth0: [{ address: '192.168.1.20', family: 'IPv4', internal: false } as any],
     docker0: [{ address: '172.18.0.1', family: 'IPv4', internal: false } as any],
@@ -84,11 +85,11 @@ describe('system routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_IP=192.168.1.20');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_MYSQL_IP=10.0.0.8');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_PAYSYS_IP=172.18.0.1');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).toContain('JX_MSSQL_IP=8.8.8.8');
-    expect(readFileSync(path.join(root, '.env'), 'utf8')).not.toContain('MSSQL_HOST=');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('JX_IP=192.168.1.20');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('JX_MYSQL_IP=10.0.0.8');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('JX_PAYSYS_IP=172.18.0.1');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).toContain('JX_MSSQL_IP=8.8.8.8');
+    expect(readFileSync(path.join(root, 'apps/jx-services/.env'), 'utf8')).not.toContain('MSSQL_HOST=');
     expect(response.json().data.message).toBe('Đã lưu cấu hình IP game vào .env. Restart dịch vụ để áp dụng.');
   });
 });
