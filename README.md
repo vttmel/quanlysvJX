@@ -5,7 +5,7 @@ Huong dan nay danh cho nguoi moi, khong can biet nhieu ve IT. Ban chi can cai Do
 ## Luu y truoc khi cai
 
 - Uu tien chay tren Ubuntu/Linux server.
-- Windows/macOS Docker Desktop chua duoc test day du. Co the gap loi do co che network, Docker socket va duong dan file khac Linux.
+- Co the chay tren Windows bang Docker Desktop, nhung can lam them buoc cau hinh `MANAGER_PROJECT_ROOT` va bat tinh nang Host networking. Xem muc "Chay tren Windows (Docker Desktop)" o cuoi bai.
 - File `.env` da co san trong repo va co the sua tren Web o muc Cai dat. File nay co mat khau mac dinh, can doi truoc khi dung ngoai may ca nhan hoac mang LAN tin cay.
 - Web Manager co quyen dieu khien Docker tren may chu. Chi dung trong mang LAN tin cay, khong mo cong ra Internet cong cong.
 
@@ -88,8 +88,9 @@ Neu chua kich hoat phien ban game, Dashboard se khong cho chay cac dich vu game.
 
 Vao `Cai dat` de cau hinh IP game.
 
-- `Game server IP`: chon IP that cua may chu trong mang LAN.
-- Neu muon choi tu ngoai Internet qua VPN, chon IP VPN cua may chu thay vi IP LAN.
+- `Game server IP`: chon IP that cua may chu trong mang LAN trong danh sach goi y, hoac tu nhap IP
+  (dang IPv4) neu IP do khong co trong danh sach (vi du IP LAN thuc tren Windows).
+- Neu muon choi tu ngoai Internet qua VPN, chon/nhap IP VPN cua may chu thay vi IP LAN.
 - May choi game cung can ket noi vao cung VPN va truy cap server bang IP VPN nay.
 - `MySQL IP`, `Paysys IP`, `MSSQL IP`: thuong de `127.0.0.1` khi chay tat ca tren cung may.
 
@@ -165,9 +166,57 @@ Vao `Cai dat` -> `Phien ban game`, tai len hoac clone phien ban game, sau do kic
 
 Kiem tra MSSQL da chay va thong tin `MSSQL_USER`, `MSSQL_PASSWORD`, `MSSQL_DATABASE` trong `.env` dung.
 
-### Chay tren Windows/macOS bi loi
+### Chay tren Windows bi loi
 
-Moi truong Windows/macOS Docker Desktop chua test day du. Neu gap loi network, duong dan volume, hoac Docker socket, hay chay tren Ubuntu/Linux server.
+Xem muc "Chay tren Windows (Docker Desktop)" o duoi. Loi thuong gap nhat la chua dien `MANAGER_PROJECT_ROOT` trong `.env`, hoac chua bat Host networking trong Docker Desktop.
+
+### Chay tren macOS
+
+macOS Docker Desktop chua duoc test. Cac van de tuong tu Windows (network_mode: host, duong dan volume) co the xay ra; uu tien chay tren Ubuntu/Linux server.
+
+## Chay tren Windows (Docker Desktop)
+
+Du an co the chay tren Windows bang Docker Desktop (WSL2 backend), nhung can cau hinh them 2 muc duoi day.
+
+### 1. Bat Host networking trong Docker Desktop
+
+Manager (api/ui) va toan bo dich vu JX trong `apps/jx-services` deu dung `network_mode: host` de bind dung IP LAN cua may. Tren Windows, tinh nang nay can duoc bat thu cong:
+
+- Mo Docker Desktop -> `Settings` -> `Resources` -> `Network`.
+- Bat `Enable host networking` (yeu cau Docker Desktop ban moi, tu khoang 4.34 tro len).
+- Ap dung va khoi dong lai Docker Desktop.
+
+Can Docker Desktop >= 4.34. Neu khong thay tuy chon nay, hay cap nhat Docker Desktop len ban moi nhat.
+
+### 2. Khai bao `MANAGER_PROJECT_ROOT` trong `.env`
+
+API container goi `docker compose` (qua Docker socket mount) de dieu khien cac service trong `apps/jx-services` tren chinh Docker host. Vi vay gia tri `MANAGER_PROJECT_ROOT` phai la duong dan **theo goc nhin cua Docker Desktop daemon**, khong phai duong dan Windows binh thuong (`C:\...`).
+
+Docker Desktop mount cac o dia Windows vao duong dan noi bo dang:
+
+```
+/run/desktop/mnt/host/<o dia viet thuong>/<duong dan, dung dau />
+```
+
+Vi du, neu repo nam o `C:\Users\Admin\Documents\GitHub\quanlysvJX`, mo file `.env` o thu muc goc repo va dien:
+
+```
+MANAGER_PROJECT_ROOT=/run/desktop/mnt/host/c/Users/Admin/Documents/GitHub/quanlysvJX
+```
+
+Sau do chay binh thuong tu PowerShell tai thu muc goc repo:
+
+```powershell
+docker compose up -d --build
+```
+
+Khong can dat bien moi truong `MANAGER_PROJECT_ROOT` truoc lenh nhu tren Linux (vi `$PWD` khong ton tai trong PowerShell/cmd) - gia tri trong `.env` se duoc dung truc tiep.
+
+### Luu y khi chay tren Windows
+
+- Tinh nang tu nhan dien IP (trong `Cai dat` -> Game server IP) co the chi goi y IP noi bo cua may ao Docker Desktop (vi du `192.168.65.x`), khong phai IP LAN thuc cua Windows. O o `Game server IP`, hay tu nhap (go truc tiep) IP LAN thuc cua may Windows (xem bang `ipconfig`, thuong dang `192.168.x.x`) roi bam Luu cau hinh IP.
+- Gio hien thi trong container duoc dat ve `Asia/Ho_Chi_Minh` qua bien `TZ` (xem `docker-compose.yaml`), khong phu thuoc `/etc/timezone` cua may Windows.
+- Cac container game (Wine/CentOS) van la container Linux, build va chay binh thuong trong VM Linux cua Docker Desktop; van de chinh nam o networking (muc 1) chu khong phai build.
 
 ## Bao mat
 
