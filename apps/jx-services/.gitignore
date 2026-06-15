@@ -16,3 +16,10 @@ mount/paysyswin/relayserver_log
 mount/paysyswin/wineprefix-paysys.tar.gz
 
 versions/*
+
+# Cấu hình JX config
+mount/config/**/*
+!mount/config/**/*.example
+
+# State files
+.image-build-state.json
