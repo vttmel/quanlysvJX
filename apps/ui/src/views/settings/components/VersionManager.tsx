@@ -76,7 +76,10 @@ export function VersionManager({ onSuccess, onError }: Props) {
 
   const cleanLogs = (str: string) => {
     // eslint-disable-next-line no-control-regex
-    const stripped = str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+    const stripped = str.replace(
+      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+      ''
+    );
     const lines = stripped.replace(/\r/g, '\n').split('\n');
     return lines.join('\n');
   };
@@ -509,7 +512,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
                       lineHeight: '1.4',
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
-                      color: '#4af626'
+                      color: '#4af626',
                     }}
                   >
                     {cleanLogs(cloneLogs) || 'Đang kết nối tới Git terminal...'}
