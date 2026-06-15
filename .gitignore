@@ -13,3 +13,8 @@ apps/jx-services/mount/database/mssql/seed/*.mdf
 apps/jx-services/mount/database/mssql/seed/*.ldf
 apps/jx-services/.image-build-state.json
 .codegraph/daemon.pid
+
+# Cấu hình môi trường cục bộ và JX config
+.env
+apps/jx-services/mount/config/**/*
+!apps/jx-services/mount/config/**/*.example

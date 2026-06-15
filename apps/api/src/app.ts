@@ -33,7 +33,47 @@ export type AppDeps = {
 };
 
 import { autoUpdateEnvIp } from './env/envFile.js';
-import { existsSync } from 'node:fs';
+import { existsSync, copyFileSync, mkdirSync } from 'node:fs';
+
+function ensureConfigFiles(projectRoot: string) {
+  const configsToCopy = [
+    {
+      example: path.join(projectRoot, '.env.example'),
+      target: path.join(projectRoot, '.env')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/bishop.cfg.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/bishop.cfg')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/goddess.cfg.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/goddess.cfg')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/hostset.ini.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/hostset.ini')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/relay_config.ini.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/gateway/relay_config.ini')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/gs1/servercf0.ini.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/gs1/servercf0.ini')
+    },
+    {
+      example: path.join(projectRoot, 'apps/jx-services/mount/config/paysys/database.ini.example'),
+      target: path.join(projectRoot, 'apps/jx-services/mount/config/paysys/database.ini')
+    }
+  ];
+
+  for (const config of configsToCopy) {
+    if (!existsSync(config.target) && existsSync(config.example)) {
+      mkdirSync(path.dirname(config.target), { recursive: true });
+      copyFileSync(config.example, config.target);
+    }
+  }
+}
 
 export async function buildApp(overrides: Partial<AppDeps> = {}) {
   // Tự động phát hiện và ghi đè IP host vào .env nếu đang là auto
@@ -46,6 +86,9 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
       projectRoot = cwd;
     }
   }
+  
+  ensureConfigFiles(projectRoot);
+
   const envFilePath = path.join(projectRoot, '.env');
   const updatedIp = autoUpdateEnvIp(envFilePath);
   if (updatedIp) {
