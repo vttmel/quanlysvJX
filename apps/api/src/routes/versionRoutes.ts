@@ -110,9 +110,13 @@ export async function registerVersionRoutes(app: FastifyInstance) {
 
     const child = spawn('git', ['clone', '--depth', '1', '-b', branch, url, targetDir]);
     let closed = false;
+    let errorOutput = '';
 
     child.stdout.on('data', writeLog);
-    child.stderr.on('data', writeLog);
+    child.stderr.on('data', (chunk) => {
+      errorOutput += String(chunk);
+      writeLog(chunk);
+    });
 
     child.on('error', (error: Error) => {
       if (!reply.raw.destroyed) {
@@ -155,7 +159,8 @@ export async function registerVersionRoutes(app: FastifyInstance) {
           fs.rmSync(targetDir, { recursive: true, force: true });
         }
         if (!reply.raw.destroyed) {
-          reply.raw.write(`event: error\ndata: ${JSON.stringify('Git clone failed')}\n\n`);
+          const detail = errorOutput.trim() || 'Git clone failed';
+          reply.raw.write(`event: error\ndata: ${JSON.stringify(detail)}\n\n`);
           reply.raw.end();
         }
       }
