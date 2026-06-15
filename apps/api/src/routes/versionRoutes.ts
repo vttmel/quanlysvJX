@@ -86,8 +86,18 @@ export async function registerVersionRoutes(app: FastifyInstance) {
 
     const registry = versionRepository.getRegistry();
     const existing = registry.versions.find((v) => v.name === targetName);
-    if (existing || fs.existsSync(targetDir)) {
+    if (existing) {
       throw new DuplicateVersionError(targetName);
+    }
+
+    if (fs.existsSync(targetDir)) {
+      try {
+        fs.rmSync(targetDir, { recursive: true, force: true });
+      } catch (err) {
+        throw new Error(
+          `Thư mục ${targetName} đã tồn tại nhưng không có trong danh sách đăng ký. Không thể tự động dọn dẹp do lỗi quyền: ${err instanceof Error ? err.message : 'Unknown'}`
+        );
+      }
     }
 
     reply.hijack();
