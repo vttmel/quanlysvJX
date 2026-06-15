@@ -3,6 +3,7 @@ set -e
 
 # 0. Tự động làm sạch các biến môi trường khỏi ký tự \r ẩn (do CRLF khi clone ở máy khác)
 export APP_CMD=$(echo -n "$APP_CMD" | tr -d '\r')
+export HOST_IP=$(hostname -I | awk '{print $1}')
 export JX_IP=$(echo -n "$JX_IP" | tr -d '\r')
 export JX_MYSQL_IP=$(echo -n "$JX_MYSQL_IP" | tr -d '\r')
 export JX_PAYSYS_IP=$(echo -n "$JX_PAYSYS_IP" | tr -d '\r')
@@ -100,8 +101,8 @@ if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
     
     if [[ "$CONFIG_FILE" == *"goddess.cfg"* ]]; then
         update_ini_key "$TEMP_FILE" "Database" "Ip" "$JX_MYSQL_IP"
-        update_ini_key "$TEMP_FILE" "FixIp" "IntranetIp" "$JX_IP"
-        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
+        update_ini_key "$TEMP_FILE" "FixIp" "IntranetIp" "$HOST_IP"
+        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$HOST_IP"
         
     elif [[ "$CONFIG_FILE" == *"bishop.cfg"* ]]; then
         update_ini_key "$TEMP_FILE" "Network" "AccSvrIP" "$JX_PAYSYS_IP"
@@ -113,9 +114,8 @@ if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
         # "Failed to connect to Paysys". IntranetIp phải là địa chỉ có thể
         # bind được trong container (127.0.0.1); InternetIp vẫn dùng $JX_IP
         # để client LAN kết nối vào bishop.
-        update_ini_key "$TEMP_FILE" "FixIp" "IntranetIp" "$JX_IP"
-        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
-        
+        update_ini_key "$TEMP_FILE" "FixIp" "IntranetIp" "$HOST_IP"
+        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$HOST_IP"
     elif [[ "$CONFIG_FILE" == *"relay_config.ini"* ]]; then
         update_ini_key "$TEMP_FILE" "Database" "Ip" "$JX_MYSQL_IP"
         # s3relay_y (CRootClient) bind() socket nguon cua ket noi RootRelay
@@ -126,7 +126,7 @@ if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
         # -> s3relay_y exit(0) ngay. Dung 127.0.0.1 de bind() thanh cong
         # (RootRelay tu ket noi vao chinh no qua loopback, hop ly cho setup
         # 1 may chu duy nhat).
-        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$JX_IP"
+        update_ini_key "$TEMP_FILE" "FixIp" "InternetIp" "$HOST_IP"
 
     elif [[ "$CONFIG_FILE" == *"servercf0.ini"* ]]; then
         # jx_linux_y bind() socket lang nghe [GameServer] Port truc tiep vao

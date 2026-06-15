@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import type { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { CommandError } from '../utils/errors.js';
+import { readEnvMap } from '../env/envFile.js';
 
 export type CommandResult = {
   stdout: string;
@@ -45,6 +46,22 @@ function shouldUsePlainProgress(args: readonly string[]) {
   return args[0] === 'build' || (args[0] === 'up' && args.includes('--build'));
 }
 
+function getSpawnEnv(cwd: string, args: readonly string[]): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  if (args[0] === 'compose') {
+    try {
+      const envFilePath = path.join(cwd, '.env');
+      const envMap = readEnvMap(envFilePath);
+      for (const key of Object.keys(envMap)) {
+        delete env[key];
+      }
+    } catch {
+      // Bỏ qua lỗi
+    }
+  }
+  return env;
+}
+
 export async function runDockerCompose(
   args: readonly string[],
   cwd: string,
@@ -69,7 +86,7 @@ function runCommand(
   options?: { stdin?: string | Buffer }
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, shell: false });
+    const child = spawn(command, args, { cwd, shell: false, env: getSpawnEnv(cwd, args) });
     let stdout = '';
     let stderr = '';
 
@@ -100,9 +117,11 @@ export function runDockerComposeStream(
   cwd: string,
   runnerOptions: ComposeRunnerOptions = {}
 ): ComposeStream {
-  return spawn('docker', buildComposeArgs(args, runnerOptions), { cwd, shell: false });
+  const composeArgs = buildComposeArgs(args, runnerOptions);
+  return spawn('docker', composeArgs, { cwd, shell: false, env: getSpawnEnv(cwd, composeArgs) });
 }
 
 export function runDockerStream(args: readonly string[], cwd: string): ComposeStream {
   return spawn('docker', buildDockerArgs(args), { cwd, shell: false });
 }
+
