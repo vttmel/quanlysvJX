@@ -28,6 +28,8 @@ export type ManagerConfig = {
   maxFinishedScheduledRuns?: number;
   schedulerEnabled: boolean;
   mssql: MssqlConfig;
+  gameVersionPath?: string;
+  gameVersionSubPath?: string;
 };
 
 
@@ -70,7 +72,9 @@ export function loadConfig(env = process.env): ManagerConfig {
       password: env.MSSQL_PASSWORD ?? null,
       encrypt: env.MSSQL_ENCRYPT === 'true',
       trustServerCertificate: env.MSSQL_TRUST_SERVER_CERTIFICATE !== 'false'
-    }
+    },
+    gameVersionPath: env.GAME_VERSION_PATH,
+    gameVersionSubPath: env.GAME_VERSION_SUB_PATH
   };
 }
 

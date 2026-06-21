@@ -57,4 +57,15 @@ describe('loadConfig MSSQL settings', () => {
     expect(config.mysqlBackupDir).toBe('/repo/apps/jx-services/mount/database/backups/mysql');
     expect(config.mssqlBackupDir).toBe('/repo/apps/jx-services/mount/database/backups/mssql');
   });
+
+  it('loads game version settings from env', () => {
+    const config = loadConfig({
+      VITEST: 'true',
+      GAME_VERSION_PATH: '/srv/game',
+      GAME_VERSION_SUB_PATH: 'server'
+    });
+
+    expect(config.gameVersionPath).toBe('/srv/game');
+    expect(config.gameVersionSubPath).toBe('server');
+  });
 });
