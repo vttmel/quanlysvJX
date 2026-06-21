@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { Container, Loader, Stack, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGameVersionSettings } from '@/hooks/useGameVersionSettings';
 import { GameVersionErrorScreen } from './GameVersionErrorScreen';
@@ -21,7 +21,10 @@ export function GameVersionStartupGuard({ children }: { children: ReactNode }) {
   if (startupQuery.isLoading) {
     return (
       <Container size="sm" py="xl">
-        <Stack align="center" gap="md"><Loader /><Text>Đang kiểm tra game version...</Text></Stack>
+        <Stack align="center" gap="md">
+          <Loader />
+          <Text>Đang kiểm tra game version...</Text>
+        </Stack>
       </Container>
     );
   }

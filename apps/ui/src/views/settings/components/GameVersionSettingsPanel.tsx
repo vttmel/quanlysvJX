@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconAlertCircle, IconCheck, IconDeviceFloppy, IconSearch } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import { useGameVersionSettings } from '@/hooks/useGameVersionSettings';
 
 type Props = {
@@ -29,7 +29,9 @@ export function GameVersionSettingsPanel({ onSuccess, onError }: Props) {
       <Stack gap="md">
         <div>
           <Title order={4}>Cài đặt game version</Title>
-          <Text size="xs" c="dimmed">Chọn thư mục chứa đủ các mục bắt buộc trước khi lưu vào .env.</Text>
+          <Text size="xs" c="dimmed">
+            Chọn thư mục chứa đủ các mục bắt buộc trước khi lưu vào .env.
+          </Text>
         </div>
 
         <TextInput
@@ -46,29 +48,56 @@ export function GameVersionSettingsPanel({ onSuccess, onError }: Props) {
         />
 
         <Group gap="xs">
-          {requiredFiles.map((requiredFile) => <Badge key={requiredFile} variant="light">{requiredFile}</Badge>)}
+          {requiredFiles.map((requiredFile) => (
+            <Badge key={requiredFile} variant="light">
+              {requiredFile}
+            </Badge>
+          ))}
         </Group>
 
         {validation && !validation.isValid ? (
           <Alert color="red" icon={<IconAlertCircle size={16} />} title="Game version chưa hợp lệ">
-            <Stack gap={4}>{validation.errors.map((error) => <Text key={error} size="xs">{error}</Text>)}</Stack>
+            <Stack gap={4}>
+              {validation.errors.map((error) => (
+                <Text key={error} size="xs">
+                  {error}
+                </Text>
+              ))}
+            </Stack>
           </Alert>
         ) : null}
-        {validation?.isValid ? <Alert color="green" icon={<IconCheck size={16} />}>Game version hợp lệ.</Alert> : null}
+        {validation?.isValid ? (
+          <Alert color="green" icon={<IconCheck size={16} />}>
+            Game version hợp lệ.
+          </Alert>
+        ) : null}
 
         <Group justify="flex-end">
           <Button
             variant="light"
             leftSection={<IconSearch size={16} />}
             loading={validateMutation.isPending}
-            onClick={() => validateMutation.mutateAsync(payload).catch((error) => onError(error instanceof Error ? error.message : 'Kiểm tra thất bại'))}
+            onClick={() =>
+              validateMutation
+                .mutateAsync(payload)
+                .catch((error) =>
+                  onError(error instanceof Error ? error.message : 'Kiểm tra thất bại')
+                )
+            }
           >
             Kiểm tra
           </Button>
           <Button
             leftSection={<IconDeviceFloppy size={16} />}
             loading={saveMutation.isPending}
-            onClick={() => saveMutation.mutateAsync(payload).then(() => onSuccess('Đã lưu cài đặt game version. Vui lòng restart dịch vụ nếu cần.')).catch((error) => onError(error instanceof Error ? error.message : 'Lưu thất bại'))}
+            onClick={() =>
+              saveMutation
+                .mutateAsync(payload)
+                .then(() =>
+                  onSuccess('Đã lưu cài đặt game version. Vui lòng restart dịch vụ nếu cần.')
+                )
+                .catch((error) => onError(error instanceof Error ? error.message : 'Lưu thất bại'))
+            }
           >
             Lưu cài đặt
           </Button>

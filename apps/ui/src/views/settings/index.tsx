@@ -4,8 +4,8 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { showSuccessNotification, showErrorNotification } from '@/utils/notification';
 import { BackupSettingsTab } from './components/BackupSettingsTab';
 import { EnvEditor } from './components/EnvEditor';
-import { VersionManager } from './components/VersionManager';
 import { GameVersionSettingsPanel } from './components/GameVersionSettingsPanel';
+import { VersionManager } from './components/VersionManager';
 
 type SettingsTab = 'versions' | 'env' | 'backup';
 

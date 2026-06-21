@@ -120,7 +120,12 @@ vi.mock('@/hooks/useGameVersionSettings', () => ({
       isLoading: false,
     },
     settingsQuery: {
-      data: { gameVersionPath: '/srv/game', gameVersionSubPath: '', requiredFiles: [], validation: { isValid: true, errors: [], missingFiles: [] } },
+      data: {
+        gameVersionPath: '/srv/game',
+        gameVersionSubPath: '',
+        requiredFiles: [],
+        validation: { isValid: true, errors: [], missingFiles: [] },
+      },
       isLoading: false,
     },
     validateMutation: { mutateAsync: vi.fn(), isPending: false },

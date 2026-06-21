@@ -14,9 +14,9 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconSwords, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { GameVersionStartupGuard } from '@/components/GameVersionStartupGuard';
 import { navigationConfig } from '@/configs/routes.config';
 import { useSystemInfo } from '@/hooks/useSystemInfo';
-import { GameVersionStartupGuard } from '@/components/GameVersionStartupGuard';
 
 const navbarCollapsedStorageKey = 'jx-manager-navbar-collapsed';
 

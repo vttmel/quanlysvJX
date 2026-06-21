@@ -26,19 +26,33 @@ export type GameVersionStartupCheck = {
 
 export const gameVersionSettingsService = {
   getSettings: async () => {
-    const res = await ApiService.fetchData<any, GameVersionSettings>({ url: '/api/game-version-settings', method: 'GET' });
+    const res = await ApiService.fetchData<any, GameVersionSettings>({
+      url: '/api/game-version-settings',
+      method: 'GET',
+    });
     return res.data;
   },
   validateSettings: async (data: GameVersionSettingsPayload) => {
-    const res = await ApiService.fetchData<any, GameVersionSettings>({ url: '/api/game-version-settings/validate', method: 'POST', data });
+    const res = await ApiService.fetchData<any, GameVersionSettings>({
+      url: '/api/game-version-settings/validate',
+      method: 'POST',
+      data,
+    });
     return res.data;
   },
   saveSettings: async (data: GameVersionSettingsPayload) => {
-    const res = await ApiService.fetchData<any, GameVersionSettings>({ url: '/api/game-version-settings', method: 'PUT', data });
+    const res = await ApiService.fetchData<any, GameVersionSettings>({
+      url: '/api/game-version-settings',
+      method: 'PUT',
+      data,
+    });
     return res.data;
   },
   startupCheck: async () => {
-    const res = await ApiService.fetchData<any, GameVersionStartupCheck>({ url: '/api/game-version-settings/startup-check', method: 'GET' });
+    const res = await ApiService.fetchData<any, GameVersionStartupCheck>({
+      url: '/api/game-version-settings/startup-check',
+      method: 'GET',
+    });
     return res.data;
-  }
+  },
 };
