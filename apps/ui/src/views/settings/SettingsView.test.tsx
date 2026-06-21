@@ -15,6 +15,10 @@ vi.mock('./components/VersionManager', () => ({
   VersionManager: () => <div>Phiên bản game content</div>,
 }));
 
+vi.mock('./components/GameVersionSettingsPanel', () => ({
+  GameVersionSettingsPanel: () => <div>Cài đặt game version content</div>,
+}));
+
 describe('SettingsView routing', () => {
   afterEach(() => cleanup());
 

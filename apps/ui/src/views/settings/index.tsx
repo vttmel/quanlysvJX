@@ -1,10 +1,11 @@
-import { Paper, Tabs } from '@mantine/core';
+import { Paper, Stack, Tabs } from '@mantine/core';
 import { useCallback } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { showSuccessNotification, showErrorNotification } from '@/utils/notification';
 import { BackupSettingsTab } from './components/BackupSettingsTab';
 import { EnvEditor } from './components/EnvEditor';
 import { VersionManager } from './components/VersionManager';
+import { GameVersionSettingsPanel } from './components/GameVersionSettingsPanel';
 
 type SettingsTab = 'versions' | 'env' | 'backup';
 
@@ -66,7 +67,10 @@ export default function SettingsView() {
           <EnvEditor onSuccess={handleSuccess} onError={handleError} />
         </Tabs.Panel>
         <Tabs.Panel value="versions">
-          <VersionManager onSuccess={handleSuccess} onError={handleError} />
+          <Stack gap="md">
+            <GameVersionSettingsPanel onSuccess={handleSuccess} onError={handleError} />
+            <VersionManager onSuccess={handleSuccess} onError={handleError} />
+          </Stack>
         </Tabs.Panel>
         <Tabs.Panel value="backup">
           <BackupSettingsTab onError={handleError} />
