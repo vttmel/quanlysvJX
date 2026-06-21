@@ -113,6 +113,21 @@ vi.mock('@/hooks/useEnv', () => ({
   })),
 }));
 
+vi.mock('@/hooks/useGameVersionSettings', () => ({
+  useGameVersionSettings: vi.fn(() => ({
+    startupQuery: {
+      data: { configured: true, ready: true, validation: { errors: [], missingFiles: [] } },
+      isLoading: false,
+    },
+    settingsQuery: {
+      data: { gameVersionPath: '/srv/game', gameVersionSubPath: '', requiredFiles: [], validation: { isValid: true, errors: [], missingFiles: [] } },
+      isLoading: false,
+    },
+    validateMutation: { mutateAsync: vi.fn(), isPending: false },
+    saveMutation: { mutateAsync: vi.fn(), isPending: false },
+  })),
+}));
+
 vi.mock('@/services/serviceService', () => ({
   serviceService: {
     getLogs: vi.fn().mockResolvedValue({ service: 'all', tail: 300, logs: '' }),
