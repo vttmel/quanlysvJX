@@ -174,13 +174,26 @@ export class UpdateService {
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
     
-    // Bước 1: Build đồng bộ các image mới (ở bước này container API cũ vẫn đang chạy bình thường)
+    // Ghi đè phiên bản mới nhất vào file version.json ngay sau khi checkout
+    try {
+      const versionFilePath = path.join(this.deps.projectRoot, "version.json");
+      const versionData = {
+        version: status.latestTag,
+        commit: "unknown"
+      };
+      fs.writeFileSync(versionFilePath, JSON.stringify(versionData, null, 2) + "\n", "utf8");
+      onEvent({ type: "status", message: `Đã cập nhật file version.json thành ${status.latestTag}` });
+    } catch (err) {
+      onEvent({ type: "status", message: `Cảnh báo: Không thể ghi file version.json: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Bước 1: Build đồng bộ các image mới
     onEvent({ type: "status", message: "Bước 1/2: Đang build các image phiên bản mới..." });
     await this.streamStep("docker", ["compose", "-p", "quanlysvjx-manager", "build"], onEvent);
     
-    // Bước 2: Recreate và khởi chạy lại các container trong nền (Background)
-    onEvent({ type: "restarting", message: "Bước 2/2: Đang khởi động lại dịch vụ với phiên bản mới..." });
-    const composeCmd = "nohup docker compose -p quanlysvjx-manager up -d > /dev/null 2>&1 &";
+    // Bước 2: Recreate API trước để chạy bản mới, sau đó mới up toàn bộ cụm
+    onEvent({ type: "restarting", message: "Bước 2/2: Đang khởi động lại container API và UI..." });
+    const composeCmd = "nohup sh -c 'docker compose -p quanlysvjx-manager up -d api && sleep 2 && docker compose -p quanlysvjx-manager up -d ui' > /dev/null 2>&1 &";
     const child = spawn("sh", ["-c", composeCmd], {
       cwd: this.deps.projectRoot,
       detached: true,
