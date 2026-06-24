@@ -67,6 +67,7 @@ describe('SelfUpdatePanel', () => {
   });
 
   afterEach(() => {
+    window.sessionStorage.clear();
     cleanup();
   });
 
@@ -143,8 +144,28 @@ describe('SelfUpdatePanel', () => {
     expect(screen.getByRole('button', { name: /thử lại/i })).toBeTruthy();
   });
 
-  it('notifies success when latest run completed', async () => {
+  it('does not notify success when viewing old completed latest run', async () => {
     const onSuccess = vi.fn();
+    mocks.latestRun = {
+      ...runningRun,
+      status: 'succeeded',
+      stage: 'succeeded',
+      finishedAt: '2026-06-24T10:01:00.000Z',
+    };
+
+    renderWithProviders(<SelfUpdatePanel onSuccess={onSuccess} onError={vi.fn()} />, {
+      route: '/settings',
+    });
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: /cập nhật/i }) as HTMLButtonElement).disabled).toBe(
+      false
+    );
+  });
+
+  it('notifies success when completed latest run matches pending update run', async () => {
+    const onSuccess = vi.fn();
+    window.sessionStorage.setItem('quanlysvjx:pending-update-run-notification', 'run-1');
     mocks.latestRun = {
       ...runningRun,
       status: 'succeeded',
@@ -159,6 +180,7 @@ describe('SelfUpdatePanel', () => {
     await waitFor(() =>
       expect(onSuccess).toHaveBeenCalledWith('Đã cập nhật JX Manager lên v1.1.0')
     );
+    expect(window.sessionStorage.getItem('quanlysvjx:pending-update-run-notification')).toBeNull();
     expect((screen.getByRole('button', { name: /cập nhật/i }) as HTMLButtonElement).disabled).toBe(
       false
     );

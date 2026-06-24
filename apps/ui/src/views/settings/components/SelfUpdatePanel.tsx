@@ -10,6 +10,8 @@ import type { UpdateRun } from '@/services/types';
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
+const pendingUpdateRunNotificationKey = 'quanlysvjx:pending-update-run-notification';
+
 type Props = {
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -54,8 +56,12 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   const notifyTerminalRun = useCallback(
     (run: UpdateRun) => {
       if (notifiedRunIdsRef.current.has(run.runId)) return;
+      const pendingRunId = window.sessionStorage.getItem(pendingUpdateRunNotificationKey);
+      if (pendingRunId !== run.runId) return;
+
       if (run.status === 'succeeded') {
         notifiedRunIdsRef.current.add(run.runId);
+        window.sessionStorage.removeItem(pendingUpdateRunNotificationKey);
         streamCloseRef.current?.();
         streamCloseRef.current = null;
         onSuccess(`Đã cập nhật JX Manager lên ${run.targetTag}`);
@@ -64,6 +70,7 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
       }
       if (run.status === 'failed') {
         notifiedRunIdsRef.current.add(run.runId);
+        window.sessionStorage.removeItem(pendingUpdateRunNotificationKey);
         streamCloseRef.current?.();
         streamCloseRef.current = null;
         onError(run.error ?? 'Cập nhật thất bại');
@@ -124,6 +131,7 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
     try {
       const run = await startRun();
       setCurrentRun(run);
+      window.sessionStorage.setItem(pendingUpdateRunNotificationKey, run.runId);
       if (isActiveRun(run)) {
         attachStream(run.runId);
       }
