@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { UpdateRunRepository } from "./updateRunRepository.js";
+import type { UpdateRun, UpdateRunLogLevel, UpdateRunStage, UpdateRunStatus } from "./updateRunTypes.js";
 
 export type UpdateStatus = {
   currentVersion: string;
@@ -53,6 +55,7 @@ type UpdateServiceDeps = {
   updaterImage?: string;
   releaseClient: ReleaseClient;
   commandRunner: CommandRunner;
+  runRepository?: UpdateRunRepository;
   now: () => Date;
 };
 
@@ -115,8 +118,13 @@ export class ProcessCommandRunner implements CommandRunner {
 
 export class UpdateService {
   private cachedStatus: UpdateStatus | null = null;
+  private readonly runRepository: UpdateRunRepository;
 
-  constructor(private readonly deps: UpdateServiceDeps) {}
+  constructor(private readonly deps: UpdateServiceDeps) {
+    this.runRepository =
+      deps.runRepository ??
+      new UpdateRunRepository(path.join(deps.projectRoot, "apps/jx-services/mount/update/update-runs.json"));
+  }
 
   private getLocalVersion(): { version: string; commit: string } {
     const versionFilePath = path.join(this.deps.projectRoot, "version.json");
@@ -194,6 +202,144 @@ export class UpdateService {
       message: "Đang tạo updater container để build và khởi động lại API/UI...",
     });
     await this.startDetachedUpdater(status.latestTag, onEvent);
+  }
+
+  async startUpdateRun(): Promise<UpdateRun> {
+    const activeRun = this.reconcileRun(this.runRepository.getActive());
+    if (activeRun) {
+      return activeRun;
+    }
+
+    const status = await this.checkForUpdates();
+    if (status.repoDirty) throw new Error("Repository has uncommitted changes");
+    if (!status.latestTag) throw new Error("No GitHub release found");
+    this.assertSafeTag(status.latestTag);
+
+    const now = this.deps.now().toISOString();
+    const run: UpdateRun = {
+      runId: `update-${Date.now()}`,
+      status: "running",
+      stage: "checking",
+      currentVersion: status.currentVersion,
+      targetTag: status.latestTag,
+      releaseUrl: status.releaseUrl,
+      releaseNotesSnapshot: status.releaseNotes,
+      startedAt: now,
+      updatedAt: now,
+      finishedAt: null,
+      failedStep: null,
+      failedCommand: null,
+      error: null,
+      logs: [{ at: now, level: "status", message: `Bắt đầu cập nhật lên ${status.latestTag}` }],
+    };
+
+    this.runRepository.upsert(run);
+    void this.executeRun(run.runId);
+    return run;
+  }
+
+  getRun(runId: string): UpdateRun | null {
+    return this.reconcileRun(this.runRepository.get(runId));
+  }
+
+  getLatestRun(): UpdateRun | null {
+    return this.reconcileRun(this.runRepository.getLatest());
+  }
+
+  private async executeRun(runId: string): Promise<void> {
+    const run = this.runRepository.get(runId);
+    if (!run) return;
+
+    try {
+      this.setRunStage(runId, "preparing");
+      this.ensureJxEnvFile((event) => this.appendRunLog(runId, "status", event.message));
+
+      this.setRunStage(runId, "fetching");
+      await this.streamRunStep(runId, "git", ["fetch", "--tags", "origin"]);
+
+      this.setRunStage(runId, "checkout");
+      await this.streamRunStep(runId, "git", ["checkout", "-f", run.targetTag]);
+      this.writeVersionFile(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message));
+
+      this.setRunStage(runId, "building");
+      await this.startDetachedUpdater(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message));
+
+      this.setRunStage(runId, "restarting", "restarting");
+      this.setRunStage(runId, "verifying", "verifying");
+    } catch (error) {
+      const failedRun = this.runRepository.get(runId);
+      this.failRun(runId, failedRun?.stage ?? "failed", null, error);
+    }
+  }
+
+  private async streamRunStep(runId: string, command: string, args: string[]): Promise<void> {
+    const commandText = [command, ...args].join(" ");
+    this.appendRunLog(runId, "status", commandText);
+    const code = await this.deps.commandRunner.stream(command, args, this.deps.projectRoot, (message) =>
+      this.appendRunLog(runId, "log", message),
+    );
+    if (code !== 0) {
+      throw new Error(`${commandText} failed with code ${code}`);
+    }
+  }
+
+  private appendRunLog(runId: string, level: UpdateRunLogLevel, message: string): void {
+    this.runRepository.appendLog(runId, { at: this.deps.now().toISOString(), level, message });
+  }
+
+  private setRunStage(runId: string, stage: UpdateRunStage, status: UpdateRunStatus = "running"): void {
+    const now = this.deps.now().toISOString();
+    this.runRepository.patch(runId, (run) => ({ ...run, stage, status, updatedAt: now }));
+    this.appendRunLog(runId, "status", stage);
+  }
+
+  private failRun(runId: string, stage: UpdateRunStage, command: string | null, error: unknown): void {
+    const now = this.deps.now().toISOString();
+    const message = error instanceof Error ? error.message : String(error);
+    this.runRepository.patch(runId, (run) => ({
+      ...run,
+      status: "failed",
+      stage: "failed",
+      updatedAt: now,
+      finishedAt: now,
+      failedStep: stage,
+      failedCommand: command,
+      error: message,
+      logs: [...run.logs, { at: now, level: "error", message }],
+    }));
+  }
+
+  private succeedRun(runId: string): UpdateRun | null {
+    const now = this.deps.now().toISOString();
+    return this.runRepository.patch(runId, (run) => ({
+      ...run,
+      status: "succeeded",
+      stage: "succeeded",
+      updatedAt: now,
+      finishedAt: now,
+      logs: [...run.logs, { at: now, level: "status", message: `Đã cập nhật thành công ${run.targetTag}` }],
+    }));
+  }
+
+  private reconcileRun(run: UpdateRun | null): UpdateRun | null {
+    if (!run) return null;
+    if ((run.status === "restarting" || run.status === "verifying") && this.getLocalVersion().version === run.targetTag) {
+      return this.succeedRun(run.runId);
+    }
+    return run;
+  }
+
+  private writeVersionFile(tag: string, onEvent: (event: UpdateEvent) => void): void {
+    try {
+      const versionFilePath = path.join(this.deps.projectRoot, "version.json");
+      fs.writeFileSync(versionFilePath, JSON.stringify({ version: tag, commit: "unknown" }, null, 2) + "\n", "utf8");
+      onEvent({ type: "status", message: `Đã cập nhật file version.json thành ${tag}` });
+    } catch (err) {
+      onEvent({
+        type: "status",
+        message: `Cảnh báo: Không thể ghi file version.json: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }
 
   private async startDetachedUpdater(
