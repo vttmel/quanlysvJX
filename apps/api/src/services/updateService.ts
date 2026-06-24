@@ -259,7 +259,6 @@ export class UpdateService {
 
       this.setRunStage(runId, "checkout");
       await this.streamRunStep(runId, "git", ["checkout", "-f", run.targetTag]);
-      this.writeVersionFile(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message));
 
       this.setRunStage(runId, "building");
       await this.startDetachedUpdater(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message), runId);
@@ -348,6 +347,7 @@ export class UpdateService {
     const hostProjectRoot = await this.resolveUpdaterProjectRoot(onEvent);
     const composeCommand = `docker compose --project-directory ${this.shellQuote(hostProjectRoot)} -p quanlysvjx-manager`;
     const failWriter = this.buildUpdateRunWriterCommand("failed", "failed", "Updater failed");
+    const versionWriter = this.buildVersionWriterCommand(tag);
     const successWriter = this.buildUpdateRunWriterCommand("succeeded", "succeeded", `Đã cập nhật thành công ${tag}`);
     const script = [
       "set -eu",
@@ -356,6 +356,7 @@ export class UpdateService {
       `${composeCommand} build`,
       `${composeCommand} up -d api`,
       `${composeCommand} up -d ui`,
+      versionWriter,
       `[ -z "${runId ?? ""}" ] || ${successWriter}`,
       "echo '[updater] done'",
     ].join("; ");
@@ -425,6 +426,14 @@ if (file && runId && fs.existsSync(file)) {
     fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\\n', 'utf8');
   }
 }
+`;
+    return `node -e ${this.shellQuote(code)}`;
+  }
+
+  private buildVersionWriterCommand(tag: string): string {
+    const code = `
+const fs = require('fs');
+fs.writeFileSync('/workspace/version.json', JSON.stringify({ version: ${JSON.stringify(tag)}, commit: 'unknown' }, null, 2) + '\\n', 'utf8');
 `;
     return `node -e ${this.shellQuote(code)}`;
   }

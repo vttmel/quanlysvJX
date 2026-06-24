@@ -140,6 +140,12 @@ describe("UpdateService", () => {
     expect(JSON.stringify(commandRunner.run.mock.calls[1])).toContain(
       "docker compose --project-directory '/host/quanlysvJX' -p quanlysvjx-manager build",
     );
+    const updaterArgs = commandRunner.run.mock.calls[1]![1] as string[];
+    const updaterScript = updaterArgs.at(-1) ?? "";
+    expect(updaterScript.indexOf("docker compose --project-directory '/host/quanlysvJX' -p quanlysvjx-manager build")).toBeGreaterThan(-1);
+    expect(updaterScript.indexOf("/workspace/version.json")).toBeGreaterThan(
+      updaterScript.indexOf("docker compose --project-directory '/host/quanlysvJX' -p quanlysvjx-manager up -d ui"),
+    );
     expect(JSON.stringify(events)).toContain("Updater container đã chạy: updater-id");
 
     vi.restoreAllMocks();
