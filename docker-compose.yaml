@@ -12,7 +12,7 @@ services:
       MANAGER_PROJECT_ROOT: ${MANAGER_PROJECT_ROOT:-${PWD}}
       BACKUP_SCHEDULER_ENABLED: true
     volumes:
-      - ./apps/jx-services:/workspace/apps/jx-services
+      - .:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - /etc/localtime:/etc/localtime:ro

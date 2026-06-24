@@ -32,10 +32,15 @@ RUN apk add --no-cache docker-cli docker-cli-buildx docker-cli-compose git iprou
 
 WORKDIR /app/apps/api
 
+ARG APP_VERSION=0.0.0-dev
+ARG APP_COMMIT=unknown
+
 ENV NODE_ENV=production \
     MANAGER_API_HOST=0.0.0.0 \
     MANAGER_API_PORT=3001 \
-    MANAGER_PROJECT_ROOT=/workspace
+    MANAGER_PROJECT_ROOT=/workspace \
+    APP_VERSION=${APP_VERSION} \
+    APP_COMMIT=${APP_COMMIT}
 
 COPY --from=production-deps /app/node_modules /app/node_modules
 COPY --from=production-deps /app/package.json /app/package-lock.json /app/
