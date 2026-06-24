@@ -17,6 +17,7 @@ import { registerEnvRoutes } from './routes/envRoutes.js';
 import { registerSystemRoutes } from './routes/systemRoutes.js';
 import { registerVersionRoutes } from './routes/versionRoutes.js';
 import { registerGameVersionSettingsRoutes } from './routes/gameVersionSettingsRoutes.js';
+import { registerUpdateRoutes } from './routes/updateRoutes.js';
 import {
   runDocker,
   runDockerCompose,
@@ -150,6 +151,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   await registerSystemRoutes(app);
   await registerVersionRoutes(app);
   await registerGameVersionSettingsRoutes(app);
+  await registerUpdateRoutes(app);
 
   if (config.schedulerEnabled) {
     app.log.info('Backup scheduler enabled');
