@@ -43,6 +43,7 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
 
   const activeRun = currentRun ?? latestRun ?? null;
   const runIsActive = isActiveRun(activeRun);
+  const isUpdateBusy = isStartingRun || runIsActive;
   const logs = activeRun?.logs.map((log) => `[${log.level}] ${log.message}`) ?? [];
 
   const notifyTerminalRun = useCallback(
@@ -180,20 +181,26 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
           </Button>
           <Button
             leftSection={<IconDownload size={16} stroke={1.5} />}
-            disabled={runIsActive || !status?.hasUpdate || status.repoDirty}
-            loading={isStartingRun || runIsActive}
+            disabled={isUpdateBusy || !status?.hasUpdate || status.repoDirty}
+            loading={isUpdateBusy}
             onClick={() => void handleUpdate()}
           >
             {activeRun?.status === 'failed'
               ? 'Thử lại'
-              : runIsActive
+              : isUpdateBusy
                 ? 'Đang cập nhật...'
                 : 'Cập nhật'}
           </Button>
         </Group>
+        {isStartingRun && !activeRun && (
+          <Alert color="blue" title="Đang khởi tạo cập nhật">
+            Đang tạo job cập nhật từ GitHub. Vui lòng không đóng trang trong bước này.
+          </Alert>
+        )}
         {runIsActive && (
           <Alert color="blue" title="Đang cập nhật">
-            API/UI có thể khởi động lại. Trang sẽ tự nối lại run cập nhật.
+            Đang cập nhật JX Manager. Bước hiện tại: <strong>{activeRun?.stage}</strong>. API/UI có
+            thể khởi động lại và trang sẽ tự nối lại run cập nhật.
           </Alert>
         )}
         {logs.length > 0 && (

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   checkNow: vi.fn(),
   getRun: vi.fn(),
   latestRun: null as UpdateRun | null,
+  isStartingRun: false,
 }));
 
 const runningRun: UpdateRun = {
@@ -48,7 +49,7 @@ vi.mock('@/hooks/useUpdateStatus', () => ({
     latestRun: mocks.latestRun,
     isLoadingLatestRun: false,
     startRun: mocks.startRun,
-    isStartingRun: false,
+    isStartingRun: mocks.isStartingRun,
     getRun: mocks.getRun,
     streamRun: mocks.streamRun,
   }),
@@ -61,6 +62,7 @@ describe('SelfUpdatePanel', () => {
     mocks.checkNow.mockReset();
     mocks.getRun.mockReset();
     mocks.latestRun = null;
+    mocks.isStartingRun = false;
     mocks.streamRun.mockReturnValue(vi.fn());
   });
 
@@ -91,6 +93,32 @@ describe('SelfUpdatePanel', () => {
     await screen.findByText('Trạng thái: running');
     expect(mocks.startRun).toHaveBeenCalled();
     expect(mocks.streamRun).toHaveBeenCalledWith('run-1', expect.any(Object));
+  });
+
+  it('shows initializing loading message while start request is pending', () => {
+    mocks.isStartingRun = true;
+
+    renderWithProviders(<SelfUpdatePanel onSuccess={vi.fn()} onError={vi.fn()} />, {
+      route: '/settings',
+    });
+
+    expect(screen.getByText('Đang khởi tạo cập nhật')).toBeTruthy();
+    expect(screen.getByText(/Đang tạo job cập nhật từ GitHub/)).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: /đang cập nhật/i }) as HTMLButtonElement).disabled
+    ).toBe(true);
+  });
+
+  it('shows active update stage while run is not completed', () => {
+    mocks.latestRun = runningRun;
+
+    renderWithProviders(<SelfUpdatePanel onSuccess={vi.fn()} onError={vi.fn()} />, {
+      route: '/settings',
+    });
+
+    expect(screen.getByText('Đang cập nhật')).toBeTruthy();
+    expect(screen.getByText(/Bước hiện tại:/)).toBeTruthy();
+    expect(screen.getByText('building')).toBeTruthy();
   });
 
   it('shows failed latest run with retry option', () => {
