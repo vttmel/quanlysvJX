@@ -50,6 +50,7 @@ type UpdateServiceDeps = {
   projectRoot: string;
   currentVersion?: string;
   currentCommit?: string;
+  updaterImage?: string;
   releaseClient: ReleaseClient;
   commandRunner: CommandRunner;
   now: () => Date;
@@ -187,23 +188,61 @@ export class UpdateService {
       onEvent({ type: "status", message: `Cảnh báo: Không thể ghi file version.json: ${err instanceof Error ? err.message : String(err)}` });
     }
 
-    // Bước 1: Build đồng bộ các image mới
-    onEvent({ type: "status", message: "Bước 1/2: Đang build các image phiên bản mới..." });
-    await this.streamStep("docker", ["compose", "-p", "quanlysvjx-manager", "build"], onEvent);
-    
-    // Bước 2: Recreate API trước để chạy bản mới, sau đó mới up toàn bộ cụm
-    onEvent({ type: "restarting", message: "Bước 2/2: Đang khởi động lại container API và UI..." });
-    const composeCmd = "nohup sh -c 'docker compose -p quanlysvjx-manager up -d api && sleep 2 && docker compose -p quanlysvjx-manager up -d ui' > /dev/null 2>&1 &";
-    
-    // Ghi đè biến môi trường COMPOSE_PROJECT_NAME để Docker Compose chạy ngầm nhận diện đúng tên project
-    const spawnEnv = { ...process.env, COMPOSE_PROJECT_NAME: "quanlysvjx-manager" };
-    const child = spawn("sh", ["-c", composeCmd], {
-      cwd: this.deps.projectRoot,
-      detached: true,
-      stdio: "ignore",
-      env: spawnEnv,
+    onEvent({
+      type: "restarting",
+      message: "Đang tạo updater container để build và khởi động lại API/UI...",
     });
-    child.unref();
+    await this.startDetachedUpdater(status.latestTag, onEvent);
+  }
+
+  private async startDetachedUpdater(
+    tag: string,
+    onEvent: (event: UpdateEvent) => void,
+  ): Promise<void> {
+    const updaterName = `quanlysvjx-manager-updater-${Date.now()}`;
+    const updaterImage = this.deps.updaterImage ?? "quanlysvjx-manager-api";
+    const script = [
+      "set -eu",
+      `echo '[updater] applying ${tag}'`,
+      "docker compose -p quanlysvjx-manager build",
+      "docker compose -p quanlysvjx-manager up -d api",
+      "docker compose -p quanlysvjx-manager up -d ui",
+      "echo '[updater] done'",
+    ].join("; ");
+    const result = await this.deps.commandRunner.run(
+      "docker",
+      [
+        "run",
+        "--rm",
+        "-d",
+        "--name",
+        updaterName,
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-v",
+        `${this.deps.projectRoot}:/workspace`,
+        "-w",
+        "/workspace",
+        "--network",
+        "host",
+        "-e",
+        "COMPOSE_PROJECT_NAME=quanlysvjx-manager",
+        updaterImage,
+        "sh",
+        "-c",
+        script,
+      ],
+      this.deps.projectRoot,
+    );
+
+    if (result.code !== 0) {
+      throw new Error(`docker run updater failed: ${result.stderr || result.stdout}`.trim());
+    }
+
+    onEvent({
+      type: "status",
+      message: `Updater container đã chạy: ${result.stdout.trim() || updaterName}`,
+    });
   }
 
   private async isRepoDirty(): Promise<boolean> {

@@ -37,11 +37,13 @@ describe("UpdateService", () => {
     });
   });
 
-  it("blocks update when repository has uncommitted changes", async () => {
+  it("does not block update when local repository status has changes", async () => {
     const commandRunner = {
       run: vi.fn().mockResolvedValue({ code: 0, stdout: " M apps/api/src/app.ts\n", stderr: "" }),
-      stream: vi.fn(),
+      stream: vi.fn().mockResolvedValue(0),
     };
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
     const service = new UpdateService({
       projectRoot: "/workspace",
       currentVersion: "v1.0.0",
@@ -55,8 +57,73 @@ describe("UpdateService", () => {
       now: () => new Date("2026-06-24T10:00:00.000Z"),
     });
 
-    await expect(service.runUpdate()).rejects.toThrow("Repository has uncommitted changes");
-    expect(commandRunner.stream).not.toHaveBeenCalled();
+    await service.runUpdate();
+    expect(commandRunner.stream).toHaveBeenCalledTimes(2);
+
+    vi.restoreAllMocks();
+  });
+
+  it("starts a detached updater container instead of restarting itself", async () => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+    vi.spyOn(Date, "now").mockReturnValue(1782300000000);
+    const commandRunner = {
+      run: vi.fn().mockResolvedValue({ code: 0, stdout: "updater-id\n", stderr: "" }),
+      stream: vi.fn().mockResolvedValue(0),
+    };
+    const events: unknown[] = [];
+    const service = new UpdateService({
+      projectRoot: "/workspace",
+      currentVersion: "v1.0.0",
+      currentCommit: "abc1234",
+      updaterImage: "manager-api:test",
+      releaseClient: {
+        getLatestRelease: vi.fn().mockResolvedValue({ tagName: "v1.1.0", htmlUrl: "url", body: "" }),
+      },
+      commandRunner,
+      now: () => new Date("2026-06-24T10:00:00.000Z"),
+    });
+
+    await service.runUpdate((event) => events.push(event));
+
+    expect(commandRunner.stream).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["fetch", "--tags", "origin"],
+      "/workspace",
+      expect.any(Function),
+    );
+    expect(commandRunner.stream).toHaveBeenNthCalledWith(
+      2,
+      "git",
+      ["checkout", "-f", "v1.1.0"],
+      "/workspace",
+      expect.any(Function),
+    );
+    expect(commandRunner.run).toHaveBeenCalledWith(
+      "docker",
+      expect.arrayContaining([
+        "run",
+        "--rm",
+        "-d",
+        "--name",
+        "quanlysvjx-manager-updater-1782300000000",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-v",
+        "/workspace:/workspace",
+        "manager-api:test",
+        "sh",
+        "-c",
+      ]),
+      "/workspace",
+    );
+    expect(JSON.stringify(commandRunner.run.mock.calls[0])).toContain(
+      "docker compose -p quanlysvjx-manager build",
+    );
+    expect(JSON.stringify(events)).toContain("Updater container đã chạy: updater-id");
+
+    vi.restoreAllMocks();
   });
 
   it("reads current version from version.json if the file exists", async () => {
