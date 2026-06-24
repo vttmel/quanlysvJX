@@ -4,14 +4,16 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { showSuccessNotification, showErrorNotification } from '@/utils/notification';
 import { BackupSettingsTab } from './components/BackupSettingsTab';
 import { EnvEditor } from './components/EnvEditor';
+import { SelfUpdatePanel } from './components/SelfUpdatePanel';
 import { VersionManager } from './components/VersionManager';
 
-type SettingsTab = 'versions' | 'env' | 'backup';
+type SettingsTab = 'versions' | 'env' | 'backup' | 'system';
 
 const settingsRoutes = new Map<SettingsTab, string>([
   ['versions', '/settings/versions'],
   ['env', '/settings/env'],
   ['backup', '/settings/backup'],
+  ['system', '/settings/system'],
 ]);
 
 function getActiveSettingsTab(pathname: string): SettingsTab | null {
@@ -26,6 +28,9 @@ function getActiveSettingsTab(pathname: string): SettingsTab | null {
   }
   if (pathname.startsWith('/settings/versions')) {
     return 'versions';
+  }
+  if (pathname.startsWith('/settings/system')) {
+    return 'system';
   }
   return null;
 }
@@ -60,6 +65,7 @@ export default function SettingsView() {
           <Tabs.Tab value="versions">Phiên bản game</Tabs.Tab>
           <Tabs.Tab value="env">Biến môi trường (.env)</Tabs.Tab>
           <Tabs.Tab value="backup">Cấu hình sao lưu</Tabs.Tab>
+          <Tabs.Tab value="system">Cập nhật hệ thống</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="env">
@@ -72,6 +78,9 @@ export default function SettingsView() {
         </Tabs.Panel>
         <Tabs.Panel value="backup">
           <BackupSettingsTab onError={handleError} />
+        </Tabs.Panel>
+        <Tabs.Panel value="system">
+          <SelfUpdatePanel onSuccess={handleSuccess} onError={handleError} />
         </Tabs.Panel>
       </Tabs>
     </Paper>
