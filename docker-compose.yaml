@@ -18,11 +18,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     privileged: true
-    ports:
-      - "3001:3001"
     restart: unless-stopped
-    networks:
-      - ui
+    network_mode: host
 
   ui:
     build:
@@ -30,13 +27,5 @@ services:
       dockerfile: apps/ui/Dockerfile
     depends_on:
       - api
-    ports:
-      - "80:80"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
-    networks:
-      - ui
-networks:
-  ui:
-    driver: bridge
+    network_mode: host
