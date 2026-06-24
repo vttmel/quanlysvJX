@@ -2,7 +2,7 @@ import { Alert, Badge, Button, Card, Group, Stack, Text, Title, Tooltip } from '
 import { IconAlertTriangle, IconCheck, IconDownload, IconRefresh } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'dayjs/locale/vi';
 import { useUpdateStatus } from '@/hooks/useUpdateStatus';
 import type { UpdateEvent } from '@/services/types';
@@ -19,10 +19,17 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   const { status, isLoading, checkNow, isChecking, streamUpdate } = useUpdateStatus();
   const [logs, setLogs] = useState<string[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isWaitingForRestart, setIsWaitingForRestart] = useState(false);
+  const isRestartingRef = useRef(false);
+  const healthPollRef = useRef<number | null>(null);
+
+  useEffect(() => () => stopHealthPolling(), []);
 
   const handleEvent = (event: UpdateEvent) => {
     setLogs((current) => [...current, event.message]);
     if (event.type === 'restarting') {
+      isRestartingRef.current = true;
+      setIsWaitingForRestart(true);
       onSuccess('Đang khởi động lại JX Manager');
       pollHealth();
     }
@@ -31,16 +38,33 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
     }
   };
 
+  const stopHealthPolling = () => {
+    if (healthPollRef.current !== null) {
+      window.clearInterval(healthPollRef.current);
+      healthPollRef.current = null;
+    }
+  };
+
   const pollHealth = () => {
-    const interval = window.setInterval(async () => {
+    stopHealthPolling();
+    const startedAt = Date.now();
+    healthPollRef.current = window.setInterval(async () => {
       try {
-        const response = await fetch('/api/health');
-        if (response.ok) {
-          window.clearInterval(interval);
+        const response = await fetch(`/api/health?t=${Date.now()}`, { cache: 'no-store' });
+        if (response.ok && Date.now() - startedAt > 8000) {
+          stopHealthPolling();
           window.location.reload();
         }
       } catch {
         // API is restarting.
+      }
+
+      if (Date.now() - startedAt > 120000) {
+        stopHealthPolling();
+        isRestartingRef.current = false;
+        setIsUpdating(false);
+        setIsWaitingForRestart(false);
+        onError('Không thể kết nối lại API sau khi cập nhật');
       }
     }, 3000);
   };
@@ -52,6 +76,10 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
       onEvent: handleEvent,
       onDone: () => setIsUpdating(false),
       onError: (message) => {
+        if (isRestartingRef.current) {
+          setLogs((current) => [...current, 'Mất kết nối tạm thời, đang chờ API khởi động lại...']);
+          return;
+        }
         setIsUpdating(false);
         onError(message);
       },
@@ -119,12 +147,17 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
           <Button
             leftSection={<IconDownload size={16} stroke={1.5} />}
             disabled={!status?.hasUpdate || status.repoDirty}
-            loading={isUpdating}
+            loading={isUpdating || isWaitingForRestart}
             onClick={handleUpdate}
           >
-            Cập nhật
+            {isWaitingForRestart ? 'Đang chờ khởi động lại...' : 'Cập nhật'}
           </Button>
         </Group>
+        {isWaitingForRestart && (
+          <Alert color="blue" title="Đang cập nhật">
+            API/UI đang khởi động lại. Trang sẽ tự tải lại khi API sẵn sàng.
+          </Alert>
+        )}
         {logs.length > 0 && (
           <Text
             component="pre"

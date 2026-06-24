@@ -129,6 +129,8 @@ describe("UpdateService", () => {
         "/var/run/docker.sock:/var/run/docker.sock",
         "-v",
         "/host/quanlysvJX:/workspace",
+        "-e",
+        "MANAGER_PROJECT_ROOT=/host/quanlysvJX",
         "manager-api:test",
         "sh",
         "-c",
@@ -136,7 +138,7 @@ describe("UpdateService", () => {
       "/workspace",
     );
     expect(JSON.stringify(commandRunner.run.mock.calls[1])).toContain(
-      "docker compose -p quanlysvjx-manager build",
+      "docker compose --project-directory '/host/quanlysvJX' -p quanlysvjx-manager build",
     );
     expect(JSON.stringify(events)).toContain("Updater container đã chạy: updater-id");
 

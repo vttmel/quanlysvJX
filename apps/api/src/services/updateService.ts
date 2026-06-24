@@ -203,12 +203,13 @@ export class UpdateService {
     const updaterName = `quanlysvjx-manager-updater-${Date.now()}`;
     const updaterImage = this.deps.updaterImage ?? "quanlysvjx-manager-api";
     const hostProjectRoot = await this.resolveUpdaterProjectRoot(onEvent);
+    const composeCommand = `docker compose --project-directory ${this.shellQuote(hostProjectRoot)} -p quanlysvjx-manager`;
     const script = [
       "set -eu",
       `echo '[updater] applying ${tag}'`,
-      "docker compose -p quanlysvjx-manager build",
-      "docker compose -p quanlysvjx-manager up -d api",
-      "docker compose -p quanlysvjx-manager up -d ui",
+      `${composeCommand} build`,
+      `${composeCommand} up -d api`,
+      `${composeCommand} up -d ui`,
       "echo '[updater] done'",
     ].join("; ");
     const result = await this.deps.commandRunner.run(
@@ -229,6 +230,8 @@ export class UpdateService {
         "host",
         "-e",
         "COMPOSE_PROJECT_NAME=quanlysvjx-manager",
+        "-e",
+        `MANAGER_PROJECT_ROOT=${hostProjectRoot}`,
         updaterImage,
         "sh",
         "-c",
@@ -245,6 +248,10 @@ export class UpdateService {
       type: "status",
       message: `Updater container đã chạy: ${result.stdout.trim() || updaterName}`,
     });
+  }
+
+  private shellQuote(value: string): string {
+    return `'${value.replace(/'/g, `'"'"'`)}'`;
   }
 
   private async resolveUpdaterProjectRoot(onEvent: (event: UpdateEvent) => void): Promise<string> {
