@@ -30,3 +30,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
     network_mode: host
+
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/versions:/srv/versions
+      - filebrowser_data:/database
+    environment:
+      - FB_PORT=8080
+      - FB_BASEURL=/filebrowser
+      - FB_NOAUTH=true
+      - TZ=Asia/Ho_Chi_Minh
+
+volumes:
+  filebrowser_data:

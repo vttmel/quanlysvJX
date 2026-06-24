@@ -1,4 +1,4 @@
-import { IconGauge, IconUser, IconCloudDownload, IconSettings } from '@tabler/icons-react';
+import { IconGauge, IconUser, IconCloudDownload, IconSettings, IconFileCode } from '@tabler/icons-react';
 import { lazy } from 'react';
 
 export interface NavigationTree {
@@ -39,6 +39,13 @@ export const routes: RouteConfig[] = [
     component: lazy(() => import('@/views/backup')),
     title: 'Sao lưu',
     icon: IconCloudDownload,
+  },
+  {
+    key: 'file-manager',
+    path: '/file-manager',
+    component: lazy(() => import('@/views/file-manager/FileManagerView').then(m => ({ default: m.FileManagerView }))),
+    title: 'Quản lý File',
+    icon: IconFileCode,
   },
   {
     key: 'settings',
