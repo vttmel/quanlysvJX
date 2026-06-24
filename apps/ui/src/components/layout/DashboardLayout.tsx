@@ -9,13 +9,22 @@ import {
   Tooltip,
   ActionIcon,
   Text,
+  Code,
+  Button,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconSwords, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import {
+  IconSwords,
+  IconChevronLeft,
+  IconChevronRight,
+  IconRefresh,
+  IconDownload,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
 import { navigationConfig } from '@/configs/routes.config';
 import { useSystemInfo } from '@/hooks/useSystemInfo';
+import { useUpdateStatus } from '@/hooks/useUpdateStatus';
 
 const navbarCollapsedStorageKey = 'jx-manager-navbar-collapsed';
 
@@ -34,6 +43,7 @@ export default function DashboardLayout() {
   const [desktopOpened, setDesktopOpened] = useState(readDesktopNavbarOpened);
   const systemInfo = useSystemInfo({ refetchInterval: 30000 });
   const serverClock = useServerClock(systemInfo.data?.serverTime);
+  const { status, checkNow, isChecking, isLoading } = useUpdateStatus();
 
   const toggleDesktop = useCallback(() => {
     setDesktopOpened((current) => {
@@ -85,6 +95,39 @@ export default function DashboardLayout() {
             <Title order={3} style={{ fontFamily: 'var(--mantine-font-family)' }}>
               JX Manager
             </Title>
+            <Group gap="xs" style={{ flexWrap: 'nowrap', marginLeft: '5px' }}>
+              <Code style={{ fontWeight: 'bold' }}>{status?.currentVersion || '...'}</Code>
+              <Tooltip label="Kiểm tra cập nhật">
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  loading={isChecking || isLoading}
+                  onClick={() => void checkNow()}
+                >
+                  <IconRefresh size={14} stroke={1.5} />
+                </ActionIcon>
+              </Tooltip>
+              {status?.hasUpdate && (
+                <Button
+                  component={Link}
+                  to="/settings/system"
+                  size="xs"
+                  color="orange"
+                  variant="light"
+                  leftSection={<IconDownload size={12} stroke={1.5} />}
+                  styles={{
+                    root: {
+                      paddingLeft: '6px',
+                      paddingRight: '6px',
+                      height: '22px',
+                    },
+                  }}
+                >
+                  Cập nhật
+                </Button>
+              )}
+            </Group>
           </Group>
           {systemInfo.data && (
             <Group gap="sm" visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>

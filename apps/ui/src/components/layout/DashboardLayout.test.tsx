@@ -24,6 +24,20 @@ vi.mock('@/services/systemService', () => ({
   },
 }));
 
+vi.mock('@/hooks/useUpdateStatus', () => ({
+  useUpdateStatus: () => ({
+    status: {
+      currentVersion: 'v1.0.0',
+      latestVersion: 'v1.1.0',
+      hasUpdate: true,
+      repoDirty: false,
+    },
+    isLoading: false,
+    checkNow: vi.fn(),
+    isChecking: false,
+  }),
+}));
+
 describe('DashboardLayout navbar', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -54,5 +68,12 @@ describe('DashboardLayout navbar', () => {
     expect(screen.getAllByText(/192\.168\.1\.20/).length).toBeGreaterThan(0);
     expect(screen.getByText('MySQL')).toBeTruthy();
     expect(screen.getByText('MSSQL')).toBeTruthy();
+  });
+
+  it('shows version tag and update action in the header when update is available', async () => {
+    renderWithProviders(<DashboardLayout />, { route: '/dashboard' });
+
+    expect(screen.getByText('v1.0.0')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /cập nhật/i })).toBeTruthy();
   });
 });
