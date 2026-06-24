@@ -177,8 +177,9 @@ export class UpdateService {
     
     // Sử dụng nohup và chạy ngầm (detached) để Docker Engine tự hoàn thành việc rebuild & restart 
     // ngay cả khi container API cũ (đang chạy lệnh này) bị tắt giữa chừng.
-    const spawnArgs = ["-p", "quanlysvjx-manager", "up", "-d", "--build"];
-    const child = spawn("docker", ["compose", ...spawnArgs], {
+    // Chạy thông qua shell bằng nohup để chắc chắn lệnh sống độc lập sau khi Node.js runtime bị SIGKILL (exit 137)
+    const composeCmd = "nohup docker compose -p quanlysvjx-manager up -d --build > /dev/null 2>&1 &";
+    const child = spawn("sh", ["-c", composeCmd], {
       cwd: this.deps.projectRoot,
       detached: true,
       stdio: "ignore",
