@@ -262,7 +262,7 @@ export class UpdateService {
       this.writeVersionFile(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message));
 
       this.setRunStage(runId, "building");
-      await this.startDetachedUpdater(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message));
+      await this.startDetachedUpdater(run.targetTag, (event) => this.appendRunLog(runId, "status", event.message), runId);
 
       this.setRunStage(runId, "restarting", "restarting");
       this.setRunStage(runId, "verifying", "verifying");
@@ -322,10 +322,6 @@ export class UpdateService {
   }
 
   private reconcileRun(run: UpdateRun | null): UpdateRun | null {
-    if (!run) return null;
-    if ((run.status === "restarting" || run.status === "verifying") && this.getLocalVersion().version === run.targetTag) {
-      return this.succeedRun(run.runId);
-    }
     return run;
   }
 
@@ -345,17 +341,22 @@ export class UpdateService {
   private async startDetachedUpdater(
     tag: string,
     onEvent: (event: UpdateEvent) => void,
+    runId?: string,
   ): Promise<void> {
     const updaterName = `quanlysvjx-manager-updater-${Date.now()}`;
     const updaterImage = this.deps.updaterImage ?? "quanlysvjx-manager-api";
     const hostProjectRoot = await this.resolveUpdaterProjectRoot(onEvent);
     const composeCommand = `docker compose --project-directory ${this.shellQuote(hostProjectRoot)} -p quanlysvjx-manager`;
+    const failWriter = this.buildUpdateRunWriterCommand("failed", "failed", "Updater failed");
+    const successWriter = this.buildUpdateRunWriterCommand("succeeded", "succeeded", `Đã cập nhật thành công ${tag}`);
     const script = [
       "set -eu",
+      `[ -z "${runId ?? ""}" ] || trap ${this.shellQuote(`${failWriter}; exit 1`)} ERR`,
       `echo '[updater] applying ${tag}'`,
       `${composeCommand} build`,
       `${composeCommand} up -d api`,
       `${composeCommand} up -d ui`,
+      `[ -z "${runId ?? ""}" ] || ${successWriter}`,
       "echo '[updater] done'",
     ].join("; ");
     const result = await this.deps.commandRunner.run(
@@ -378,6 +379,12 @@ export class UpdateService {
         "COMPOSE_PROJECT_NAME=quanlysvjx-manager",
         "-e",
         `MANAGER_PROJECT_ROOT=${hostProjectRoot}`,
+        "-e",
+        `UPDATE_RUN_ID=${runId ?? ""}`,
+        "-e",
+        `UPDATE_TARGET_TAG=${tag}`,
+        "-e",
+        "UPDATE_RUNS_FILE=/workspace/apps/jx-services/mount/update/update-runs.json",
         updaterImage,
         "sh",
         "-c",
@@ -394,6 +401,32 @@ export class UpdateService {
       type: "status",
       message: `Updater container đã chạy: ${result.stdout.trim() || updaterName}`,
     });
+  }
+
+  private buildUpdateRunWriterCommand(status: UpdateRunStatus, stage: UpdateRunStage, message: string): string {
+    const code = `
+const fs = require('fs');
+const file = process.env.UPDATE_RUNS_FILE;
+const runId = process.env.UPDATE_RUN_ID;
+if (file && runId && fs.existsSync(file)) {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const run = data.runs.find((item) => item.runId === runId);
+  if (run) {
+    const now = new Date().toISOString();
+    run.status = ${JSON.stringify(status)};
+    run.stage = ${JSON.stringify(stage)};
+    run.updatedAt = now;
+    run.finishedAt = now;
+    if (${JSON.stringify(status)} === 'failed') {
+      run.failedStep = run.stage;
+      run.error = ${JSON.stringify(message)};
+    }
+    run.logs.push({ at: now, level: ${JSON.stringify(status === "failed" ? "error" : "status")}, message: ${JSON.stringify(message)} });
+    fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\\n', 'utf8');
+  }
+}
+`;
+    return `node -e ${this.shellQuote(code)}`;
   }
 
   private shellQuote(value: string): string {

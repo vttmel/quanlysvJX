@@ -188,6 +188,47 @@ describe("UpdateService", () => {
     process.env.HOSTNAME = originalHostname;
   });
 
+  it("does not mark verifying run succeeded before updater writes completion", () => {
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => String(p).endsWith("version.json"));
+    vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify({ version: "v1.1.0", commit: "new" }));
+    const run = {
+      runId: "run-1",
+      status: "verifying",
+      stage: "verifying",
+      currentVersion: "v1.0.0",
+      targetTag: "v1.1.0",
+      releaseUrl: "url",
+      releaseNotesSnapshot: "notes",
+      startedAt: "2026-06-24T10:00:00.000Z",
+      updatedAt: "2026-06-24T10:00:00.000Z",
+      finishedAt: null,
+      failedStep: null,
+      failedCommand: null,
+      error: null,
+      logs: [],
+    };
+    const runRepository = {
+      get: vi.fn().mockReturnValue(run),
+      getLatest: vi.fn(),
+      getActive: vi.fn(),
+      upsert: vi.fn(),
+      patch: vi.fn(),
+      appendLog: vi.fn(),
+    };
+    const service = new UpdateService({
+      projectRoot: "/workspace",
+      releaseClient: { getLatestRelease: vi.fn() },
+      commandRunner: { run: vi.fn(), stream: vi.fn() },
+      runRepository: runRepository as any,
+      now: () => new Date("2026-06-24T10:00:00.000Z"),
+    });
+
+    expect(service.getRun("run-1")?.status).toBe("verifying");
+    expect(runRepository.patch).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+  });
+
   it("reads current version from version.json if the file exists", async () => {
     vi.spyOn(fs, "existsSync").mockImplementation((p) => String(p).endsWith("version.json"));
     vi.spyOn(fs, "readFileSync").mockReturnValue(
