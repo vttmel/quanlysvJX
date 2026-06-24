@@ -214,6 +214,42 @@ export type UpdateStatus = {
   checkedAt: string | null;
 };
 
+export type UpdateRunStatus = 'queued' | 'running' | 'restarting' | 'verifying' | 'succeeded' | 'failed';
+
+export type UpdateRunStage =
+  | 'checking'
+  | 'preparing'
+  | 'fetching'
+  | 'checkout'
+  | 'building'
+  | 'restarting'
+  | 'verifying'
+  | 'succeeded'
+  | 'failed';
+
+export type UpdateRunLog = {
+  at: string;
+  level: 'status' | 'log' | 'error';
+  message: string;
+};
+
+export type UpdateRun = {
+  runId: string;
+  status: UpdateRunStatus;
+  stage: UpdateRunStage;
+  currentVersion: string;
+  targetTag: string;
+  releaseUrl: string | null;
+  releaseNotesSnapshot: string | null;
+  startedAt: string;
+  updatedAt: string;
+  finishedAt: string | null;
+  failedStep: UpdateRunStage | null;
+  failedCommand: string | null;
+  error: string | null;
+  logs: UpdateRunLog[];
+};
+
 export type UpdateEvent =
   | { type: 'status'; message: string }
   | { type: 'log'; message: string }
