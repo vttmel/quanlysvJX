@@ -90,6 +90,17 @@ export function BrowseFolderModal({
           </Alert>
         ) : (
           <Stack gap="xs">
+            {data?.validation && !data.validation.isValid && (
+              <Alert color="red" title="Thư mục không đủ điều kiện làm phiên bản game" mb="sm">
+                <Text size="sm">Các file/thư mục bắt buộc còn thiếu:</Text>
+                <List size="sm" mt="xs" withPadding>
+                  {data.validation.missingFiles.map((file) => (
+                    <List.Item key={file}>{file}</List.Item>
+                  ))}
+                </List>
+              </Alert>
+            )}
+            
             <Text size="xs" fw={700} color="dimmed" tt="uppercase">
               Thư mục con:
             </Text>
@@ -124,7 +135,12 @@ export function BrowseFolderModal({
           <Button variant="default" onClick={onClose} disabled={isSelecting}>
             Hủy
           </Button>
-          <Button color="green" loading={isSelecting} onClick={handleSelectPathClick}>
+          <Button 
+            color="green" 
+            loading={isSelecting} 
+            onClick={handleSelectPathClick}
+            disabled={!data?.validation?.isValid}
+          >
             Sử dụng đường dẫn này
           </Button>
         </Group>

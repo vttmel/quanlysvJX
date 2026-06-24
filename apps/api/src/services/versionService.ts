@@ -133,10 +133,16 @@ export class VersionService {
     const directories = items.filter((item) => item.isDirectory()).map((item) => item.name);
     const parentPath = relativePath ? path.dirname(relativePath) : null;
 
+    const validation = validateGameVersionPath({
+      gameVersionPath: versionRoot,
+      gameVersionSubPath: relativePath
+    });
+
     return {
       currentPath: relativePath,
       parentPath: parentPath === '.' ? '' : parentPath,
-      directories
+      directories,
+      validation
     };
   }
 
