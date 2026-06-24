@@ -68,6 +68,9 @@ export default function DashboardLayout() {
     if (path.startsWith('/backup')) {
       return 'backup';
     }
+    if (path.startsWith('/file-manager')) {
+      return 'file-manager';
+    }
     if (path.startsWith('/settings')) {
       return 'settings';
     }

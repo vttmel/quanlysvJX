@@ -16,9 +16,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    proxy: { 
+    proxy: {
       '/api': 'http://127.0.0.1:3001',
-      '/filebrowser': 'http://127.0.0.1:8080'
+      '/filebrowser': 'http://127.0.0.1:8080',
     },
   },
 });

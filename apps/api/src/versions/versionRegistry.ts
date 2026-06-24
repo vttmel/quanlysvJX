@@ -1,4 +1,4 @@
-import { chmodSync, chownSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, chownSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { updateEnvKey } from '../env/envFile.js';
@@ -84,6 +84,8 @@ export function ensureVersionRegistry(projectRoot: string): VersionRegistry {
     }
     const parsed = versionRegistrySchema.parse(raw);
     writeVersionRegistry(projectRoot, parsed);
+    const activeVer = parsed.versions.find((v) => v.name === parsed.activeVersion);
+    updateActiveSymlink(projectRoot, activeVer ? activeVer.path : null);
     return parsed;
   }
 
@@ -102,6 +104,8 @@ export function ensureVersionRegistry(projectRoot: string): VersionRegistry {
     versions
   };
   writeVersionRegistry(projectRoot, registry);
+  const activeVer = registry.versions.find((v) => v.name === registry.activeVersion);
+  updateActiveSymlink(projectRoot, activeVer ? activeVer.path : null);
   return registry;
 }
 
@@ -159,6 +163,7 @@ export function selectVersion(projectRoot: string, name: string, subPath?: strin
   const envServerPath = toEnvServerPath(nextVersion.path);
 
   updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', envServerPath);
+  updateActiveSymlink(projectRoot, nextVersion.path);
   return { activeVersion: versionName, serverPath: envServerPath };
 }
 
@@ -194,6 +199,7 @@ export function renameVersion(projectRoot: string, currentName: string, options:
 
   if (registry.activeVersion === oldName) {
     updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', toEnvServerPath(renamed.path));
+    updateActiveSymlink(projectRoot, renamed.path);
   }
 
   return renamed;
@@ -234,6 +240,7 @@ export function deleteVersionRecord(projectRoot: string, name: string, options: 
   });
   if (isActive) {
     updateEnvKey(path.join(projectRoot, 'apps/jx-services/.env'), 'SERVER_PATH', '');
+    updateActiveSymlink(projectRoot, null);
   }
 }
 
@@ -304,3 +311,20 @@ function getActiveServerPathFromEnv(projectRoot: string) {
 function toEnvServerPath(serverPath: string) {
   return path.resolve(serverPath) + '/';
 }
+
+export function updateActiveSymlink(projectRoot: string, targetServerPath: string | null) {
+  const symlinkPath = path.join(projectRoot, 'apps/jx-services/active');
+  try {
+    rmSync(symlinkPath, { recursive: true, force: true });
+  } catch (err) {
+    // Bỏ qua nếu có lỗi
+  }
+  if (targetServerPath && existsSync(targetServerPath)) {
+    const relativeTarget = path.relative(path.join(projectRoot, 'apps/jx-services'), targetServerPath);
+    symlinkSync(relativeTarget, symlinkPath);
+  } else {
+    // Fallback thành thư mục rỗng để Filebrowser không bị crash khi không có version nào hoạt động
+    mkdirSync(symlinkPath, { recursive: true });
+  }
+}
+
