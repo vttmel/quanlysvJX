@@ -10,6 +10,7 @@ import { useVersions } from '@/hooks/useVersions';
 import { LogsPanel } from './components/LogsPanel';
 import { PrepareImagesModal } from './components/PrepareImagesModal';
 import { ServiceTable } from './components/ServiceTable';
+import { UpdateBanner } from './components/UpdateBanner';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -112,6 +113,7 @@ export default function Dashboard() {
 
   return (
     <Stack gap="md">
+      <UpdateBanner />
       {hasInvalidIp && (
         <Paper
           withBorder
