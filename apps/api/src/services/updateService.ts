@@ -173,12 +173,14 @@ export class UpdateService {
 
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
-    onEvent({ type: "restarting", message: "Rebuilding manager services in background" });
     
-    // Sử dụng nohup và chạy ngầm (detached) để Docker Engine tự hoàn thành việc rebuild & restart 
-    // ngay cả khi container API cũ (đang chạy lệnh này) bị tắt giữa chừng.
-    // Chạy thông qua shell bằng nohup để chắc chắn lệnh sống độc lập sau khi Node.js runtime bị SIGKILL (exit 137)
-    const composeCmd = "nohup docker compose -p quanlysvjx-manager up -d --build > /dev/null 2>&1 &";
+    // Bước 1: Build đồng bộ các image mới (ở bước này container API cũ vẫn đang chạy bình thường)
+    onEvent({ type: "status", message: "Bước 1/2: Đang build các image phiên bản mới..." });
+    await this.streamStep("docker", ["compose", "-p", "quanlysvjx-manager", "build"], onEvent);
+    
+    // Bước 2: Recreate và khởi chạy lại các container trong nền (Background)
+    onEvent({ type: "restarting", message: "Bước 2/2: Đang khởi động lại dịch vụ với phiên bản mới..." });
+    const composeCmd = "nohup docker compose -p quanlysvjx-manager up -d > /dev/null 2>&1 &";
     const child = spawn("sh", ["-c", composeCmd], {
       cwd: this.deps.projectRoot,
       detached: true,
