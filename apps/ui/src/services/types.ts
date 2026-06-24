@@ -201,3 +201,21 @@ export type SaveGameNetworkResponse = {
   gameNetwork: GameNetworkConfig;
   message: string;
 };
+
+export type UpdateStatus = {
+  currentVersion: string;
+  currentCommit: string;
+  latestVersion: string | null;
+  latestTag: string | null;
+  releaseUrl: string | null;
+  releaseNotes: string | null;
+  hasUpdate: boolean;
+  repoDirty: boolean;
+  checkedAt: string | null;
+};
+
+export type UpdateEvent =
+  | { type: 'status'; message: string }
+  | { type: 'log'; message: string }
+  | { type: 'error'; message: string }
+  | { type: 'restarting'; message: string };
