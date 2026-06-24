@@ -192,6 +192,7 @@ export type SystemInfo = {
   mysqlIp: string;
   mssqlIp: string;
   gameNetwork: GameNetworkConfig;
+  rawJxIp: string | null;
   coreServicesRunning: boolean;
   runningCoreServices: string[];
 };

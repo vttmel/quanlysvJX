@@ -26,6 +26,7 @@ export type SystemInfo = {
   mysqlIp: string;
   mssqlIp: string;
   gameNetwork: GameNetworkConfig;
+  rawJxIp: string | null;
   coreServicesRunning: boolean;
   runningCoreServices: string[];
 };
@@ -185,6 +186,7 @@ export function buildSystemInfo(options: {
     mysqlIp: gameNetwork.mysqlIp,
     mssqlIp: gameNetwork.mssqlIp,
     gameNetwork,
+    rawJxIp: env.JX_IP ?? null,
     coreServicesRunning: runningCoreServices.length > 0,
     runningCoreServices
   };
