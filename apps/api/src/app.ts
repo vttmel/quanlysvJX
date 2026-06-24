@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
 import path from 'node:path';
 import multipart from '@fastify/multipart';
 import sensible from '@fastify/sensible';
@@ -33,7 +33,7 @@ export type AppDeps = {
   gameAccounts: GameAccountService;
 };
 
-import { autoUpdateEnvIp, updateEnvKey } from './env/envFile.js';
+import { autoUpdateEnvIp, loadEnvIntoProcess, readEnvMap, updateEnvKey } from './env/envFile.js';
 import { existsSync, copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 
 function ensureConfigFiles(projectRoot: string) {
@@ -110,6 +110,7 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   ensureConfigFiles(projectRoot);
 
   const envFilePath = path.join(projectRoot, 'apps/jx-services/.env');
+  loadEnvIntoProcess(envFilePath);
   const updatedIp = autoUpdateEnvIp(envFilePath);
   if (updatedIp) {
     process.env.JX_IP = updatedIp;
@@ -163,9 +164,36 @@ export async function buildApp(overrides: Partial<AppDeps> = {}) {
   return app;
 }
 
+export function reloadAppConfig(app: FastifyInstance): void {
+  const envFilePath = path.join(app.deps.config.projectRoot, 'apps/jx-services/.env');
+  loadEnvIntoProcess(envFilePath);
+  
+  const originalProjectRoot = process.env.MANAGER_PROJECT_ROOT;
+  process.env.MANAGER_PROJECT_ROOT = app.deps.config.projectRoot;
+  
+  const newConfig = loadConfig();
+  
+  if (originalProjectRoot === undefined) {
+    delete process.env.MANAGER_PROJECT_ROOT;
+  } else {
+    process.env.MANAGER_PROJECT_ROOT = originalProjectRoot;
+  }
+  
+  const envMap = readEnvMap(envFilePath);
+  app.log.info({
+    envFilePath,
+    envMap,
+    processEnvMssqlIp: process.env.JX_MSSQL_IP,
+    newConfigHost: newConfig.mssql.host
+  }, 'Reload debugging details');
+
+  Object.assign(app.deps.config, newConfig);
+  app.log.info('Environment variables and application config reloaded successfully.');
+}
 
 declare module 'fastify' {
   interface FastifyInstance {
     deps: AppDeps;
   }
 }
+

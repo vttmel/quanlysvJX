@@ -3,6 +3,7 @@ import {
   gameVersionSettingsService,
   type GameVersionSettingsPayload,
 } from '@/services/gameVersionSettingsService';
+import { systemKeys } from './useSystemInfo';
 
 export const gameVersionSettingsKeys = {
   all: ['game-version-settings'] as const,
@@ -26,6 +27,7 @@ export function useGameVersionSettings() {
       gameVersionSettingsService.saveSettings(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: gameVersionSettingsKeys.all });
+      void queryClient.invalidateQueries({ queryKey: systemKeys.all });
     },
   });
 

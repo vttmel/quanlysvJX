@@ -19,7 +19,8 @@ export function useSaveGameNetwork() {
   return useMutation({
     mutationFn: systemService.saveGameNetwork,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: systemKeys.all });
+      void queryClient.invalidateQueries({ queryKey: systemKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['env'] });
     },
   });
 }

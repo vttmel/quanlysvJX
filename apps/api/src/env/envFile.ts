@@ -103,3 +103,15 @@ export function autoUpdateEnvIp(envFilePath: string): string | null {
   return null;
 }
 
+export function loadEnvIntoProcess(envFilePath: string): void {
+  try {
+    const envMap = readEnvMap(envFilePath);
+    for (const [key, value] of Object.entries(envMap)) {
+      process.env[key] = value;
+    }
+  } catch {
+    // Bỏ qua lỗi
+  }
+}
+
+

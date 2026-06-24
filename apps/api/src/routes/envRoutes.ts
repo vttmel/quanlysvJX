@@ -23,6 +23,10 @@ export async function registerEnvRoutes(app: FastifyInstance) {
     {
       preHandler: validate({ body: saveEnvSchema })
     },
-    (req, reply) => envController.saveEnv(req as any, reply)
+    async (req, reply) => {
+      await envController.saveEnv(req as any, reply);
+      const { reloadAppConfig } = await import('../app.js');
+      reloadAppConfig(app);
+    }
   );
 }

@@ -31,7 +31,9 @@ export function EnvEditor({ onSuccess, onError }: Props) {
     saveEnv(content)
       .then(() => {
         onSuccessRef.current('Lưu cấu hình file .env thành công');
-        queryClient.invalidateQueries({ queryKey: ['versions'] });
+        void queryClient.invalidateQueries({ queryKey: ['env'] });
+        void queryClient.invalidateQueries({ queryKey: ['versions'] });
+        void queryClient.invalidateQueries({ queryKey: ['system'] });
       })
       .catch((error) =>
         onErrorRef.current(error instanceof Error ? error.message : 'Lưu file cấu hình thất bại')

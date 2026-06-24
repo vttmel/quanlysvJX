@@ -19,7 +19,9 @@ export const useVersions = () => {
     mutationFn: (payload: { name: string; subPath?: string }) =>
       versionService.selectVersion(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: versionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: versionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['env'] });
+      void queryClient.invalidateQueries({ queryKey: ['system'] });
     },
   });
 
