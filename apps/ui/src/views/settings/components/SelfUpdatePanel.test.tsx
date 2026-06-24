@@ -159,5 +159,8 @@ describe('SelfUpdatePanel', () => {
     await waitFor(() =>
       expect(onSuccess).toHaveBeenCalledWith('Đã cập nhật JX Manager lên v1.1.0')
     );
+    expect((screen.getByRole('button', { name: /cập nhật/i }) as HTMLButtonElement).disabled).toBe(
+      false
+    );
   });
 });

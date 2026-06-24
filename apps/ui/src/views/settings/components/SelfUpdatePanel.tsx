@@ -19,6 +19,10 @@ function isActiveRun(run: UpdateRun | null): boolean {
   return run?.status === 'running' || run?.status === 'restarting' || run?.status === 'verifying';
 }
 
+function isTerminalRun(run: UpdateRun | null): boolean {
+  return run?.status === 'succeeded' || run?.status === 'failed';
+}
+
 function getRunColor(run: UpdateRun) {
   if (run.status === 'failed') return 'red';
   if (run.status === 'succeeded') return 'green';
@@ -40,6 +44,7 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   const [currentRun, setCurrentRun] = useState<UpdateRun | null>(null);
   const notifiedRunIdsRef = useRef(new Set<string>());
   const streamCloseRef = useRef<(() => void) | null>(null);
+  const reloadTimerRef = useRef<number | null>(null);
 
   const activeRun = currentRun ?? latestRun ?? null;
   const runIsActive = isActiveRun(activeRun);
@@ -51,11 +56,16 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
       if (notifiedRunIdsRef.current.has(run.runId)) return;
       if (run.status === 'succeeded') {
         notifiedRunIdsRef.current.add(run.runId);
+        streamCloseRef.current?.();
+        streamCloseRef.current = null;
         onSuccess(`Đã cập nhật JX Manager lên ${run.targetTag}`);
         void checkNow();
+        reloadTimerRef.current = window.setTimeout(() => window.location.reload(), 1500);
       }
       if (run.status === 'failed') {
         notifiedRunIdsRef.current.add(run.runId);
+        streamCloseRef.current?.();
+        streamCloseRef.current = null;
         onError(run.error ?? 'Cập nhật thất bại');
       }
     },
@@ -87,7 +97,15 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
     [refreshRun, streamRun]
   );
 
-  useEffect(() => () => streamCloseRef.current?.(), []);
+  useEffect(
+    () => () => {
+      streamCloseRef.current?.();
+      if (reloadTimerRef.current !== null) {
+        window.clearTimeout(reloadTimerRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!latestRun) return;
@@ -95,6 +113,10 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
     notifyTerminalRun(latestRun);
     if (isActiveRun(latestRun)) {
       attachStream(latestRun.runId);
+    }
+    if (isTerminalRun(latestRun)) {
+      streamCloseRef.current?.();
+      streamCloseRef.current = null;
     }
   }, [attachStream, latestRun, notifyTerminalRun]);
 
