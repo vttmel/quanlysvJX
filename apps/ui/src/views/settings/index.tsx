@@ -4,7 +4,6 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { showSuccessNotification, showErrorNotification } from '@/utils/notification';
 import { BackupSettingsTab } from './components/BackupSettingsTab';
 import { EnvEditor } from './components/EnvEditor';
-import { GameVersionSettingsPanel } from './components/GameVersionSettingsPanel';
 import { VersionManager } from './components/VersionManager';
 
 type SettingsTab = 'versions' | 'env' | 'backup';
@@ -68,7 +67,6 @@ export default function SettingsView() {
         </Tabs.Panel>
         <Tabs.Panel value="versions">
           <Stack gap="md">
-            <GameVersionSettingsPanel onSuccess={handleSuccess} onError={handleError} />
             <VersionManager onSuccess={handleSuccess} onError={handleError} />
           </Stack>
         </Tabs.Panel>

@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { VersionRepository } from '../repositories/versionRepository.js';
 import { ValidationError, CommandError } from '../utils/errors.js';
 import { normalizeVersionName, DuplicateVersionError } from '../versions/versionRegistry.js';
+import { validateGameVersionPath } from '../gameVersionSettings/gameVersionPathValidator.js';
 import { parseManagedServiceStatuses } from './serviceStatus.js';
 import type { AppDeps } from '../app.js';
 
@@ -21,10 +22,16 @@ export class VersionService {
     const registry = this.versionRepository.getRegistry();
     return {
       activeVersion: registry.activeVersion,
-      versions: registry.versions.map((version) => ({
-        ...version,
-        isActive: version.name === registry.activeVersion
-      }))
+      versions: registry.versions.map((version) => {
+        const validation = validateGameVersionPath({
+          gameVersionPath: version.path
+        });
+        return {
+          ...version,
+          isActive: version.name === registry.activeVersion,
+          validation
+        };
+      })
     };
   }
 

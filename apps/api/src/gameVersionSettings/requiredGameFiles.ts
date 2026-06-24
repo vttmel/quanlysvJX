@@ -1,4 +1,4 @@
-export const REQUIRED_GAME_FILES = ['goddes_y', 'bishop_y', 'server', 'gateway'] as const;
+export const REQUIRED_GAME_FILES = ['gateway/goddess_y', 'gateway/bishop_y', 'gateway/s3relay/s3relay_y','server1/jx_linux_y',] as const;
 
 export type RequiredGameFile = (typeof REQUIRED_GAME_FILES)[number];
 

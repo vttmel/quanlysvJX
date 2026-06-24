@@ -23,10 +23,11 @@ function testConfig(projectRoot: string): ManagerConfig {
 }
 
 function createRequiredEntries(base: string) {
-  writeFileSync(path.join(base, 'goddes_y'), '');
-  writeFileSync(path.join(base, 'bishop_y'), '');
-  mkdirSync(path.join(base, 'server'));
-  mkdirSync(path.join(base, 'gateway'));
+  mkdirSync(path.join(base, 'gateway'), { recursive: true });
+  mkdirSync(path.join(base, 's3relay'), { recursive: true });
+  writeFileSync(path.join(base, 'gateway/goddes_y'), '');
+  writeFileSync(path.join(base, 'gateway/bishop_y'), '');
+  writeFileSync(path.join(base, 's3relay/s3relay_y'), '');
 }
 
 beforeEach(() => {

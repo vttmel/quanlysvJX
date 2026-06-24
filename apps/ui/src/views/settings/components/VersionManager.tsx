@@ -14,6 +14,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import { useForm, schemaResolver } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -431,15 +432,39 @@ export function VersionManager({ onSuccess, onError }: Props) {
                     </Table.Td>
                     <Table.Td>
                       <Group gap="xs">
-                        <Button
-                          size="xs"
-                          variant="filled"
-                          color="green"
-                          disabled={ver.isActive || loading}
-                          onClick={() => handleActivateVersion(ver.name)}
-                        >
-                          Sử dụng bản này
-                        </Button>
+                        <Stack gap={2} style={{ minWidth: 130 }}>
+                          <Button
+                            size="xs"
+                            variant="filled"
+                            color="green"
+                            disabled={ver.isActive || loading}
+                            onClick={() => handleActivateVersion(ver.name)}
+                          >
+                            Sử dụng bản này
+                          </Button>
+                          {ver.validation && (
+                            ver.validation.isValid ? (
+                              <Badge size="xs" color="green" variant="light" radius="sm" ta="center">Đủ điều kiện</Badge>
+                            ) : (
+                              <Tooltip
+                                label={
+                                  <Stack gap={2} p={4}>
+                                    <Text size="xs" fw={700}>Thiếu file:</Text>
+                                    {ver.validation.missingFiles.map((f) => (
+                                      <Text key={f} size="xs">• {f}</Text>
+                                    ))}
+                                  </Stack>
+                                }
+                                withArrow
+                                position="bottom"
+                              >
+                                <Badge size="xs" color="red" variant="light" radius="sm" ta="center" style={{ cursor: 'help' }}>
+                                  Không đủ điều kiện
+                                </Badge>
+                              </Tooltip>
+                            )
+                          )}
+                        </Stack>
                         <Button
                           size="xs"
                           variant="outline"

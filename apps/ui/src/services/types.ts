@@ -24,6 +24,12 @@ export type GameVersion = {
   path: string;
   uploadedAt: string;
   isActive: boolean;
+  validation?: {
+    isValid: boolean;
+    errors: string[];
+    missingFiles: string[];
+    resolvedPath: string | null;
+  };
 };
 
 export type VersionListResponse = {
