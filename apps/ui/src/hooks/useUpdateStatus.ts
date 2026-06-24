@@ -21,7 +21,9 @@ export function useUpdateStatus() {
     queryFn: updateService.getLatestRun,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === 'running' || status === 'restarting' || status === 'verifying' ? 3000 : false;
+      return status === 'running' || status === 'restarting' || status === 'verifying'
+        ? 3000
+        : false;
     },
   });
 

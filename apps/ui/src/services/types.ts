@@ -214,7 +214,13 @@ export type UpdateStatus = {
   checkedAt: string | null;
 };
 
-export type UpdateRunStatus = 'queued' | 'running' | 'restarting' | 'verifying' | 'succeeded' | 'failed';
+export type UpdateRunStatus =
+  | 'queued'
+  | 'running'
+  | 'restarting'
+  | 'verifying'
+  | 'succeeded'
+  | 'failed';
 
 export type UpdateRunStage =
   | 'checking'

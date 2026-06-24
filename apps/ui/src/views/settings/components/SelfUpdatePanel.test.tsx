@@ -1,11 +1,33 @@
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UpdateRun } from '@/services/types';
 import { renderWithProviders } from '@/utils/test/renderWithProviders';
 import { SelfUpdatePanel } from './SelfUpdatePanel';
 
 const mocks = vi.hoisted(() => ({
-  streamUpdate: vi.fn(),
+  startRun: vi.fn(),
+  streamRun: vi.fn(),
+  checkNow: vi.fn(),
+  getRun: vi.fn(),
+  latestRun: null as UpdateRun | null,
 }));
+
+const runningRun: UpdateRun = {
+  runId: 'run-1',
+  status: 'running',
+  stage: 'building',
+  currentVersion: 'v1.0.0',
+  targetTag: 'v1.1.0',
+  releaseUrl: 'url',
+  releaseNotesSnapshot: 'Notes',
+  startedAt: '2026-06-24T10:00:00.000Z',
+  updatedAt: '2026-06-24T10:00:00.000Z',
+  finishedAt: null,
+  failedStep: null,
+  failedCommand: null,
+  error: null,
+  logs: [{ at: '2026-06-24T10:00:00.000Z', level: 'status', message: 'building' }],
+};
 
 vi.mock('@/hooks/useUpdateStatus', () => ({
   useUpdateStatus: () => ({
@@ -21,19 +43,28 @@ vi.mock('@/hooks/useUpdateStatus', () => ({
       checkedAt: '2026-06-24T10:00:00.000Z',
     },
     isLoading: false,
-    checkNow: vi.fn(),
+    checkNow: mocks.checkNow,
     isChecking: false,
-    streamUpdate: mocks.streamUpdate,
+    latestRun: mocks.latestRun,
+    isLoadingLatestRun: false,
+    startRun: mocks.startRun,
+    isStartingRun: false,
+    getRun: mocks.getRun,
+    streamRun: mocks.streamRun,
   }),
 }));
 
 describe('SelfUpdatePanel', () => {
   beforeEach(() => {
-    mocks.streamUpdate.mockReset();
+    mocks.startRun.mockReset();
+    mocks.streamRun.mockReset();
+    mocks.checkNow.mockReset();
+    mocks.getRun.mockReset();
+    mocks.latestRun = null;
+    mocks.streamRun.mockReturnValue(vi.fn());
   });
 
   afterEach(() => {
-    window.localStorage.clear();
     cleanup();
   });
 
@@ -48,35 +79,57 @@ describe('SelfUpdatePanel', () => {
     );
   });
 
-  it('keeps waiting instead of reporting error when SSE disconnects during restart', () => {
-    const onError = vi.fn();
-    const onSuccess = vi.fn();
-    mocks.streamUpdate.mockImplementation((handlers) => {
-      handlers.onEvent({ type: 'restarting', message: 'Đang khởi động lại' });
-      handlers.onError('Mất kết nối khi cập nhật');
-    });
+  it('starts a durable update run and streams that run', async () => {
+    mocks.startRun.mockResolvedValue(runningRun);
+    mocks.getRun.mockResolvedValue(runningRun);
 
-    renderWithProviders(<SelfUpdatePanel onSuccess={onSuccess} onError={onError} />, {
+    renderWithProviders(<SelfUpdatePanel onSuccess={vi.fn()} onError={vi.fn()} />, {
       route: '/settings',
     });
     fireEvent.click(screen.getByRole('button', { name: /cập nhật/i }));
 
-    expect(onSuccess).toHaveBeenCalledWith('Đang khởi động lại JX Manager');
-    expect(onError).not.toHaveBeenCalled();
-    expect(
-      screen.getByText('API/UI đang khởi động lại. Trang sẽ tự tải lại khi API sẵn sàng.')
-    ).toBeTruthy();
+    await screen.findByText('Trạng thái: running');
+    expect(mocks.startRun).toHaveBeenCalled();
+    expect(mocks.streamRun).toHaveBeenCalledWith('run-1', expect.any(Object));
   });
 
-  it('shows success message after reload when update completed', () => {
+  it('shows failed latest run with retry option', () => {
+    mocks.latestRun = {
+      ...runningRun,
+      runId: 'run-failed',
+      status: 'failed',
+      stage: 'failed',
+      failedStep: 'building',
+      failedCommand: 'docker compose build',
+      error: 'build failed',
+      finishedAt: '2026-06-24T10:01:00.000Z',
+      logs: [{ at: '2026-06-24T10:01:00.000Z', level: 'error', message: 'build failed' }],
+    };
+
+    renderWithProviders(<SelfUpdatePanel onSuccess={vi.fn()} onError={vi.fn()} />, {
+      route: '/settings',
+    });
+
+    expect(screen.getByText('Trạng thái: failed')).toBeTruthy();
+    expect(screen.getAllByText(/build failed/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /thử lại/i })).toBeTruthy();
+  });
+
+  it('notifies success when latest run completed', async () => {
     const onSuccess = vi.fn();
-    window.localStorage.setItem('quanlysvjx:update-success-version', 'v1.1.0');
+    mocks.latestRun = {
+      ...runningRun,
+      status: 'succeeded',
+      stage: 'succeeded',
+      finishedAt: '2026-06-24T10:01:00.000Z',
+    };
 
     renderWithProviders(<SelfUpdatePanel onSuccess={onSuccess} onError={vi.fn()} />, {
       route: '/settings',
     });
 
-    expect(onSuccess).toHaveBeenCalledWith('Đã cập nhật JX Manager lên v1.1.0');
-    expect(window.localStorage.getItem('quanlysvjx:update-success-version')).toBeNull();
+    await waitFor(() =>
+      expect(onSuccess).toHaveBeenCalledWith('Đã cập nhật JX Manager lên v1.1.0')
+    );
   });
 });
