@@ -194,10 +194,14 @@ export class UpdateService {
     // Bước 2: Recreate API trước để chạy bản mới, sau đó mới up toàn bộ cụm
     onEvent({ type: "restarting", message: "Bước 2/2: Đang khởi động lại container API và UI..." });
     const composeCmd = "nohup sh -c 'docker compose -p quanlysvjx-manager up -d api && sleep 2 && docker compose -p quanlysvjx-manager up -d ui' > /dev/null 2>&1 &";
+    
+    // Ghi đè biến môi trường COMPOSE_PROJECT_NAME để Docker Compose chạy ngầm nhận diện đúng tên project
+    const spawnEnv = { ...process.env, COMPOSE_PROJECT_NAME: "quanlysvjx-manager" };
     const child = spawn("sh", ["-c", composeCmd], {
       cwd: this.deps.projectRoot,
       detached: true,
       stdio: "ignore",
+      env: spawnEnv,
     });
     child.unref();
   }
