@@ -126,6 +126,42 @@ describe("UpdateService", () => {
     vi.restoreAllMocks();
   });
 
+  it("creates missing JX env file before starting updater", async () => {
+    vi.spyOn(fs, "existsSync").mockImplementation((filePath) => {
+      const value = String(filePath);
+      return value.endsWith("apps/jx-services/.env.example");
+    });
+    vi.spyOn(fs, "mkdirSync").mockImplementation(() => undefined as never);
+    vi.spyOn(fs, "copyFileSync").mockImplementation(() => undefined);
+    vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+    const commandRunner = {
+      run: vi.fn().mockResolvedValue({ code: 0, stdout: "updater-id\n", stderr: "" }),
+      stream: vi.fn().mockResolvedValue(0),
+    };
+    const events: unknown[] = [];
+    const service = new UpdateService({
+      projectRoot: "/workspace",
+      currentVersion: "v1.0.0",
+      currentCommit: "abc1234",
+      releaseClient: {
+        getLatestRelease: vi.fn().mockResolvedValue({ tagName: "v1.1.0", htmlUrl: "url", body: "" }),
+      },
+      commandRunner,
+      now: () => new Date("2026-06-24T10:00:00.000Z"),
+    });
+
+    await service.runUpdate((event) => events.push(event));
+
+    expect(fs.mkdirSync).toHaveBeenCalledWith("/workspace/apps/jx-services", { recursive: true });
+    expect(fs.copyFileSync).toHaveBeenCalledWith(
+      "/workspace/apps/jx-services/.env.example",
+      "/workspace/apps/jx-services/.env",
+    );
+    expect(JSON.stringify(events)).toContain("Đã tạo apps/jx-services/.env từ .env.example");
+
+    vi.restoreAllMocks();
+  });
+
   it("reads current version from version.json if the file exists", async () => {
     vi.spyOn(fs, "existsSync").mockImplementation((p) => String(p).endsWith("version.json"));
     vi.spyOn(fs, "readFileSync").mockReturnValue(

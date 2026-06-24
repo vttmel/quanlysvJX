@@ -174,6 +174,7 @@ export class UpdateService {
 
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
+    this.ensureJxEnvFile(onEvent);
     
     // Ghi đè phiên bản mới nhất vào file version.json ngay sau khi checkout
     try {
@@ -243,6 +244,27 @@ export class UpdateService {
       type: "status",
       message: `Updater container đã chạy: ${result.stdout.trim() || updaterName}`,
     });
+  }
+
+  private ensureJxEnvFile(onEvent: (event: UpdateEvent) => void): void {
+    const envFilePath = path.join(this.deps.projectRoot, "apps/jx-services/.env");
+    const exampleFilePath = path.join(this.deps.projectRoot, "apps/jx-services/.env.example");
+
+    if (fs.existsSync(envFilePath)) {
+      return;
+    }
+
+    if (!fs.existsSync(exampleFilePath)) {
+      onEvent({
+        type: "status",
+        message: "Cảnh báo: Không tìm thấy apps/jx-services/.env.example để tạo .env",
+      });
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(envFilePath), { recursive: true });
+    fs.copyFileSync(exampleFilePath, envFilePath);
+    onEvent({ type: "status", message: "Đã tạo apps/jx-services/.env từ .env.example" });
   }
 
   private async isRepoDirty(): Promise<boolean> {
