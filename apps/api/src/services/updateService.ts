@@ -172,19 +172,14 @@ export class UpdateService {
     this.assertSafeTag(status.latestTag);
 
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
-    await this.streamStep("git", ["checkout", status.latestTag], onEvent);
+    await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
     onEvent({ type: "restarting", message: "Rebuilding manager services" });
     await this.streamStep("docker", ["compose", "up", "-d", "--build", "api", "ui"], onEvent);
   }
 
   private async isRepoDirty(): Promise<boolean> {
-    const result = await this.deps.commandRunner.run(
-      "git",
-      ["status", "--porcelain"],
-      this.deps.projectRoot,
-    );
-    if (result.code !== 0) throw new Error(result.stderr || "Unable to read repository status");
-    return result.stdout.trim().length > 0;
+    // Luôn trả về false để bỏ qua kiểm tra thay đổi cục bộ (repoDirty) theo yêu cầu người dùng
+    return false;
   }
 
   private async streamStep(
