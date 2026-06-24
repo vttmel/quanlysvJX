@@ -72,4 +72,7 @@ ensure_file_mode "apps/jx-services/mount/database/mssql/seed/mssql-entrypoint.sh
 
 echo "[setup] directory preparation completed"
 
+# Configure git safe.directory to allow git commands run under non-root or mapped user inside /workspace
+git config --global --add safe.directory /workspace
+
 exec "$@"
