@@ -15,11 +15,12 @@ afterEach(() => {
 });
 
 function createRequiredEntries(base: string) {
-  mkdirSync(path.join(base, 'gateway'), { recursive: true });
-  mkdirSync(path.join(base, 's3relay'), { recursive: true });
-  writeFileSync(path.join(base, 'gateway/goddes_y'), '');
+  mkdirSync(path.join(base, 'gateway/s3relay'), { recursive: true });
+  mkdirSync(path.join(base, 'server1'), { recursive: true });
+  writeFileSync(path.join(base, 'gateway/goddess_y'), '');
   writeFileSync(path.join(base, 'gateway/bishop_y'), '');
-  writeFileSync(path.join(base, 's3relay/s3relay_y'), '');
+  writeFileSync(path.join(base, 'gateway/s3relay/s3relay_y'), '');
+  writeFileSync(path.join(base, 'server1/jx_linux_y'), '');
 }
 
 describe('validateGameVersionPath', () => {
@@ -41,7 +42,12 @@ describe('validateGameVersionPath', () => {
     const result = validateGameVersionPath({ gameVersionPath: root });
 
     expect(result.isValid).toBe(false);
-    expect(result.missingFiles).toEqual(['gateway/goddes_y', 'gateway/bishop_y', 's3relay/s3relay_y']);
+    expect(result.missingFiles).toEqual([
+      'gateway/goddess_y',
+      'gateway/bishop_y',
+      'gateway/s3relay/s3relay_y',
+      'server1/jx_linux_y'
+    ]);
   });
 
   it('accepts all required entries at root path', () => {

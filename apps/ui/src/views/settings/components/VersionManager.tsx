@@ -437,7 +437,7 @@ export function VersionManager({ onSuccess, onError }: Props) {
                             size="xs"
                             variant="filled"
                             color="green"
-                            disabled={ver.isActive || loading}
+                            disabled={ver.isActive || !ver.validation?.isValid || loading}
                             onClick={() => handleActivateVersion(ver.name)}
                           >
                             Sử dụng bản này
