@@ -104,7 +104,8 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
 
         {data?.rawJxIp && !data.ipChoices.includes(data.rawJxIp) && (
           <Alert color="red" title="IP không khả dụng">
-            IP hiện tại trong file .env ({data.rawJxIp}) không khớp với bất kỳ IP mạng nào của máy chủ (host hoặc VPN). Vui lòng chọn lại một IP hợp lệ dưới đây và Lưu cấu hình.
+            IP hiện tại trong file .env ({data.rawJxIp}) không khớp với bất kỳ IP mạng nào của máy
+            chủ (host hoặc VPN). Vui lòng chọn lại một IP hợp lệ dưới đây và Lưu cấu hình.
           </Alert>
         )}
 
@@ -116,7 +117,12 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
             onChange={(value) => setField('jxIp', value)}
             disabled={isLoading || saveMutation.isPending}
             placeholder="Chưa tìm thấy IP host"
-            error={form.errors.jxIp || (data?.rawJxIp && !data.ipChoices.includes(data.rawJxIp) ? 'IP hiện tại không khả dụng' : null)}
+            error={
+              form.errors.jxIp ||
+              (data?.rawJxIp && !data.ipChoices.includes(data.rawJxIp)
+                ? 'IP hiện tại không khả dụng'
+                : null)
+            }
           />
           <TextInput
             label="MySQL IP"

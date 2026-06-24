@@ -100,7 +100,7 @@ export function BrowseFolderModal({
                 </List>
               </Alert>
             )}
-            
+
             <Text size="xs" fw={700} color="dimmed" tt="uppercase">
               Thư mục con:
             </Text>
@@ -135,9 +135,9 @@ export function BrowseFolderModal({
           <Button variant="default" onClick={onClose} disabled={isSelecting}>
             Hủy
           </Button>
-          <Button 
-            color="green" 
-            loading={isSelecting} 
+          <Button
+            color="green"
+            loading={isSelecting}
             onClick={handleSelectPathClick}
             disabled={!data?.validation?.isValid}
           >

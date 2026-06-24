@@ -59,7 +59,12 @@ export const versionService = {
     const query = path ? `?path=${encodeURIComponent(path)}` : '';
     const res = await ApiService.fetchData<
       any,
-      { currentPath: string; parentPath: string | null; directories: string[]; validation: GameVersion['validation'] }
+      {
+        currentPath: string;
+        parentPath: string | null;
+        directories: string[];
+        validation: GameVersion['validation'];
+      }
     >({
       url: `/api/versions/${encodeURIComponent(name)}/browse${query}`,
       method: 'GET',

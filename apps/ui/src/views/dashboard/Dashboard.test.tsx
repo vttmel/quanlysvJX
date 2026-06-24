@@ -5,6 +5,7 @@ import Dashboard from './index';
 
 const mockUseServices = vi.fn();
 const mockUseVersions = vi.fn();
+const mockUseSystemInfo = vi.fn();
 
 vi.mock('@/hooks/useServices', () => ({
   useServices: (...args: unknown[]) => mockUseServices(...args),
@@ -22,6 +23,14 @@ vi.mock('@/hooks/useVersions', () => ({
     lists: () => ['versions', 'list'] as const,
     browse: (name: string, path?: string) => ['versions', 'browse', name, { path }] as const,
   },
+}));
+
+vi.mock('@/hooks/useSystemInfo', () => ({
+  useSystemInfo: () => mockUseSystemInfo(),
+  useSaveGameNetwork: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/services/serviceService', () => ({
@@ -49,6 +58,13 @@ describe('Dashboard', () => {
       deleteVersion: vi.fn(),
       renameVersion: vi.fn(),
     });
+    mockUseSystemInfo.mockReturnValue({
+      data: {
+        rawJxIp: '192.168.1.100',
+        ipChoices: ['192.168.1.100'],
+      },
+      isLoading: false,
+    });
   });
 
   afterEach(() => {
@@ -56,6 +72,7 @@ describe('Dashboard', () => {
     vi.unstubAllGlobals();
     mockUseServices.mockReset();
     mockUseVersions.mockReset();
+    mockUseSystemInfo.mockReset();
   });
 
   it('shows a game version warning when versions load without an active version', async () => {
@@ -98,6 +115,32 @@ describe('Dashboard', () => {
     expect(await screen.findByText('Cảnh báo: Chưa có Phiên bản Game')).toBeTruthy();
     expect(screen.getByText(/Vui lòng vào Quản lý phiên bản game/)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Mở quản lý phiên bản' }).getAttribute('href')).toBe(
+      '/settings/versions'
+    );
+  });
+
+  it('shows an IP warning when raw JX_IP does not match any server IP choices', async () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      isFetching: false,
+      error: null,
+      isError: false,
+      runAction: vi.fn(),
+      isActionLoading: false,
+    });
+    mockUseSystemInfo.mockReturnValue({
+      data: {
+        rawJxIp: '1.2.3.4',
+        ipChoices: ['192.168.1.100'],
+      },
+      isLoading: false,
+    });
+
+    renderWithProviders(<Dashboard />);
+
+    expect(await screen.findByText('Cảnh báo: Cấu hình IP Game không hợp lệ')).toBeTruthy();
+    expect(screen.getByText(/IP cấu hình game hiện tại \(1.2.3.4\)/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Cấu hình IP' }).getAttribute('href')).toBe(
       '/settings/versions'
     );
   });

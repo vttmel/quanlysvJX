@@ -442,28 +442,46 @@ export function VersionManager({ onSuccess, onError }: Props) {
                           >
                             Sử dụng bản này
                           </Button>
-                          {ver.validation && (
-                            ver.validation.isValid ? (
-                              <Badge size="xs" color="green" variant="light" radius="sm" ta="center">Đủ điều kiện</Badge>
+                          {ver.validation &&
+                            (ver.validation.isValid ? (
+                              <Badge
+                                size="xs"
+                                color="green"
+                                variant="light"
+                                radius="sm"
+                                ta="center"
+                              >
+                                Đủ điều kiện
+                              </Badge>
                             ) : (
                               <Tooltip
                                 label={
                                   <Stack gap={2} p={4}>
-                                    <Text size="xs" fw={700}>Thiếu file:</Text>
+                                    <Text size="xs" fw={700}>
+                                      Thiếu file:
+                                    </Text>
                                     {ver.validation.missingFiles.map((f) => (
-                                      <Text key={f} size="xs">• {f}</Text>
+                                      <Text key={f} size="xs">
+                                        • {f}
+                                      </Text>
                                     ))}
                                   </Stack>
                                 }
                                 withArrow
                                 position="bottom"
                               >
-                                <Badge size="xs" color="red" variant="light" radius="sm" ta="center" style={{ cursor: 'help' }}>
+                                <Badge
+                                  size="xs"
+                                  color="red"
+                                  variant="light"
+                                  radius="sm"
+                                  ta="center"
+                                  style={{ cursor: 'help' }}
+                                >
                                   Không đủ điều kiện
                                 </Badge>
                               </Tooltip>
-                            )
-                          )}
+                            ))}
                         </Stack>
                         <Button
                           size="xs"

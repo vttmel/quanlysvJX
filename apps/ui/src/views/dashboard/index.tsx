@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { BatchActionModal } from '@/components/BatchActionModal';
 import { ServiceActionModal } from '@/components/ServiceActionModal';
 import { useServices, serviceKeys } from '@/hooks/useServices';
+import { useSystemInfo } from '@/hooks/useSystemInfo';
 import { useVersions } from '@/hooks/useVersions';
 import { LogsPanel } from './components/LogsPanel';
 import { PrepareImagesModal } from './components/PrepareImagesModal';
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const { services, runAction, error, isError } = useServices(true); // polling status every 5 seconds
   const { versionsData } = useVersions();
+  const { data: systemInfo } = useSystemInfo();
 
   const [prepareOpened, setPrepareOpened] = useState(false);
   const [servicesToPrepare, setServicesToPrepare] = useState<string[]>([]);
@@ -106,9 +108,34 @@ export default function Dashboard() {
   const hasMissingGameVersion =
     hasNoActiveVersion ||
     (isError && serviceErrorMessage.toLocaleLowerCase('vi-VN').includes('phiên bản game'));
+  const hasInvalidIp = !!systemInfo?.rawJxIp && !systemInfo.ipChoices.includes(systemInfo.rawJxIp);
 
   return (
     <Stack gap="md">
+      {hasInvalidIp && (
+        <Paper
+          withBorder
+          p="md"
+          bg="var(--mantine-color-red-light)"
+          style={{ borderColor: 'var(--mantine-color-red-outline)' }}
+        >
+          <Group justify="space-between" align="center">
+            <Stack gap={2}>
+              <Text fw={700} c="red" size="md">
+                Cảnh báo: Cấu hình IP Game không hợp lệ
+              </Text>
+              <Text size="sm" c="dimmed">
+                IP cấu hình game hiện tại ({systemInfo.rawJxIp}) không khớp với bất kỳ IP mạng nào
+                của máy chủ (host hoặc VPN). Các dịch vụ có thể không hoạt động chính xác.
+              </Text>
+            </Stack>
+            <Button color="red" size="md" component={Link} to="/settings/versions">
+              Cấu hình IP
+            </Button>
+          </Group>
+        </Paper>
+      )}
+
       {hasMissingGameVersion && (
         <Paper
           withBorder
