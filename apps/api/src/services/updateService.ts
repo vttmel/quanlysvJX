@@ -202,6 +202,7 @@ export class UpdateService {
   ): Promise<void> {
     const updaterName = `quanlysvjx-manager-updater-${Date.now()}`;
     const updaterImage = this.deps.updaterImage ?? "quanlysvjx-manager-api";
+    const hostProjectRoot = await this.resolveUpdaterProjectRoot(onEvent);
     const script = [
       "set -eu",
       `echo '[updater] applying ${tag}'`,
@@ -221,7 +222,7 @@ export class UpdateService {
         "-v",
         "/var/run/docker.sock:/var/run/docker.sock",
         "-v",
-        `${this.deps.projectRoot}:/workspace`,
+        `${hostProjectRoot}:/workspace`,
         "-w",
         "/workspace",
         "--network",
@@ -244,6 +245,35 @@ export class UpdateService {
       type: "status",
       message: `Updater container đã chạy: ${result.stdout.trim() || updaterName}`,
     });
+  }
+
+  private async resolveUpdaterProjectRoot(onEvent: (event: UpdateEvent) => void): Promise<string> {
+    if (this.deps.projectRoot !== "/workspace") {
+      return this.deps.projectRoot;
+    }
+
+    const containerId = process.env.HOSTNAME;
+    if (!containerId || !fs.existsSync("/.dockerenv")) {
+      throw new Error("Cannot resolve host project root for updater container");
+    }
+
+    const result = await this.deps.commandRunner.run(
+      "docker",
+      [
+        "inspect",
+        containerId,
+        "--format",
+        '{{range .Mounts}}{{if eq .Destination "/workspace"}}{{.Source}}{{end}}{{end}}',
+      ],
+      this.deps.projectRoot,
+    );
+    const hostProjectRoot = result.stdout.trim();
+    if (result.code !== 0 || !hostProjectRoot) {
+      throw new Error(`Cannot resolve /workspace host mount: ${result.stderr || result.stdout}`.trim());
+    }
+
+    onEvent({ type: "status", message: `Dùng host project root: ${hostProjectRoot}` });
+    return hostProjectRoot;
   }
 
   private ensureJxEnvFile(onEvent: (event: UpdateEvent) => void): void {

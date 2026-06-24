@@ -45,7 +45,7 @@ describe("UpdateService", () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
     vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
     const service = new UpdateService({
-      projectRoot: "/workspace",
+      projectRoot: "/host/quanlysvJX",
       currentVersion: "v1.0.0",
       currentCommit: "abc1234",
       releaseClient: {
@@ -64,11 +64,16 @@ describe("UpdateService", () => {
   });
 
   it("starts a detached updater container instead of restarting itself", async () => {
-    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    const originalHostname = process.env.HOSTNAME;
+    process.env.HOSTNAME = "api-container";
+    vi.spyOn(fs, "existsSync").mockImplementation((filePath) => String(filePath) === "/.dockerenv");
     vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
     vi.spyOn(Date, "now").mockReturnValue(1782300000000);
     const commandRunner = {
-      run: vi.fn().mockResolvedValue({ code: 0, stdout: "updater-id\n", stderr: "" }),
+      run: vi
+        .fn()
+        .mockResolvedValueOnce({ code: 0, stdout: "/host/quanlysvJX\n", stderr: "" })
+        .mockResolvedValueOnce({ code: 0, stdout: "updater-id\n", stderr: "" }),
       stream: vi.fn().mockResolvedValue(0),
     };
     const events: unknown[] = [];
@@ -100,7 +105,19 @@ describe("UpdateService", () => {
       "/workspace",
       expect.any(Function),
     );
-    expect(commandRunner.run).toHaveBeenCalledWith(
+    expect(commandRunner.run).toHaveBeenNthCalledWith(
+      1,
+      "docker",
+      [
+        "inspect",
+        "api-container",
+        "--format",
+        '{{range .Mounts}}{{if eq .Destination "/workspace"}}{{.Source}}{{end}}{{end}}',
+      ],
+      "/workspace",
+    );
+    expect(commandRunner.run).toHaveBeenNthCalledWith(
+      2,
       "docker",
       expect.arrayContaining([
         "run",
@@ -111,31 +128,37 @@ describe("UpdateService", () => {
         "-v",
         "/var/run/docker.sock:/var/run/docker.sock",
         "-v",
-        "/workspace:/workspace",
+        "/host/quanlysvJX:/workspace",
         "manager-api:test",
         "sh",
         "-c",
       ]),
       "/workspace",
     );
-    expect(JSON.stringify(commandRunner.run.mock.calls[0])).toContain(
+    expect(JSON.stringify(commandRunner.run.mock.calls[1])).toContain(
       "docker compose -p quanlysvjx-manager build",
     );
     expect(JSON.stringify(events)).toContain("Updater container đã chạy: updater-id");
 
     vi.restoreAllMocks();
+    process.env.HOSTNAME = originalHostname;
   });
 
   it("creates missing JX env file before starting updater", async () => {
+    const originalHostname = process.env.HOSTNAME;
+    process.env.HOSTNAME = "api-container";
     vi.spyOn(fs, "existsSync").mockImplementation((filePath) => {
       const value = String(filePath);
-      return value.endsWith("apps/jx-services/.env.example");
+      return value === "/.dockerenv" || value.endsWith("apps/jx-services/.env.example");
     });
     vi.spyOn(fs, "mkdirSync").mockImplementation(() => undefined as never);
     vi.spyOn(fs, "copyFileSync").mockImplementation(() => undefined);
     vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
     const commandRunner = {
-      run: vi.fn().mockResolvedValue({ code: 0, stdout: "updater-id\n", stderr: "" }),
+      run: vi
+        .fn()
+        .mockResolvedValueOnce({ code: 0, stdout: "/host/quanlysvJX\n", stderr: "" })
+        .mockResolvedValueOnce({ code: 0, stdout: "updater-id\n", stderr: "" }),
       stream: vi.fn().mockResolvedValue(0),
     };
     const events: unknown[] = [];
@@ -160,6 +183,7 @@ describe("UpdateService", () => {
     expect(JSON.stringify(events)).toContain("Đã tạo apps/jx-services/.env từ .env.example");
 
     vi.restoreAllMocks();
+    process.env.HOSTNAME = originalHostname;
   });
 
   it("reads current version from version.json if the file exists", async () => {
