@@ -10,6 +10,8 @@ import type { UpdateEvent } from '@/services/types';
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
+const updateSuccessStorageKey = 'quanlysvjx:update-success-version';
+
 type Props = {
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -22,8 +24,17 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   const [isWaitingForRestart, setIsWaitingForRestart] = useState(false);
   const isRestartingRef = useRef(false);
   const healthPollRef = useRef<number | null>(null);
+  const targetVersionRef = useRef<string | null>(null);
 
-  useEffect(() => () => stopHealthPolling(), []);
+  useEffect(() => {
+    const updatedVersion = window.localStorage.getItem(updateSuccessStorageKey);
+    if (updatedVersion) {
+      window.localStorage.removeItem(updateSuccessStorageKey);
+      onSuccess(`Đã cập nhật JX Manager lên ${updatedVersion}`);
+    }
+
+    return () => stopHealthPolling();
+  }, [onSuccess]);
 
   const handleEvent = (event: UpdateEvent) => {
     setLogs((current) => [...current, event.message]);
@@ -50,9 +61,13 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
     const startedAt = Date.now();
     healthPollRef.current = window.setInterval(async () => {
       try {
-        const response = await fetch(`/api/health?t=${Date.now()}`, { cache: 'no-store' });
-        if (response.ok && Date.now() - startedAt > 8000) {
+        const response = await fetch(`/api/update/status?t=${Date.now()}`, { cache: 'no-store' });
+        const body = await response.json();
+        const currentVersion = body?.data?.currentVersion;
+        const targetVersion = targetVersionRef.current;
+        if (response.ok && targetVersion && currentVersion === targetVersion) {
           stopHealthPolling();
+          window.localStorage.setItem(updateSuccessStorageKey, targetVersion);
           window.location.reload();
         }
       } catch {
@@ -72,6 +87,7 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   const handleUpdate = () => {
     setIsUpdating(true);
     setLogs([]);
+    targetVersionRef.current = status?.latestTag ?? status?.latestVersion ?? null;
     streamUpdate({
       onEvent: handleEvent,
       onDone: () => setIsUpdating(false),

@@ -33,6 +33,7 @@ describe('SelfUpdatePanel', () => {
   });
 
   afterEach(() => {
+    window.localStorage.clear();
     cleanup();
   });
 
@@ -65,5 +66,17 @@ describe('SelfUpdatePanel', () => {
     expect(
       screen.getByText('API/UI đang khởi động lại. Trang sẽ tự tải lại khi API sẵn sàng.')
     ).toBeTruthy();
+  });
+
+  it('shows success message after reload when update completed', () => {
+    const onSuccess = vi.fn();
+    window.localStorage.setItem('quanlysvjx:update-success-version', 'v1.1.0');
+
+    renderWithProviders(<SelfUpdatePanel onSuccess={onSuccess} onError={vi.fn()} />, {
+      route: '/settings',
+    });
+
+    expect(onSuccess).toHaveBeenCalledWith('Đã cập nhật JX Manager lên v1.1.0');
+    expect(window.localStorage.getItem('quanlysvjx:update-success-version')).toBeNull();
   });
 });
