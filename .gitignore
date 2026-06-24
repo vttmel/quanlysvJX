@@ -10,3 +10,4 @@ manager-dashboard.png
 
 # Cấu hình môi trường cục bộ
 .env
+version.json
