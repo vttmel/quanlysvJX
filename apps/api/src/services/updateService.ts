@@ -174,7 +174,7 @@ export class UpdateService {
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
     onEvent({ type: "restarting", message: "Rebuilding manager services" });
-    await this.streamStep("docker", ["compose", "up", "-d", "--build"], onEvent);
+    await this.streamStep("docker", ["compose", "-p", "quanlysvjx-manager", "up", "-d", "--build"], onEvent);
   }
 
   private async isRepoDirty(): Promise<boolean> {
