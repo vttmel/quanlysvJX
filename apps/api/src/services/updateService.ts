@@ -173,8 +173,17 @@ export class UpdateService {
 
     await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
-    onEvent({ type: "restarting", message: "Rebuilding manager services" });
-    await this.streamStep("docker", ["compose", "-p", "quanlysvjx-manager", "up", "-d", "--build"], onEvent);
+    onEvent({ type: "restarting", message: "Rebuilding manager services in background" });
+    
+    // Sử dụng nohup và chạy ngầm (detached) để Docker Engine tự hoàn thành việc rebuild & restart 
+    // ngay cả khi container API cũ (đang chạy lệnh này) bị tắt giữa chừng.
+    const spawnArgs = ["-p", "quanlysvjx-manager", "up", "-d", "--build"];
+    const child = spawn("docker", ["compose", ...spawnArgs], {
+      cwd: this.deps.projectRoot,
+      detached: true,
+      stdio: "ignore",
+    });
+    child.unref();
   }
 
   private async isRepoDirty(): Promise<boolean> {
