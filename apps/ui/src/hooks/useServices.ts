@@ -4,7 +4,7 @@ import { serviceService } from '@/services/serviceService';
 export const serviceKeys = {
   all: ['services'] as const,
   lists: () => [...serviceKeys.all, 'list'] as const,
-  logs: (service: string, tail: number) => [...serviceKeys.all, 'logs', service, { tail }] as const,
+  logs: (service: string, tail: number | 'all') => [...serviceKeys.all, 'logs', service, { tail }] as const,
 };
 
 export const useServices = (enabledPolling = false) => {

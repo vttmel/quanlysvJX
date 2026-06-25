@@ -1,4 +1,7 @@
-export function normalizeTail(value: unknown) {
+export function normalizeTail(value: unknown): number | 'all' {
+  if (value === 'all') {
+    return 'all';
+  }
   const parsed = typeof value === 'string' ? Number(value) : 300;
   if (!Number.isFinite(parsed)) {
     return 300;
@@ -7,7 +10,10 @@ export function normalizeTail(value: unknown) {
   return Math.min(2000, Math.max(50, Math.trunc(parsed)));
 }
 
-export function normalizeStreamTail(value: unknown) {
+export function normalizeStreamTail(value: unknown): number | 'all' {
+  if (value === 'all') {
+    return 'all';
+  }
   const parsed = typeof value === 'string' ? Number(value) : 100;
   if (!Number.isFinite(parsed)) {
     return 100;

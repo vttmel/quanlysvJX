@@ -16,15 +16,15 @@ export const serviceService = {
     });
     return res.data;
   },
-  getLogs: async (service: string, tail: number) => {
-    const res = await ApiService.fetchData<any, { service: string; tail: number; logs: string }>({
+  getLogs: async (service: string, tail: number | 'all') => {
+    const res = await ApiService.fetchData<any, { service: string; tail: number | 'all'; logs: string }>({
       url: `/api/services/${service}/logs?tail=${tail}`,
       method: 'GET',
     });
     return res.data;
   },
   startStreamUrl: (service: string) => `/api/services/${service}/start/stream`,
-  logStreamUrl: (service: string, tail: number) =>
+  logStreamUrl: (service: string, tail: number | 'all') =>
     `/api/services/${service}/logs/stream?tail=${tail}`,
   prepareStreamUrl: (services: string) =>
     `/api/services/images/prepare/stream?services=${services}`,

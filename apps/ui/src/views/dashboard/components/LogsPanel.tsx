@@ -23,7 +23,7 @@ type Props = {
   onError: (message: string) => void;
 };
 
-const MAX_LOG_LINES = 5000;
+const MAX_LOG_LINES = 10000;
 
 const SERVICE_COLORS: Record<string, string> = {
   goddess: '#e040fb', // Tím
@@ -43,6 +43,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
   const [showTimestamps, setShowTimestamps] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+  const [showAllLogs, setShowAllLogs] = useState(false);
   const shouldFollowRef = useRef(true);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
@@ -61,8 +62,8 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
   }, [services, activeService, onSelect]);
 
   const logsQuery = useQuery({
-    queryKey: serviceKeys.logs(activeService, tail),
-    queryFn: () => serviceService.getLogs(activeService, tail),
+    queryKey: serviceKeys.logs(activeService, showAllLogs ? 'all' : tail),
+    queryFn: () => serviceService.getLogs(activeService, showAllLogs ? 'all' : tail),
     retry: false,
   });
 
@@ -73,7 +74,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
 
   useEffect(() => {
     setStreamReady(false);
-  }, [activeService, tail]);
+  }, [activeService, tail, showAllLogs]);
 
   useEffect(() => {
     if (logsQuery.isError) {
@@ -85,7 +86,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
     }
 
     if (logsQuery.data) {
-      setLogs(logsQuery.data.logs);
+      setLogs(limitLogLines(logsQuery.data.logs));
       shouldFollowRef.current = true;
       setStreamReady(true);
     }
@@ -260,6 +261,11 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
           <Text fw={700}>Nhật ký dịch vụ</Text>
           <Group gap="md">
             <Switch
+              label="Xem toàn bộ log"
+              checked={showAllLogs}
+              onChange={(event) => setShowAllLogs(event.currentTarget.checked)}
+            />
+            <Switch
               label="Hiện thời gian"
               checked={showTimestamps}
               onChange={(event) => setShowTimestamps(event.currentTarget.checked)}
@@ -289,6 +295,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
             max={2000}
             value={tail}
             onChange={handleTailChange}
+            disabled={showAllLogs}
             style={{ width: 100 }}
           />
         </Group>
