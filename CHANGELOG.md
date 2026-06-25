@@ -2,6 +2,18 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.6] - 2026-06-25
+
+### Thêm mới (Added)
+- **Hỗ trợ phiên bản game qua `vdk.so`**: Bổ sung cấu hình và giao diện kích hoạt phiên bản game phục vụ quản lý nhiều bộ dữ liệu máy chủ.
+- **Tùy chọn xem toàn bộ log**: Cho phép tải toàn bộ log dịch vụ khi cần kiểm tra sâu thay vì chỉ xem phần đuôi log.
+
+### Cải tiến & Tối ưu hóa (Improvements & Refactor)
+- **Nâng giới hạn dòng log**: Tăng giới hạn lưu/hiển thị log để phù hợp với các dịch vụ JX sinh log dài khi khởi động.
+
+### Sửa lỗi (Fixed)
+- **Khắc phục ký tự rác trong log `jxserver`**: Chuẩn hóa ký tự backspace (`\b`) trong log stream theo hành vi terminal, giữ nguyên prefix dịch vụ và tránh hiển thị dòng progress dài bất thường.
+
 ## [1.0.5] - 2026-06-25
 
 ### Thêm mới (Added)
