@@ -2,6 +2,11 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.7] - 2026-06-25
+
+### Thêm mới (Added)
+- **Tooltip thông tin Mod game**: Bổ sung Tooltip chi tiết giới thiệu tác giả vokhanh, các chức năng chính (đổi màu danh hiệu, giới hạn vòng sáng lên 25, mana tổ đội) và lưu ý sử dụng kèm với file vdk.dll ở client khi di chuột vào icon Info cạnh switch Kích hoạt Mod game.
+
 ## [1.0.6] - 2026-06-25
 
 ### Thêm mới (Added)
