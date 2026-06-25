@@ -2,6 +2,11 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.3] - 2026-06-25
+
+### Sửa lỗi (Fixed)
+- **Khắc phục lỗi phân quyền code-server**: Cấu hình container chạy dưới quyền root (`user: "0:0"`) trong `docker-compose.yaml` để tránh lỗi `EACCES: permission denied` khi khởi chạy lần đầu tiên trên máy clone.
+
 ## [1.0.2] - 2026-06-25
 
 ### Thêm mới (Added)
