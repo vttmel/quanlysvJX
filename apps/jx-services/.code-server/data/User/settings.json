@@ -1,0 +1,24 @@
+{
+  "editor.fontFamily": "sonkt_Source Code Pro",
+  "editor.fontSize": 14,
+  "workbench.colorTheme": "Dark 2026",
+  "symbolMasks.masks": [
+    {
+      "language": ["lua", "plaintext", "ini", "log", "c", "csharp", "cpp"],
+      "patterns": [
+        {
+          "pattern": "",
+          "replace": "ư"
+        }
+      ]
+    }
+  ],
+  "security.workspace.trust.untrustedFiles": "open",
+  "security.workspace.trust.enabled": false,
+  "editor.unicodeHighlight.ambiguousCharacters": false,
+  "editor.unicodeHighlight.invisibleCharacters": false,
+  "files.encoding": "iso88591",
+  "Lua.diagnostics.enable": false,
+  "editor.guides.bracketPairs": "active",
+  "editor.fontLigatures": false
+}
