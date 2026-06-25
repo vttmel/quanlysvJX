@@ -432,15 +432,36 @@ export function VersionManager({ onSuccess, onError }: Props) {
                     <Table.Td>
                       <Group gap="xs">
                         <Stack gap={2} style={{ minWidth: 130 }}>
-                          <Button
-                            size="xs"
-                            variant="filled"
-                            color="green"
-                            disabled={ver.isActive || !ver.validation?.isValid || loading}
-                            onClick={() => handleActivateVersion(ver.name)}
-                          >
-                            Sử dụng bản này
-                          </Button>
+                          {!ver.isActive && !ver.validation?.isValid ? (
+                            <Tooltip
+                              label="Phiên bản chưa đủ điều kiện. Vui lòng nhấn 'Duyệt thư mục' để kiểm tra các file còn thiếu hoặc cấu hình."
+                              position="top"
+                              withArrow
+                            >
+                              <div style={{ width: '100%', display: 'flex' }}>
+                                <Button
+                                  size="xs"
+                                  variant="filled"
+                                  color="green"
+                                  disabled={ver.isActive || !ver.validation?.isValid || loading}
+                                  onClick={() => handleActivateVersion(ver.name)}
+                                  style={{ flex: 1 }}
+                                >
+                                  Sử dụng bản này
+                                </Button>
+                              </div>
+                            </Tooltip>
+                          ) : (
+                            <Button
+                              size="xs"
+                              variant="filled"
+                              color="green"
+                              disabled={ver.isActive || !ver.validation?.isValid || loading}
+                              onClick={() => handleActivateVersion(ver.name)}
+                            >
+                              Sử dụng bản này
+                            </Button>
+                          )}
                           {ver.validation &&
                             (ver.validation.isValid ? (
                               <Badge

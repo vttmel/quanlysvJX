@@ -7,7 +7,8 @@ export const gameNetworkPayloadSchema = z.object({
   jxIp: z.string(),
   mysqlIp: z.string(),
   paysysIp: z.string(),
-  mssqlIp: z.string()
+  mssqlIp: z.string(),
+  modGame: z.boolean().optional()
 });
 
 export type GameNetworkConfig = z.infer<typeof gameNetworkPayloadSchema>;
@@ -142,7 +143,8 @@ export function normalizeGameNetworkConfig(
     jxIp: normalizeHostIp(env.JX_IP, ipChoices),
     mysqlIp: normalizeIpv4(env.JX_MYSQL_IP),
     paysysIp: normalizeIpv4(env.JX_PAYSYS_IP),
-    mssqlIp: normalizeIpv4(env.JX_MSSQL_IP)
+    mssqlIp: normalizeIpv4(env.JX_MSSQL_IP),
+    modGame: env.JX_MOD_GAME === 'true'
   };
 }
 
@@ -162,7 +164,8 @@ export function saveGameNetworkConfig(envFilePath: string, config: GameNetworkCo
     JX_IP: config.jxIp,
     JX_MYSQL_IP: config.mysqlIp,
     JX_PAYSYS_IP: config.paysysIp,
-    JX_MSSQL_IP: config.mssqlIp
+    JX_MSSQL_IP: config.mssqlIp,
+    JX_MOD_GAME: config.modGame ? 'true' : 'false'
   });
 }
 

@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Button, Card, Group, Select, Stack, Switch, Text, TextInput, Title } from '@mantine/core';
 import { schemaResolver, useForm } from '@mantine/form';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
@@ -15,6 +15,7 @@ const fallbackConfig: GameNetworkConfig = {
   mysqlIp: '127.0.0.1',
   paysysIp: '127.0.0.1',
   mssqlIp: '127.0.0.1',
+  modGame: false,
 };
 
 const ipv4Pattern = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
@@ -32,6 +33,7 @@ function createGameNetworkSchema(ipChoices: string[]) {
     mysqlIp: ipv4Schema,
     paysysIp: ipv4Schema,
     mssqlIp: ipv4Schema,
+    modGame: z.boolean().optional(),
   });
 }
 
@@ -90,9 +92,9 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
     <Card withBorder padding="md" radius="md">
       <Stack gap="md">
         <div>
-          <Title order={4}>Cấu hình IP game</Title>
+          <Title order={4}>Cấu hình IP & Mod game</Title>
           <Text size="xs" c="dimmed">
-            Lưu IP vào .env; restart dịch vụ để container áp dụng cấu hình mới.
+            Lưu IP và cấu hình mod vào .env; restart dịch vụ để container áp dụng cấu hình mới.
           </Text>
         </div>
 
@@ -155,9 +157,17 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
           />
         </Group>
 
+        <Switch
+          label="Kích hoạt Mod game"
+          description="Khởi chạy Game Server với thư viện bổ trợ (LD_PRELOAD=./vdk.so)"
+          checked={form.values.modGame}
+          onChange={(event) => form.setFieldValue('modGame', event.currentTarget.checked)}
+          disabled={isLoading || saveMutation.isPending}
+        />
+
         <Group justify="flex-end">
           <Button onClick={handleSave} loading={saveMutation.isPending} disabled={isLoading}>
-            Lưu cấu hình IP
+            Lưu cấu hình
           </Button>
         </Group>
       </Stack>

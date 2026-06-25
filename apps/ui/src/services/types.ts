@@ -175,6 +175,7 @@ export type GameNetworkConfig = {
   mysqlIp: string;
   paysysIp: string;
   mssqlIp: string;
+  modGame?: boolean;
 };
 
 export type ServerIpChoice = {

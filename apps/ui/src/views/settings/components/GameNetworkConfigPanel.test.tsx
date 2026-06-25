@@ -20,6 +20,7 @@ vi.mock('@/services/systemService', () => ({
         mysqlIp: '10.0.0.8',
         paysysIp: '172.18.0.1',
         mssqlIp: '192.168.1.20',
+        modGame: false,
       },
       coreServicesRunning: true,
       runningCoreServices: ['jxserver'],
@@ -44,6 +45,7 @@ describe('GameNetworkConfigPanel', () => {
         mysqlIp: '10.0.0.9',
         paysysIp: '172.18.0.2',
         mssqlIp: '8.8.8.8',
+        modGame: false,
       },
     });
   });
@@ -61,7 +63,7 @@ describe('GameNetworkConfigPanel', () => {
       route: '/settings/versions',
     });
 
-    expect(await screen.findByText('Cấu hình IP game')).toBeTruthy();
+    expect(await screen.findByText('Cấu hình IP & Mod game')).toBeTruthy();
     expect(await screen.findByText(/jxserver/)).toBeTruthy();
     expect(screen.queryByText('auto')).toBeNull();
     expect((screen.getAllByLabelText('Game server IP')[0] as HTMLInputElement).value).toBe(
@@ -73,7 +75,7 @@ describe('GameNetworkConfigPanel', () => {
     fireEvent.change(screen.getByLabelText('Paysys IP'), { target: { value: '172.18.0.2' } });
     fireEvent.change(screen.getByLabelText('IP Dữ liệu Nhân vật (MSSQL)'), { target: { value: '8.8.8.8' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình' }));
 
     await waitFor(() => {
       expect(mockSaveGameNetwork.mock.calls[0]?.[0]).toEqual({
@@ -81,6 +83,7 @@ describe('GameNetworkConfigPanel', () => {
         mysqlIp: '10.0.0.9',
         paysysIp: '172.18.0.2',
         mssqlIp: '8.8.8.8',
+        modGame: false,
       });
       expect(onSuccess).toHaveBeenCalledWith(
         'Đã lưu cấu hình IP game vào .env. Restart dịch vụ để áp dụng.'
@@ -98,7 +101,7 @@ describe('GameNetworkConfigPanel', () => {
 
     await screen.findByText(/jxserver/);
     fireEvent.change(screen.getByLabelText('IP Dữ liệu Đăng nhập (MySQL)'), { target: { value: '999.1.1.1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình' }));
 
     expect(await screen.findByText('Vui lòng nhập đúng IPv4.')).toBeTruthy();
     expect(mockSaveGameNetwork).not.toHaveBeenCalled();
@@ -117,7 +120,7 @@ describe('GameNetworkConfigPanel', () => {
     });
 
     await screen.findByText(/jxserver/);
-    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình' }));
 
     await waitFor(() => {
       expect(screen.getAllByText('Vui lòng nhập đúng IPv4.')).toHaveLength(3);

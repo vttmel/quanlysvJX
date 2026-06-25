@@ -88,40 +88,42 @@ describe('systemInfo domain', () => {
       jxIp: '192.168.1.20',
       mysqlIp: '127.0.0.1',
       paysysIp: '192.168.1.20',
-      mssqlIp: '127.0.0.1'
+      mssqlIp: '127.0.0.1',
+      modGame: false
     });
   });
 
   it('requires JX IP to be a host choice and allows other valid IPv4 addresses', () => {
     expect(() =>
       validateGameNetworkPayload(
-        { jxIp: 'auto', mysqlIp: '127.0.0.1', paysysIp: '127.0.0.1', mssqlIp: '127.0.0.1' },
+        { jxIp: 'auto', mysqlIp: '127.0.0.1', paysysIp: '127.0.0.1', mssqlIp: '127.0.0.1', modGame: false },
         ['192.168.1.20']
       )
     ).toThrow('IP không hợp lệ');
 
     expect(() =>
       validateGameNetworkPayload(
-        { jxIp: '127.0.0.1', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
+        { jxIp: '127.0.0.1', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8', modGame: false },
         ['192.168.1.20']
       )
     ).toThrow('IP không hợp lệ');
 
     expect(
       validateGameNetworkPayload(
-        { jxIp: '192.168.1.20', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
+        { jxIp: '192.168.1.20', mysqlIp: '10.0.0.8', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8', modGame: false },
         ['192.168.1.20']
       )
     ).toEqual({
       jxIp: '192.168.1.20',
       mysqlIp: '10.0.0.8',
       paysysIp: '172.18.0.1',
-      mssqlIp: '8.8.8.8'
+      mssqlIp: '8.8.8.8',
+      modGame: false
     });
 
     expect(() =>
       validateGameNetworkPayload(
-        { jxIp: '192.168.1.20', mysqlIp: '999.1.1.1', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8' },
+        { jxIp: '192.168.1.20', mysqlIp: '999.1.1.1', paysysIp: '172.18.0.1', mssqlIp: '8.8.8.8', modGame: false },
         ['192.168.1.20']
       )
     ).toThrow('IP không hợp lệ');

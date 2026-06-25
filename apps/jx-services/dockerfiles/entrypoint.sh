@@ -175,6 +175,10 @@ else
     # Đảm bảo file có quyền thực thi trước khi khởi chạy
     if [ -f "./${APP_CMD}" ]; then
         chmod +x "./${APP_CMD}"
+        if [ "$JX_MOD_GAME" = "true" ] && [ "$APP_CMD" = "jx_linux_y" ]; then
+            echo "-> Launching with Mod game (LD_PRELOAD=./vdk.so)..."
+            export LD_PRELOAD=./vdk.so
+        fi
         exec "./${APP_CMD}"
     else
         echo "-> [ERROR] Could not find '${APP_CMD}' anywhere in $(pwd) or its subdirectories!" >&2

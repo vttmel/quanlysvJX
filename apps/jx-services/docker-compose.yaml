@@ -223,9 +223,11 @@ services:
     environment:
       - JX_IP=${JX_IP:-auto}
       - APP_CMD=jx_linux_y
+      - JX_MOD_GAME=${JX_MOD_GAME:-false}
     volumes:
       - "${SERVER_PATH}/server1:/src/jxser/server1/"
       - "./mount/config/gs1/servercf0.ini:/src/jxser/server1/servercf0.ini"
+      - "./mount/mod/vdk.so:/src/jxser/server1/vdk.so"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
       - ./mount/logs/server1/Logs:/src/jxser/server1/Logs
       - ./mount/logs/server1/itemexchange_setting/rolevalue_log:/src/jxser/server1/itemexchange_setting/rolevalue_log
