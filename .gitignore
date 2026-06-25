@@ -13,3 +13,4 @@ manager-dashboard.png
 version.json
 apps/jx-services/active
 apps/jx-services/.code-server
+.codegraph/codegraph.lock
