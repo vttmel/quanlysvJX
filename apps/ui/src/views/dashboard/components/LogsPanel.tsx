@@ -38,7 +38,7 @@ const SERVICE_COLORS: Record<string, string> = {
 
 export function LogsPanel({ services, selected, onSelect, onError }: Props) {
   const [tail, setTail] = useState(300);
-  const [logs, setLogs] = useState('');
+  const [logs, setLogs] = useState<string[]>([]);
   const [autoFollow, setAutoFollow] = useState(true);
   const [showTimestamps, setShowTimestamps] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
@@ -86,7 +86,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
     }
 
     if (logsQuery.data) {
-      setLogs(limitLogLines(logsQuery.data.logs));
+      setLogs(normalizeLogChunk(logsQuery.data.logs).slice(-MAX_LOG_LINES));
       shouldFollowRef.current = true;
       setStreamReady(true);
     }
@@ -99,7 +99,12 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
 
     const source = new EventSource(serviceService.logStreamUrl(activeService, 0));
     const appendLog = (event: MessageEvent<string>) => {
-      setLogs((current) => limitLogLines(`${current}${parseLogChunk(event.data)}`));
+      const chunk = parseLogChunk(event.data);
+      const processed = normalizeLogChunk(chunk);
+      setLogs((current) => {
+        const next = [...current, ...processed];
+        return next.length <= MAX_LOG_LINES ? next : next.slice(-MAX_LOG_LINES);
+      });
     };
 
     source.addEventListener('log', appendLog);
@@ -179,9 +184,8 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
   }, []);
 
   const logLines = useMemo(() => {
-    const lines = logs.replace(/\r/g, '').split('\n');
-    return lines.map((line, index) => {
-      if (!line.trim() && index === lines.length - 1) {
+    return logs.map((line, index) => {
+      if (!line.trim() && index === logs.length - 1) {
         return null;
       }
 
@@ -252,7 +256,7 @@ export function LogsPanel({ services, selected, onSelect, onError }: Props) {
     setTail(typeof value === 'number' ? value : Number(value) || 300);
   }, []);
 
-  const handleClear = useCallback(() => setLogs(''), []);
+  const handleClear = useCallback(() => setLogs([]), []);
 
   return (
     <Paper withBorder p="md">
@@ -369,11 +373,41 @@ function parseLogChunk(data: string) {
   }
 }
 
-function limitLogLines(value: string) {
-  const lines = value.split('\n');
-  if (lines.length <= MAX_LOG_LINES) {
-    return value;
+function truncateLine(line: string) {
+  if (line.length > 1000) {
+    return `${line.substring(0, 1000)}... (đã cắt bớt dòng log quá dài, tổng cộng ${line.length} ký tự)`;
+  }
+  return line;
+}
+
+function normalizeLogChunk(value: string) {
+  const lines = value.replace(/\r/g, '').split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines.pop();
   }
 
-  return lines.slice(-MAX_LOG_LINES).join('\n');
+  return lines.map((line) => truncateLine(applyBackspacesToLogContent(line)));
+}
+
+function applyBackspacesToLogContent(line: string) {
+  const servicePrefixMatch = line.match(/^([a-zA-Z0-9_-]+\s*\|\s*)(.*)$/);
+  if (!servicePrefixMatch) {
+    return applyBackspaces(line);
+  }
+
+  return `${servicePrefixMatch[1]}${applyBackspaces(servicePrefixMatch[2] ?? '')}`;
+}
+
+function applyBackspaces(value: string) {
+  const output: string[] = [];
+
+  for (const char of value) {
+    if (char === '\b') {
+      output.pop();
+    } else {
+      output.push(char);
+    }
+  }
+
+  return output.join('');
 }
