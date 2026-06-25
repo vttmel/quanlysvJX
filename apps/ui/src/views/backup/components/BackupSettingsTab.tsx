@@ -54,13 +54,13 @@ export function BackupSettingsTab({ onError, onSuccess }: Props) {
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="sm">
           <NumberInput
-            label="Số ngày lưu trữ file backup MySQL"
+            label="Số ngày lưu trữ file backup Dữ liệu Đăng nhập (MySQL)"
             min={1}
             disabled={isActionLoading}
             {...form.getInputProps('mysqlRetentionDays')}
           />
           <NumberInput
-            label="Số ngày lưu trữ file backup MSSQL"
+            label="Số ngày lưu trữ file backup Dữ liệu Nhân vật (MSSQL)"
             min={1}
             disabled={isActionLoading}
             {...form.getInputProps('mssqlRetentionDays')}

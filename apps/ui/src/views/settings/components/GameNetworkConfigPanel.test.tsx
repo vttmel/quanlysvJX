@@ -69,9 +69,9 @@ describe('GameNetworkConfigPanel', () => {
     );
     expect(screen.queryByText('127.0.0.1')).toBeNull();
 
-    fireEvent.change(screen.getByLabelText('MySQL IP'), { target: { value: '10.0.0.9' } });
+    fireEvent.change(screen.getByLabelText('IP Dữ liệu Đăng nhập (MySQL)'), { target: { value: '10.0.0.9' } });
     fireEvent.change(screen.getByLabelText('Paysys IP'), { target: { value: '172.18.0.2' } });
-    fireEvent.change(screen.getByLabelText('MSSQL IP'), { target: { value: '8.8.8.8' } });
+    fireEvent.change(screen.getByLabelText('IP Dữ liệu Nhân vật (MSSQL)'), { target: { value: '8.8.8.8' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
 
@@ -97,7 +97,7 @@ describe('GameNetworkConfigPanel', () => {
     });
 
     await screen.findByText(/jxserver/);
-    fireEvent.change(screen.getByLabelText('MySQL IP'), { target: { value: '999.1.1.1' } });
+    fireEvent.change(screen.getByLabelText('IP Dữ liệu Đăng nhập (MySQL)'), { target: { value: '999.1.1.1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Lưu cấu hình IP' }));
 
     expect(await screen.findByText('Vui lòng nhập đúng IPv4.')).toBeTruthy();

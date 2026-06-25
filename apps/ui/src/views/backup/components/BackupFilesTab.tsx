@@ -24,7 +24,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 import { useBackups, backupKeys } from '@/hooks/useBackups';
 import type { BackupFile, BackupKind, UploadBackupPayload } from '@/services/types';
-import { formatBackupNoteSummary, formatBackupNoteTooltip } from '../utils/backupDisplay';
+import { formatBackupNoteSummary, formatBackupNoteTooltip, formatDatabaseLabel } from '../utils/backupDisplay';
 import { BackupEditModal } from './BackupEditModal';
 import { BackupUploadModal } from './BackupUploadModal';
 import { DeleteBackupModal } from './DeleteBackupModal';
@@ -96,7 +96,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
 
   const isBackupAllDisabled = !databaseReadiness.mysql || !databaseReadiness.mssql;
   const getDatabaseDisabledReason = (kind: BackupKind) =>
-    kind === 'mysql' ? 'Cần bật MySQL trước' : 'Cần bật MSSQL trước';
+    kind === 'mysql' ? 'Cần bật Dữ liệu Đăng nhập (MySQL) trước' : 'Cần bật Dữ liệu Nhân vật (MSSQL) trước';
 
   const handleBackupAll = useCallback(() => handleBackupNow('all'), [handleBackupNow]);
   const handleBackupMysql = useCallback(() => handleBackupNow('mysql'), [handleBackupNow]);
@@ -200,7 +200,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
                 {renderResponsiveLabel('Sao lưu tất cả')}
               </Button>,
               isBackupAllDisabled,
-              'Cần bật MySQL và MSSQL trước'
+              'Cần bật Dữ liệu Đăng nhập (MySQL) và Dữ liệu Nhân vật (MSSQL) trước'
             )}
             {wrapDisabled(
               <Button
@@ -209,7 +209,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
                 leftSection={<IconDatabase {...iconProps} />}
                 onClick={handleBackupMysql}
               >
-                {renderResponsiveLabel('Sao lưu MySQL')}
+                {renderResponsiveLabel('Sao lưu Dữ liệu Đăng nhập (MySQL)')}
               </Button>,
               !databaseReadiness.mysql,
               getDatabaseDisabledReason('mysql')
@@ -221,7 +221,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
                 leftSection={<IconDatabase {...iconProps} />}
                 onClick={handleBackupMssql}
               >
-                {renderResponsiveLabel('Sao lưu MSSQL')}
+                {renderResponsiveLabel('Sao lưu Dữ liệu Nhân vật (MSSQL)')}
               </Button>,
               !databaseReadiness.mssql,
               getDatabaseDisabledReason('mssql')
@@ -246,8 +246,8 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
               label="Database"
               data={[
                 { value: 'all', label: 'Tất cả' },
-                { value: 'mysql', label: 'MySQL' },
-                { value: 'mssql', label: 'MSSQL' },
+                { value: 'mysql', label: 'Dữ liệu Đăng nhập (MySQL)' },
+                { value: 'mssql', label: 'Dữ liệu Nhân vật (MSSQL)' },
               ]}
               value={filterKind}
               onChange={(value) => setFilterKind((value ?? 'all') as FilterKind)}
@@ -294,7 +294,7 @@ export function BackupFilesTab({ databaseReadiness, onSuccess, onError }: Props)
                   >
                     <Table.Td>
                       <Badge variant="light" color={file.kind === 'mysql' ? 'blue' : 'red'}>
-                        {file.kind.toUpperCase()}
+                        {formatDatabaseLabel(file.kind)}
                       </Badge>
                     </Table.Td>
                     <Table.Td>

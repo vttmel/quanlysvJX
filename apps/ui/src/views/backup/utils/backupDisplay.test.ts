@@ -20,7 +20,7 @@ describe('backupDisplay', () => {
       updatedAt: '2026-06-12T03:00:00.000Z',
     };
 
-    expect(formatScheduleDisplayName(job)).toBe('MySQL · Hàng giờ · Mỗi 2 giờ, phút 00');
+    expect(formatScheduleDisplayName(job)).toBe('Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00');
     expect(formatScheduleDetailVi(job.schedule)).toBe('Mỗi 2 giờ, phút 00');
   });
 
@@ -53,11 +53,11 @@ describe('backupDisplay', () => {
     };
 
     expect(formatBackupNoteSummary(file)).toEqual([
-      'Tự động: MySQL · Hàng giờ · Mỗi 2 giờ, phút 00',
+      'Tự động: Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00',
       'Run: run_123',
     ]);
     expect(formatBackupNoteTooltip(file)).toContain('Nguồn: Sao lưu tự động');
     expect(formatBackupNoteTooltip(file)).toContain('Job ID: job_456');
-    expect(formatBackupNoteTooltip(file)).toContain('Lịch: MySQL · Hàng giờ · Mỗi 2 giờ, phút 00');
+    expect(formatBackupNoteTooltip(file)).toContain('Lịch: Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00');
   });
 });

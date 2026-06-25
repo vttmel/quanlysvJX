@@ -43,7 +43,7 @@ export const routes: RouteConfig[] = [
     key: 'backup',
     path: '/backup/*',
     component: lazy(() => import('@/views/backup')),
-    title: 'Sao lưu',
+    title: 'Sao lưu & Phục hồi',
     icon: IconCloudDownload,
   },
   {
@@ -52,14 +52,14 @@ export const routes: RouteConfig[] = [
     component: lazy(() =>
       import('@/views/file-manager/FileManagerView').then((m) => ({ default: m.FileManagerView }))
     ),
-    title: 'Quản lý File',
+    title: 'Chỉnh sửa File',
     icon: IconFileCode,
   },
   {
     key: 'settings',
     path: '/settings/*',
     component: lazy(() => import('@/views/settings')),
-    title: 'Cài đặt',
+    title: 'Cấu hình Hệ thống',
     icon: IconSettings,
   },
 ];

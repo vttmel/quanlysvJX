@@ -89,8 +89,8 @@ export function BackupUploadModal({ opened, loading, onClose, onUpload }: Props)
         <Select
           label="Database"
           data={[
-            { value: 'mysql', label: 'MySQL' },
-            { value: 'mssql', label: 'MSSQL' },
+            { value: 'mysql', label: 'Dữ liệu Đăng nhập (MySQL)' },
+            { value: 'mssql', label: 'Dữ liệu Nhân vật (MSSQL)' },
           ]}
           value={kind}
           onChange={handleKindChange}
@@ -153,10 +153,10 @@ function getFilenameError(kind: BackupKind, filename: string) {
     return 'Tên file chỉ được chứa chữ, số, dấu chấm, gạch dưới và gạch ngang';
   }
   if (kind === 'mysql' && !isMysqlBackup(value)) {
-    return 'File MySQL phải có đuôi .sql hoặc .sql.gz';
+    return 'File Dữ liệu Đăng nhập (MySQL) phải có đuôi .sql hoặc .sql.gz';
   }
   if (kind === 'mssql' && !value.endsWith('.bak')) {
-    return 'File MSSQL phải có đuôi .bak';
+    return 'File Dữ liệu Nhân vật (MSSQL) phải có đuôi .bak';
   }
   return null;
 }
@@ -169,10 +169,10 @@ function getFileError(kind: BackupKind, file: File | null) {
     return 'File vượt quá giới hạn 2GB';
   }
   if (kind === 'mysql' && !isMysqlBackup(file.name)) {
-    return 'File MySQL phải có đuôi .sql hoặc .sql.gz';
+    return 'File Dữ liệu Đăng nhập (MySQL) phải có đuôi .sql hoặc .sql.gz';
   }
   if (kind === 'mssql' && !file.name.endsWith('.bak')) {
-    return 'File MSSQL phải có đuôi .bak';
+    return 'File Dữ liệu Nhân vật (MSSQL) phải có đuôi .bak';
   }
   return null;
 }

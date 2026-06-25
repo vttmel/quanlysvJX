@@ -73,8 +73,8 @@ describe('DashboardLayout navbar', () => {
 
     expect(await screen.findByText('Time server')).toBeTruthy();
     expect(screen.getAllByText(/192\.168\.1\.20/).length).toBeGreaterThan(0);
-    expect(screen.getByText('IP MySQL')).toBeTruthy();
-    expect(screen.getByText('Ip MSSQL')).toBeTruthy();
+    expect(screen.queryByText('IP MySQL')).toBeNull();
+    expect(screen.queryByText('Ip MSSQL')).toBeNull();
   });
 
   it('shows version tag and update action in the header when update is available', async () => {

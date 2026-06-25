@@ -16,7 +16,7 @@ const dayLabels = new Map<number, string>([
 ]);
 
 export function formatDatabaseLabel(kind: BackupKind) {
-  return kind === 'mysql' ? 'MySQL' : 'MSSQL';
+  return kind === 'mysql' ? 'Dữ liệu Đăng nhập (MySQL)' : 'Dữ liệu Nhân vật (MSSQL)';
 }
 
 export function formatScheduleKindVi(schedule: BackupScheduleRule) {

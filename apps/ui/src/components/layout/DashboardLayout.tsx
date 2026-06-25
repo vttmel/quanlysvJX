@@ -20,7 +20,6 @@ import {
   IconRefresh,
   IconClock,
   IconServer,
-  IconDatabase,
   IconCpu,
   IconGauge,
   IconDeviceSdCard,
@@ -107,41 +106,39 @@ export default function DashboardLayout() {
           </Group>
           {systemInfo.data && (
             <Group gap={6} visibleFrom="sm" className="headerBadgesGroup" style={{ flexWrap: 'nowrap' }}>
-              <Badge
-                variant="light"
-                className="glassBadge"
-                leftSection={<IconServer size={14} stroke={1.5} />}
-                radius="md"
+              <Tooltip
+                label={
+                  <Stack gap={4} p={4}>
+                    <div>
+                      <Text size="xs" fw={700} span>IP Server: </Text>
+                      <Text size="xs" span>{systemInfo.data.serverIp}</Text>
+                    </div>
+                    <div>
+                      <Text size="xs" fw={700} span>Dữ liệu Đăng nhập (MySQL): </Text>
+                      <Text size="xs" span>{systemInfo.data.mysqlIp}</Text>
+                    </div>
+                    <div>
+                      <Text size="xs" fw={700} span>Dữ liệu Nhân vật (MSSQL): </Text>
+                      <Text size="xs" span>{systemInfo.data.mssqlIp}</Text>
+                    </div>
+                  </Stack>
+                }
+                withArrow
+                position="bottom"
               >
-                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
-                  IP server
-                </Text>
-                {systemInfo.data.serverIp}
-              </Badge>
-              <Badge
-                variant="light"
-                className="glassBadge"
-                leftSection={<IconDatabase size={14} stroke={1.5} />}
-                radius="md"
-                visibleFrom="lg"
-              >
-                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
-                  IP MySQL
-                </Text>
-                {systemInfo.data.mysqlIp}
-              </Badge>
-              <Badge
-                variant="light"
-                className="glassBadge"
-                leftSection={<IconDatabase size={14} stroke={1.5} />}
-                radius="md"
-                visibleFrom="lg"
-              >
-                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
-                  Ip MSSQL
-                </Text>
-                {systemInfo.data.mssqlIp}
-              </Badge>
+                <Badge
+                  variant="light"
+                  className="glassBadge"
+                  leftSection={<IconServer size={14} stroke={1.5} />}
+                  radius="md"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
+                    IP server
+                  </Text>
+                  {systemInfo.data.serverIp}
+                </Badge>
+              </Tooltip>
               <Badge
                 variant="light"
                 className="glassBadge"

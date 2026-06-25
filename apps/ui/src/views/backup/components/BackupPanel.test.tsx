@@ -112,10 +112,10 @@ describe('BackupPanel routing', () => {
     expect(screen.getByRole('button', { name: 'Sao lưu tất cả' }).hasAttribute('disabled')).toBe(
       true
     );
-    expect(screen.getByRole('button', { name: 'Sao lưu MySQL' }).hasAttribute('disabled')).toBe(
+    expect(screen.getByRole('button', { name: 'Sao lưu Dữ liệu Đăng nhập (MySQL)' }).hasAttribute('disabled')).toBe(
       false
     );
-    expect(screen.getByRole('button', { name: 'Sao lưu MSSQL' }).hasAttribute('disabled')).toBe(
+    expect(screen.getByRole('button', { name: 'Sao lưu Dữ liệu Nhân vật (MSSQL)' }).hasAttribute('disabled')).toBe(
       true
     );
   });
@@ -148,7 +148,7 @@ describe('BackupPanel routing', () => {
       route: '/backup/files',
     });
 
-    expect(await screen.findByText('Tự động: MySQL · Hàng giờ · Mỗi 2 giờ, phút 00')).toBeTruthy();
+    expect(await screen.findByText('Tự động: Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00')).toBeTruthy();
     expect(screen.getByText('Run: run_123')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Khôi phục file backup mysql-20260612-030000.sql.gz' })
@@ -183,16 +183,16 @@ describe('BackupPanel routing', () => {
       route: '/backup/schedule',
     });
 
-    expect(await screen.findByText('MySQL · Hàng giờ · Mỗi 2 giờ, phút 00')).toBeTruthy();
+    expect(await screen.findByText('Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00')).toBeTruthy();
     expect(screen.queryByText('MySQL · Hàng giờ #1')).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Chạy ngay lịch MySQL · Hàng giờ · Mỗi 2 giờ, phút 00' })
+      screen.getByRole('button', { name: 'Chạy ngay lịch Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00' })
     ).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'Sửa lịch MySQL · Hàng giờ · Mỗi 2 giờ, phút 00' })
+      screen.getByRole('button', { name: 'Sửa lịch Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00' })
     ).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'Xóa lịch MySQL · Hàng giờ · Mỗi 2 giờ, phút 00' })
+      screen.getByRole('button', { name: 'Xóa lịch Dữ liệu Đăng nhập (MySQL) · Hàng giờ · Mỗi 2 giờ, phút 00' })
     ).toBeTruthy();
   });
 });

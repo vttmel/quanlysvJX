@@ -125,7 +125,7 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
             }
           />
           <TextInput
-            label="MySQL IP"
+            label="IP Dữ liệu Đăng nhập (MySQL)"
             value={form.values.mysqlIp}
             onChange={(event) => setField('mysqlIp', event.currentTarget.value)}
             disabled={isLoading || saveMutation.isPending}
@@ -145,7 +145,7 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
             error={form.errors.paysysIp}
           />
           <TextInput
-            label="MSSQL IP"
+            label="IP Dữ liệu Nhân vật (MSSQL)"
             value={form.values.mssqlIp}
             onChange={(event) => setField('mssqlIp', event.currentTarget.value)}
             disabled={isLoading || saveMutation.isPending}

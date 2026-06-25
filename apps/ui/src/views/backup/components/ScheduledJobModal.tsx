@@ -155,8 +155,8 @@ export function ScheduledJobModal({ opened, job, onClose, onSuccess, onError }: 
           <Select
             label="Database"
             data={[
-              { value: 'mysql', label: 'MySQL' },
-              { value: 'mssql', label: 'MSSQL' },
+              { value: 'mysql', label: 'Dữ liệu Đăng nhập (MySQL)' },
+              { value: 'mssql', label: 'Dữ liệu Nhân vật (MSSQL)' },
             ]}
             disabled={isActionLoading || job !== null}
             {...form.getInputProps('database')}

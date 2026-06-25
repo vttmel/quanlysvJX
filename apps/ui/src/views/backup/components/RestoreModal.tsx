@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Text, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ModalTitle } from '@/components/common/ModalTitle';
+import { formatDatabaseLabel } from '../utils/backupDisplay';
 
 type Props = {
   opened: boolean;
@@ -25,7 +26,7 @@ export function RestoreModal({ opened, kind, filename, loading, onClose, onConfi
     <Modal
       opened={opened}
       onClose={onClose}
-      title={<ModalTitle title={`Khôi phục ${kind.toUpperCase()}`} subtitle={filename} />}
+      title={<ModalTitle title={`Khôi phục ${formatDatabaseLabel(kind)}`} subtitle={filename} />}
       centered
     >
       <Text mb="sm">Thao tác này sẽ ghi đè dữ liệu hiện tại. Nhập đúng tên file để xác nhận.</Text>

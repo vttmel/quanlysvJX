@@ -4,7 +4,7 @@ import { IconCalendarPlus, IconPencil, IconPlayerPlay, IconTrash } from '@tabler
 import { useState } from 'react';
 import { useBackups } from '@/hooks/useBackups';
 import type { ScheduledBackupJob } from '@/services/types';
-import { formatScheduleDisplayName } from '../utils/backupDisplay';
+import { formatScheduleDisplayName, formatDatabaseLabel } from '../utils/backupDisplay';
 import { ScheduledJobModal } from './ScheduledJobModal';
 
 type Props = {
@@ -64,7 +64,7 @@ export function ScheduledJobsTab({ onError, onSuccess, databaseReadiness }: Prop
     <>
       <Group justify="space-between" mb="sm">
         <Text size="sm" c="dimmed">
-          Quản lý lịch hẹn giờ sao lưu tự động cho database MySQL và MSSQL.
+          Quản lý lịch hẹn giờ sao lưu tự động cho Dữ liệu Đăng nhập (MySQL) và Dữ liệu Nhân vật (MSSQL).
         </Text>
         <Button leftSection={<IconCalendarPlus {...iconProps} />} onClick={handleCreate}>
           {isMobile ? null : 'Thêm lịch hẹn giờ'}
@@ -100,7 +100,7 @@ export function ScheduledJobsTab({ onError, onSuccess, databaseReadiness }: Prop
                   </Table.Td>
                   <Table.Td>
                     <Badge variant="light" color={job.database === 'mysql' ? 'blue' : 'red'}>
-                      {job.database.toUpperCase()}
+                      {formatDatabaseLabel(job.database)}
                     </Badge>
                   </Table.Td>
                   <Table.Td>{job.summaryVi || job.schedule.type}</Table.Td>
