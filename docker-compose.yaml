@@ -31,15 +31,13 @@ services:
     restart: unless-stopped
     network_mode: host
 
-  filebrowser:
-    image: filebrowser/filebrowser:latest
-    container_name: filebrowser
+  code-server:
+    image: codercom/code-server:latest
+    container_name: code-server
     restart: unless-stopped
     network_mode: host
     volumes:
       - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services:/srv
-      - filebrowser_data:/database
-    command: ["-a", "0.0.0.0", "-p", "8080", "-b", "/filebrowser", "-r", "/srv/active", "--noauth"]
-
-volumes:
-  filebrowser_data:
+      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server:/home/coder/.config
+      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server/fonts:/home/coder/.local/share/fonts:ro
+    command: ["--auth", "none", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/home/coder/.config/data", "--extensions-dir", "/home/coder/.config/extensions", "/srv/active"]

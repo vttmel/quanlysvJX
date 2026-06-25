@@ -12,3 +12,4 @@ manager-dashboard.png
 .env
 version.json
 apps/jx-services/active
+apps/jx-services/.code-server

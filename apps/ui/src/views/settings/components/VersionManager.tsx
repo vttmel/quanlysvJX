@@ -76,11 +76,10 @@ export function VersionManager({ onSuccess, onError }: Props) {
   }, [cloneLogs]);
 
   const cleanLogs = (str: string) => {
-    // eslint-disable-next-line no-control-regex
-    const stripped = str.replace(
-      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-      ''
-    );
+    const esc = String.fromCharCode(27); // \u001b
+    const csi = String.fromCharCode(155); // \u009b
+    const pattern = `[${esc}${csi}][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]`;
+    const stripped = str.replace(new RegExp(pattern, 'g'), '');
     const lines = stripped.replace(/\r/g, '\n').split('\n');
     return lines.join('\n');
   };

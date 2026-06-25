@@ -26,8 +26,12 @@ function isTerminalRun(run: UpdateRun | null): boolean {
 }
 
 function getRunColor(run: UpdateRun) {
-  if (run.status === 'failed') return 'red';
-  if (run.status === 'succeeded') return 'green';
+  if (run.status === 'failed') {
+    return 'red';
+  }
+  if (run.status === 'succeeded') {
+    return 'green';
+  }
   return 'blue';
 }
 
@@ -55,9 +59,13 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
 
   const notifyTerminalRun = useCallback(
     (run: UpdateRun) => {
-      if (notifiedRunIdsRef.current.has(run.runId)) return;
+      if (notifiedRunIdsRef.current.has(run.runId)) {
+        return;
+      }
       const pendingRunId = window.sessionStorage.getItem(pendingUpdateRunNotificationKey);
-      if (pendingRunId !== run.runId) return;
+      if (pendingRunId !== run.runId) {
+        return;
+      }
 
       if (run.status === 'succeeded') {
         notifiedRunIdsRef.current.add(run.runId);
@@ -115,7 +123,9 @@ export function SelfUpdatePanel({ onSuccess, onError }: Props) {
   );
 
   useEffect(() => {
-    if (!latestRun) return;
+    if (!latestRun) {
+      return;
+    }
     setCurrentRun((current) => current ?? latestRun);
     notifyTerminalRun(latestRun);
     if (isActiveRun(latestRun)) {
