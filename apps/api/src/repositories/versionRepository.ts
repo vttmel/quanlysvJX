@@ -41,10 +41,14 @@ export class VersionRepository {
     deleteVersionRecord(this.projectRoot, name, options);
   }
 
-  runCommand(command: string, args: string[]) {
-    const result = spawnSync(command, args, { stdio: 'pipe', encoding: 'utf8' });
+  runCommand(command: string, args: string[], options: { stdio?: any; maxBuffer?: number } = {}) {
+    const result = spawnSync(command, args, {
+      stdio: options.stdio || ['ignore', 'ignore', 'pipe'],
+      maxBuffer: options.maxBuffer || 50 * 1024 * 1024,
+      encoding: 'utf8'
+    });
     if (result.status !== 0) {
-      throw new Error((result.stderr || result.stdout || `${command} failed`).trim());
+      throw new Error((result.stderr || `${command} failed`).trim());
     }
   }
 
@@ -59,7 +63,7 @@ export class VersionRepository {
     const isTarGz = filename.endsWith('.tar.gz') || ext === '.tgz';
 
     if (isZip) {
-      this.runCommand('unzip', ['-o', tempArchivePath, '-d', targetDir]);
+      this.runCommand('unzip', ['-q', '-o', tempArchivePath, '-d', targetDir]);
       return;
     }
     if (isTarGz) {
