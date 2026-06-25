@@ -2,6 +2,14 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.4] - 2026-06-25
+
+### Thêm mới (Added)
+- **Tích hợp font và cấu hình code-server mặc định**: Bỏ bỏ qua (unignore) và đưa file cấu hình `settings.json` cùng font chữ `sonkt_SourceCodePro-Regular.ttf` vào Git để tự động áp dụng khi clone dự án lần đầu.
+
+### Cải tiến & Tối ưu hóa (Improvements & Refactor)
+- **Đồng bộ hóa đường dẫn cấu hình root**: Điều chỉnh cấu hình volumes và command của container `code-server` trong `docker-compose.yaml` để nhận diện cấu hình và font chữ từ thư mục nhà `/root` một cách đồng bộ khi chạy dưới quyền root.
+
 ## [1.0.3] - 2026-06-25
 
 ### Sửa lỗi (Fixed)
