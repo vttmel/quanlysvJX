@@ -2,6 +2,17 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [v1.0.2] - 2026-06-25
+
+### Thêm mới (Added)
+- **Tích hợp công cụ tự động phát hành**: Bổ sung skill `/release-skills` để hỗ trợ quy trình phát hành phiên bản tự động của AI Agent.
+
+### Cải tiến & Tối ưu hóa (Improvements & Refactor)
+- **Dọn dẹp tài liệu**: Loại bỏ các kế hoạch kiến trúc (plans) và tài liệu thiết kế (specs) cũ không còn sử dụng để làm sạch mã nguồn.
+
+### Sửa lỗi (Fixed)
+- **Khắc phục lỗi tải lên phiên bản game lớn**: Tối ưu hóa lệnh giải nén trong `VersionRepository` bằng cách tắt log stdout (`unzip -q`) và tăng bộ đệm `maxBuffer` lên 50MB để tránh lỗi tràn bộ đệm hệ thống (`ENOBUFS`) khi giải nén các file zip/tar lớn.
+
 ## [v1.0.1] - 2026-06-25
 
 ### Thêm mới (Added)
