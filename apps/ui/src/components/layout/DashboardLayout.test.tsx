@@ -64,10 +64,10 @@ describe('DashboardLayout navbar', () => {
   it('shows server time and IP summary in the header', async () => {
     renderWithProviders(<DashboardLayout />, { route: '/dashboard' });
 
-    expect(await screen.findByText('Server')).toBeTruthy();
+    expect(await screen.findByText('Time server')).toBeTruthy();
     expect(screen.getAllByText(/192\.168\.1\.20/).length).toBeGreaterThan(0);
-    expect(screen.getByText('MySQL')).toBeTruthy();
-    expect(screen.getByText('MSSQL')).toBeTruthy();
+    expect(screen.getByText('IP MySQL')).toBeTruthy();
+    expect(screen.getByText('Ip MSSQL')).toBeTruthy();
   });
 
   it('shows version tag and update action in the header when update is available', async () => {

@@ -56,3 +56,33 @@
   background-color: rgb(255, 255, 255, 0.15) !important;
   color: #fff !important;
 }
+
+.glassBadge {
+  background-color: rgb(0, 0, 0, 0.04) !important;
+  border: 1px solid rgb(0, 0, 0, 0.08) !important;
+  color: var(--mantine-color-gray-8) !important;
+  font-weight: 500;
+  text-transform: none !important;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+  height: 28px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+[data-mantine-color-scheme='dark'] .glassBadge,
+.dark .glassBadge {
+  background-color: rgb(255, 255, 255, 0.06) !important;
+  border: 1px solid rgb(255, 255, 255, 0.1) !important;
+  color: var(--mantine-color-dark-0) !important;
+}
+
+.glassBadge:hover {
+  background-color: rgb(0, 0, 0, 0.07) !important;
+}
+
+[data-mantine-color-scheme='dark'] .glassBadge:hover,
+.dark .glassBadge:hover {
+  background-color: rgb(255, 255, 255, 0.09) !important;
+}

@@ -1,27 +1,10 @@
-import { Box, Card, Group, Title, Button } from '@mantine/core';
-import { IconFileCode, IconExternalLink } from '@tabler/icons-react';
+import { Box, Card } from '@mantine/core';
 
 export function FileManagerView() {
   const codeServerUrl = `${window.location.protocol}//${window.location.hostname}:8080/`;
 
   return (
-    <Box p="md" h="100%" display="flex" style={{ flexDirection: 'column' }}>
-      <Group mb="md" justify="space-between">
-        <Title order={2} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <IconFileCode size={28} />
-          Quản lý File
-        </Title>
-        <Button
-          component="a"
-          href={codeServerUrl}
-          target="_blank"
-          leftSection={<IconExternalLink size={16} />}
-          variant="light"
-        >
-          Mở trong tab mới
-        </Button>
-      </Group>
-
+    <Box px="md" pb="md" pt={0} h="100%" display="flex" style={{ flexDirection: 'column' }}>
       <Card
         shadow="sm"
         padding="0"

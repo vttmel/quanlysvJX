@@ -11,6 +11,7 @@ import {
   Text,
   Code,
   Button,
+  Badge,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -19,6 +20,9 @@ import {
   IconChevronRight,
   IconRefresh,
   IconDownload,
+  IconClock,
+  IconServer,
+  IconDatabase,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
@@ -42,7 +46,6 @@ export default function DashboardLayout() {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, setDesktopOpened] = useState(readDesktopNavbarOpened);
   const systemInfo = useSystemInfo({ refetchInterval: 30000 });
-  const serverClock = useServerClock(systemInfo.data?.serverTime);
   const { status, checkNow, isChecking, isLoading } = useUpdateStatus();
 
   const toggleDesktop = useCallback(() => {
@@ -133,14 +136,44 @@ export default function DashboardLayout() {
             </Group>
           </Group>
           {systemInfo.data && (
-            <Group gap="sm" visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
-              <HeaderMetric
-                label="Server"
-                value={formatServerTime(serverClock, systemInfo.data.timezone)}
+            <Group gap="xs" visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconServer size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }}>
+                  IP server
+                </Text>
+                {systemInfo.data.serverIp}
+              </Badge>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconDatabase size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }}>
+                  IP MySQL
+                </Text>
+                {systemInfo.data.mysqlIp}
+              </Badge>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconDatabase size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }}>
+                  Ip MSSQL
+                </Text>
+                {systemInfo.data.mssqlIp}
+              </Badge>
+              <ServerClockBadge
+                serverTime={systemInfo.data.serverTime}
+                timezone={systemInfo.data.timezone}
               />
-              <HeaderMetric label="IP" value={systemInfo.data.serverIp} />
-              <HeaderMetric label="MySQL" value={systemInfo.data.mysqlIp} />
-              <HeaderMetric label="MSSQL" value={systemInfo.data.mssqlIp} />
             </Group>
           )}
         </Group>
@@ -208,14 +241,20 @@ export default function DashboardLayout() {
   );
 }
 
-function HeaderMetric({ label, value }: { label: string; value: string }) {
+function ServerClockBadge({ serverTime, timezone }: { serverTime?: string; timezone?: string }) {
+  const clock = useServerClock(serverTime);
   return (
-    <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-      <Text span fw={700} c="gray.7">
-        {label}
-      </Text>{' '}
-      {value}
-    </Text>
+    <Badge
+      variant="light"
+      className="glassBadge"
+      leftSection={<IconClock size={14} stroke={1.5} />}
+      radius="md"
+    >
+      <Text span fw={700} style={{ marginRight: '5px' }}>
+        Time server
+      </Text>
+      {formatServerTime(clock, timezone)}
+    </Badge>
   );
 }
 
