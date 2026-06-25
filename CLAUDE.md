@@ -28,12 +28,11 @@ npm run dev:api          # Fastify API via tsx watch on port 3001 by default
 npm run dev:web          # Vite UI on port 5173; proxies /api to 127.0.0.1:3001
 ```
 
-Build, typecheck, lint, and test all workspaces:
+Build, typecheck, and test all workspaces:
 
 ```bash
 npm run build            # npm --workspaces run build
 npm run typecheck        # npm --workspaces run typecheck
-npm run lint             # oxlint . from repository root
 npm run test             # npm --workspaces run test
 ```
 
