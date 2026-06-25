@@ -39,6 +39,6 @@ services:
     network_mode: host
     volumes:
       - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services:/srv
-      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server:/home/coder/.config
-      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server/fonts:/home/coder/.local/share/fonts:ro
-    command: ["--auth", "none", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/home/coder/.config/data", "--extensions-dir", "/home/coder/.config/extensions", "/srv/active"]
+      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server:/root/.config
+      - ${MANAGER_PROJECT_ROOT:-${PWD}}/apps/jx-services/.code-server/fonts/SourceCodePro/sonkt_SourceCodePro-Regular.ttf:/root/.local/share/fonts/sonkt_SourceCodePro-Regular.ttf:ro
+    command: ["--auth", "none", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/root/.config/data", "--extensions-dir", "/root/.config/extensions", "/srv/active"]

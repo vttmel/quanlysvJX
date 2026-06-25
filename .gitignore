@@ -12,5 +12,19 @@ manager-dashboard.png
 .env
 version.json
 apps/jx-services/active
-apps/jx-services/.code-server
+## Cho phép theo dõi settings.json và font SourceCodePro của code-server
+!apps/jx-services/.code-server/
+apps/jx-services/.code-server/*
+
+!apps/jx-services/.code-server/data/
+apps/jx-services/.code-server/data/*
+!apps/jx-services/.code-server/data/User/
+apps/jx-services/.code-server/data/User/*
+!apps/jx-services/.code-server/data/User/settings.json
+
+!apps/jx-services/.code-server/fonts/
+apps/jx-services/.code-server/fonts/*
+!apps/jx-services/.code-server/fonts/SourceCodePro/
+apps/jx-services/.code-server/fonts/SourceCodePro/*
+!apps/jx-services/.code-server/fonts/SourceCodePro/sonkt_SourceCodePro-Regular.ttf
 .codegraph/codegraph.lock
