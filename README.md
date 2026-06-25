@@ -174,6 +174,19 @@ Xem muc "Chay tren Windows (Docker Desktop)" o duoi. Loi thuong gap nhat la chua
 
 macOS Docker Desktop chua duoc test. Cac van de tuong tu Windows (network_mode: host, duong dan volume) co the xay ra; uu tien chay tren Ubuntu/Linux server.
 
+### code-server bao loi permission denied (EACCES) khi chay lan dau
+
+Loi hien thi trong log:
+```
+code-server  | error EACCES: permission denied, mkdir '/home/coder/.config/code-server'
+```
+
+**Nguyen nhan:**
+Docker tu dong tao cac thu muc volume mount tren host duoi quyen `root:root` khi chay lan dau, dan den user non-root trong container khong co quyen ghi.
+
+**Cach khac phuc:**
+Du an da duoc cap nhat de mac dinh chay `code-server` duoi quyen root (`user: "0:0"`) trong `docker-compose.yaml` nham tu dong giai quyet loi nay. Neu ban su dung phien ban cu, hay bo sung dong `user: "0:0"` vao duoi service `code-server` trong file `docker-compose.yaml`.
+
 ## Chay tren Windows (Docker Desktop)
 
 Du an co the chay tren Windows bang Docker Desktop (WSL2 backend), nhung can cau hinh them 2 muc duoi day.

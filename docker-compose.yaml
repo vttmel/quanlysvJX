@@ -34,6 +34,7 @@ services:
   code-server:
     image: codercom/code-server:latest
     container_name: code-server
+    user: "0:0"
     restart: unless-stopped
     network_mode: host
     volumes:
