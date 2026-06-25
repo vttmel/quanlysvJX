@@ -1,7 +1,8 @@
-import { Alert, Button, Card, Group, Select, Stack, Switch, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Button, Card, Group, Select, Stack, Switch, Text, TextInput, Title, Tooltip, UnstyledButton } from '@mantine/core';
 import { schemaResolver, useForm } from '@mantine/form';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useSaveGameNetwork, useSystemInfo } from '@/hooks/useSystemInfo';
 import type { GameNetworkConfig } from '@/services/types';
 
@@ -157,13 +158,66 @@ export function GameNetworkConfigPanel({ onSuccess, onError }: Props) {
           />
         </Group>
 
-        <Switch
-          label="Kích hoạt Mod game"
-          description="Khởi chạy Game Server với thư viện bổ trợ (LD_PRELOAD=./vdk.so)"
-          checked={form.values.modGame}
-          onChange={(event) => form.setFieldValue('modGame', event.currentTarget.checked)}
-          disabled={isLoading || saveMutation.isPending}
-        />
+        <Group align="flex-start" gap="sm" wrap="nowrap">
+          <Switch
+            checked={form.values.modGame}
+            onChange={(event) => form.setFieldValue('modGame', event.currentTarget.checked)}
+            disabled={isLoading || saveMutation.isPending}
+            style={{ marginTop: 2 }}
+          />
+          <Stack gap={2}>
+            <Group gap={6} align="center">
+              <Text
+                size="sm"
+                style={{
+                  fontWeight: 500,
+                  cursor: isLoading || saveMutation.isPending ? 'not-allowed' : 'pointer',
+                  userSelect: 'none',
+                }}
+                onClick={() =>
+                  !isLoading &&
+                  !saveMutation.isPending &&
+                  form.setFieldValue('modGame', !form.values.modGame)
+                }
+              >
+                Kích hoạt Mod game
+              </Text>
+              <Tooltip
+                multiline
+                w={300}
+                withArrow
+                label={
+                  <Stack gap="xs" p="5px">
+                    <Text size="xs">
+                      <b>Tác giả:</b> vokhanh
+                    </Text>
+                    <Text size="xs">
+                      <b>Các chức năng chính hỗ trợ:</b>
+                    </Text>
+                    <ul style={{ margin: 0, paddingLeft: '15px', fontSize: 'var(--mantine-font-size-xs)' }}>
+                      <li>Đổi màu danh hiệu (title).</li>
+                      <li>Nâng giới hạn vòng sáng lên 25.</li>
+                      <li>Hiển thị thanh mana cho các thành viên trong tổ đội (party).</li>
+                    </ul>
+                    <Text size="10px" c="dimmed" fs="italic">
+                      * Lưu ý: Cần sử dụng kết hợp với file vdk.dll ở phía client để hoạt động đầy đủ chức năng.
+                    </Text>
+                  </Stack>
+                }
+              >
+                <UnstyledButton style={{ display: 'inline-flex' }}>
+                  <IconInfoCircle
+                    size={16}
+                    style={{ cursor: 'help', color: 'var(--mantine-color-dimmed)' }}
+                  />
+                </UnstyledButton>
+              </Tooltip>
+            </Group>
+            <Text size="xs" c="dimmed">
+              Khởi chạy Game Server với thư viện bổ trợ (LD_PRELOAD=./vdk.so)
+            </Text>
+          </Stack>
+        </Group>
 
         <Group justify="flex-end">
           <Button onClick={handleSave} loading={saveMutation.isPending} disabled={isLoading}>
