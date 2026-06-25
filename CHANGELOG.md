@@ -2,6 +2,15 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.5] - 2026-06-25
+
+### Thêm mới (Added)
+- **Tùy biến hiển thị IP trên Header**: Ẩn các Badge IP MySQL và MSSQL hiển thị trực tiếp để giao diện gọn gàng hơn. Tích hợp Tooltip thông tin chi tiết 3 IP (IP Server, IP MySQL, IP MSSQL) khi rê chuột vào IP Server.
+
+### Cải tiến & Tối ưu hóa (Improvements & Refactor)
+- **Thống nhất thuật ngữ Database**: Đổi tên nhãn hiển thị và cấu hình trên toàn bộ giao diện từ `MySQL` thành `Dữ liệu Đăng nhập (MySQL)` và `MSSQL` thành `Dữ liệu Nhân vật (MSSQL)` để làm rõ vai trò chức năng của từng cơ sở dữ liệu.
+- **Đồng bộ hóa tên thanh điều hướng (Navbar)**: Cập nhật nhãn Navbar theo chức năng sử dụng mới (`Sao lưu & Phục hồi`, `Chỉnh sửa File`, `Cấu hình Hệ thống`).
+
 ## [1.0.4] - 2026-06-25
 
 ### Thêm mới (Added)
