@@ -176,7 +176,7 @@ describe('App routing', () => {
     // which redirects to '/dashboard'
     render(<App />);
 
-    expect(screen.getByText('JX Manager')).toBeTruthy();
+    expect(screen.getAllByText('JX Manager').length).toBeGreaterThan(0);
     await waitFor(() => expect(mockGetServices).toHaveBeenCalled());
   });
 });

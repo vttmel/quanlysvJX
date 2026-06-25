@@ -4,7 +4,6 @@ import {
   Group,
   NavLink,
   Stack,
-  Title,
   Burger,
   Tooltip,
   ActionIcon,
@@ -19,10 +18,12 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconRefresh,
-  IconDownload,
   IconClock,
   IconServer,
   IconDatabase,
+  IconCpu,
+  IconGauge,
+  IconDeviceSdCard,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
@@ -97,53 +98,22 @@ export default function DashboardLayout() {
         <Group h="100%" justify="space-between" style={{ flex: 1, flexWrap: 'nowrap' }}>
           <Group gap="xs" style={{ flexWrap: 'nowrap' }}>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="sm" size="sm" />
-            <IconSwords size={26} color="var(--mantine-color-blue-7)" />
-            <Title order={3} style={{ fontFamily: 'var(--mantine-font-family)' }}>
-              JX Manager
-            </Title>
-            <Group gap="xs" style={{ flexWrap: 'nowrap', marginLeft: '5px' }}>
-              <Code style={{ fontWeight: 'bold' }}>{status?.currentVersion || '...'}</Code>
-              <Tooltip label="Kiểm tra cập nhật">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="sm"
-                  loading={isChecking || isLoading}
-                  onClick={() => void checkNow()}
-                >
-                  <IconRefresh size={14} stroke={1.5} />
-                </ActionIcon>
-              </Tooltip>
-              {status?.hasUpdate && (
-                <Button
-                  component={Link}
-                  to="/settings/system"
-                  size="xs"
-                  color="orange"
-                  variant="light"
-                  leftSection={<IconDownload size={12} stroke={1.5} />}
-                  styles={{
-                    root: {
-                      paddingLeft: '6px',
-                      paddingRight: '6px',
-                      height: '22px',
-                    },
-                  }}
-                >
-                  Cập nhật
-                </Button>
-              )}
+            <Group gap="xs" hiddenFrom="sm" style={{ flexWrap: 'nowrap' }}>
+              <IconSwords size={22} color="var(--mantine-color-blue-7)" />
+              <Text fw={700} size="md">
+                JX Manager
+              </Text>
             </Group>
           </Group>
           {systemInfo.data && (
-            <Group gap="xs" visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
+            <Group gap={6} visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
               <Badge
                 variant="light"
                 className="glassBadge"
                 leftSection={<IconServer size={14} stroke={1.5} />}
                 radius="md"
               >
-                <Text span fw={700} style={{ marginRight: '5px' }}>
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
                   IP server
                 </Text>
                 {systemInfo.data.serverIp}
@@ -153,8 +123,9 @@ export default function DashboardLayout() {
                 className="glassBadge"
                 leftSection={<IconDatabase size={14} stroke={1.5} />}
                 radius="md"
+                visibleFrom="md"
               >
-                <Text span fw={700} style={{ marginRight: '5px' }}>
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
                   IP MySQL
                 </Text>
                 {systemInfo.data.mysqlIp}
@@ -164,11 +135,55 @@ export default function DashboardLayout() {
                 className="glassBadge"
                 leftSection={<IconDatabase size={14} stroke={1.5} />}
                 radius="md"
+                visibleFrom="md"
               >
-                <Text span fw={700} style={{ marginRight: '5px' }}>
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
                   Ip MSSQL
                 </Text>
                 {systemInfo.data.mssqlIp}
+              </Badge>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconCpu size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
+                  CPU
+                </Text>
+                {systemInfo.data.cpuUsage}%
+              </Badge>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconGauge size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
+                  RAM
+                </Text>
+                <Text span visibleFrom="lg">
+                  {systemInfo.data.ramUsed}/{systemInfo.data.ramTotal} GB ({systemInfo.data.ramUsage}%)
+                </Text>
+                <Text span hiddenFrom="lg">
+                  {systemInfo.data.ramUsage}%
+                </Text>
+              </Badge>
+              <Badge
+                variant="light"
+                className="glassBadge"
+                leftSection={<IconDeviceSdCard size={14} stroke={1.5} />}
+                radius="md"
+              >
+                <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
+                  Disk
+                </Text>
+                <Text span visibleFrom="lg">
+                  {systemInfo.data.diskUsed}/{systemInfo.data.diskTotal} GB ({systemInfo.data.diskUsage}%)
+                </Text>
+                <Text span hiddenFrom="lg">
+                  {systemInfo.data.diskUsage}%
+                </Text>
               </Badge>
               <ServerClockBadge
                 serverTime={systemInfo.data.serverTime}
@@ -181,6 +196,68 @@ export default function DashboardLayout() {
 
       <AppShell.Navbar p="md" className="navbarColored">
         <Stack gap="md" style={{ height: '100%' }}>
+          {/* Brand Area */}
+          <Group justify="space-between" style={{ width: '100%', flexWrap: 'nowrap' }} px={desktopOpened ? 'xs' : 0}>
+            {desktopOpened ? (
+              <Group gap="xs" style={{ flexWrap: 'nowrap' }}>
+                <IconSwords size={22} color="var(--mantine-color-blue-3)" />
+                <Stack gap={0}>
+                  <Text fw={700} size="md" c="white" style={{ lineHeight: 1.2 }}>
+                    JX Manager
+                  </Text>
+                  <Group gap={4} style={{ flexWrap: 'nowrap', marginTop: '2px' }}>
+                    <Code style={{ 
+                      fontWeight: 'bold', 
+                      fontSize: '10px', 
+                      padding: '1px 5px', 
+                      backgroundColor: 'rgba(255,255,255,0.18)', 
+                      color: '#fff',
+                      borderRadius: '4px'
+                    }}>
+                      {status?.currentVersion || '...'}
+                    </Code>
+                    <Tooltip label="Kiểm tra cập nhật">
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="xs"
+                        loading={isChecking || isLoading}
+                        onClick={() => void checkNow()}
+                        styles={{ root: { color: 'rgba(255,255,255,0.7)', minWidth: '16px', minHeight: '16px' } }}
+                      >
+                        <IconRefresh size={10} stroke={1.5} />
+                      </ActionIcon>
+                    </Tooltip>
+                    {status?.hasUpdate && (
+                      <Button
+                        component={Link}
+                        to="/settings/system"
+                        size="xs"
+                        color="orange"
+                        variant="filled"
+                        styles={{
+                          root: {
+                            paddingLeft: '4px',
+                            paddingRight: '4px',
+                            height: '16px',
+                            fontSize: '9px',
+                            minHeight: '16px',
+                          },
+                        }}
+                      >
+                        Cập nhật
+                      </Button>
+                    )}
+                  </Group>
+                </Stack>
+              </Group>
+            ) : (
+              <Group justify="center" style={{ width: '100%' }}>
+                <IconSwords size={22} color="var(--mantine-color-blue-3)" />
+              </Group>
+            )}
+          </Group>
+
           {/* Toggle Area of Navbar */}
           <Group
             justify={desktopOpened ? 'flex-end' : 'center'}
@@ -250,7 +327,7 @@ function ServerClockBadge({ serverTime, timezone }: { serverTime?: string; timez
       leftSection={<IconClock size={14} stroke={1.5} />}
       radius="md"
     >
-      <Text span fw={700} style={{ marginRight: '5px' }}>
+      <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
         Time server
       </Text>
       {formatServerTime(clock, timezone)}

@@ -195,6 +195,13 @@ export type SystemInfo = {
   rawJxIp: string | null;
   coreServicesRunning: boolean;
   runningCoreServices: string[];
+  cpuUsage: number;
+  ramUsage: number;
+  ramUsed: number;
+  ramTotal: number;
+  diskUsage: number;
+  diskUsed: number;
+  diskTotal: number;
 };
 
 export type SaveGameNetworkResponse = {

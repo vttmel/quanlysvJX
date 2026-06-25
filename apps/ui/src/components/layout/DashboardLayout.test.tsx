@@ -20,6 +20,13 @@ vi.mock('@/services/systemService', () => ({
       },
       coreServicesRunning: false,
       runningCoreServices: [],
+      cpuUsage: 12.5,
+      ramUsage: 45.8,
+      ramUsed: 3.6,
+      ramTotal: 8.0,
+      diskUsage: 35.0,
+      diskUsed: 42.0,
+      diskTotal: 120.0,
     }),
   },
 }));

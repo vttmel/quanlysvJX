@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import os, { type NetworkInterfaceInfo } from 'node:os';
 import { z } from 'zod';
 import { readEnvMap, updateEnvKeys } from '../env/envFile.js';
@@ -29,6 +29,13 @@ export type SystemInfo = {
   rawJxIp: string | null;
   coreServicesRunning: boolean;
   runningCoreServices: string[];
+  cpuUsage: number;
+  ramUsage: number;
+  ramUsed: number;
+  ramTotal: number;
+  diskUsage: number;
+  diskUsed: number;
+  diskTotal: number;
 };
 
 export type HostIpCommandResult = {
@@ -159,6 +166,72 @@ export function saveGameNetworkConfig(envFilePath: string, config: GameNetworkCo
   });
 }
 
+let lastCpuTicks = getCpuTicks();
+
+function getCpuTicks() {
+  const cpus = os.cpus();
+  let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
+  for (const cpu of cpus) {
+    user += cpu.times.user;
+    nice += cpu.times.nice;
+    sys += cpu.times.sys;
+    idle += cpu.times.idle;
+    irq += cpu.times.irq;
+  }
+  const total = user + nice + sys + idle + irq;
+  return { total, idle };
+}
+
+export function getCpuUsage() {
+  const current = getCpuTicks();
+  const idleDifference = current.idle - lastCpuTicks.idle;
+  const totalDifference = current.total - lastCpuTicks.total;
+  lastCpuTicks = current;
+  if (totalDifference === 0) return 0;
+  return Math.round((1 - idleDifference / totalDifference) * 1000) / 10;
+}
+
+export function getRamDetails() {
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  const totalGB = Math.round((totalMem / (1024 * 1024 * 1024)) * 10) / 10;
+  const usedGB = Math.round((usedMem / (1024 * 1024 * 1024)) * 10) / 10;
+  const percent = totalMem === 0 ? 0 : Math.round((usedMem / totalMem) * 1000) / 10;
+  return {
+    used: usedGB,
+    total: totalGB,
+    percent
+  };
+}
+
+export function getDiskDetails() {
+  try {
+    const stdout = execSync('df -P .', { encoding: 'utf8' });
+    const lines = stdout.trim().split('\n');
+    const line = lines[1];
+    if (line) {
+      const parts = line.split(/\s+/);
+      const totalKB = parseInt(parts[1] || '0', 10);
+      const usedKB = parseInt(parts[2] || '0', 10);
+      const percentStr = parts[4]?.replace('%', '');
+      
+      const totalGB = Math.round((totalKB / (1024 * 1024)) * 10) / 10;
+      const usedGB = Math.round((usedKB / (1024 * 1024)) * 10) / 10;
+      const percent = percentStr ? parseInt(percentStr, 10) : 0;
+
+      return {
+        used: usedGB,
+        total: totalGB,
+        percent
+      };
+    }
+  } catch {
+    // Fallback
+  }
+  return { used: 0, total: 0, percent: 0 };
+}
+
 export function buildSystemInfo(options: {
   envFilePath: string;
   ipChoices?: string[];
@@ -177,6 +250,9 @@ export function buildSystemInfo(options: {
     .filter((service) => coreServiceNames.has(service.name) && ['running', 'starting'].includes(service.state))
     .map((service) => service.name);
 
+  const ram = getRamDetails();
+  const disk = getDiskDetails();
+
   return {
     serverTime: (options.now ?? new Date()).toISOString(),
     timezone: options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -188,7 +264,14 @@ export function buildSystemInfo(options: {
     gameNetwork,
     rawJxIp: env.JX_IP ?? null,
     coreServicesRunning: runningCoreServices.length > 0,
-    runningCoreServices
+    runningCoreServices,
+    cpuUsage: getCpuUsage(),
+    ramUsage: ram.percent,
+    ramUsed: ram.used,
+    ramTotal: ram.total,
+    diskUsage: disk.percent,
+    diskUsed: disk.used,
+    diskTotal: disk.total
   };
 }
 
