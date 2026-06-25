@@ -106,7 +106,7 @@ export default function DashboardLayout() {
             </Group>
           </Group>
           {systemInfo.data && (
-            <Group gap={6} visibleFrom="sm" style={{ flexWrap: 'nowrap' }}>
+            <Group gap={6} visibleFrom="sm" className="headerBadgesGroup" style={{ flexWrap: 'nowrap' }}>
               <Badge
                 variant="light"
                 className="glassBadge"
@@ -123,7 +123,7 @@ export default function DashboardLayout() {
                 className="glassBadge"
                 leftSection={<IconDatabase size={14} stroke={1.5} />}
                 radius="md"
-                visibleFrom="md"
+                visibleFrom="lg"
               >
                 <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
                   IP MySQL
@@ -135,7 +135,7 @@ export default function DashboardLayout() {
                 className="glassBadge"
                 leftSection={<IconDatabase size={14} stroke={1.5} />}
                 radius="md"
-                visibleFrom="md"
+                visibleFrom="lg"
               >
                 <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
                   Ip MSSQL
@@ -330,7 +330,12 @@ function ServerClockBadge({ serverTime, timezone }: { serverTime?: string; timez
       <Text span fw={700} style={{ marginRight: '5px' }} visibleFrom="lg">
         Time server
       </Text>
-      {formatServerTime(clock, timezone)}
+      <Text span visibleFrom="lg">
+        {formatServerTimeFull(clock, timezone)}
+      </Text>
+      <Text span hiddenFrom="lg">
+        {formatServerTimeTimeOnly(clock, timezone)}
+      </Text>
     </Badge>
   );
 }
@@ -360,7 +365,7 @@ function useServerClock(serverTime?: string) {
   return clock;
 }
 
-function formatServerTime(date: Date | null, timezone?: string) {
+function formatServerTimeFull(date: Date | null, timezone?: string) {
   if (!date || Number.isNaN(date.getTime())) {
     return '-';
   }
@@ -368,6 +373,19 @@ function formatServerTime(date: Date | null, timezone?: string) {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: timezone,
+  });
+}
+
+function formatServerTimeTimeOnly(date: Date | null, timezone?: string) {
+  if (!date || Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  return date.toLocaleString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',

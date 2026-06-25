@@ -69,6 +69,7 @@
   height: 28px !important;
   padding-left: 10px !important;
   padding-right: 10px !important;
+  flex-shrink: 0 !important;
 }
 
 [data-mantine-color-scheme='dark'] .glassBadge,
@@ -86,3 +87,34 @@
 .dark .glassBadge:hover {
   background-color: rgb(255, 255, 255, 0.09) !important;
 }
+
+.headerBadgesGroup {
+  max-width: 100%;
+  overflow-x: auto !important;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.headerBadgesGroup::-webkit-scrollbar {
+  display: none; /* Safari & Chrome */
+}
+
+/* Responsive adjustments for header badges */
+@media (max-width: 1200px) {
+  .glassBadge {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 11px !important;
+    height: 26px !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .glassBadge {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 10px !important;
+    height: 24px !important;
+  }
+}
+
