@@ -94,7 +94,7 @@ describe("UpdateService", () => {
     expect(commandRunner.stream).toHaveBeenNthCalledWith(
       1,
       "git",
-      ["fetch", "--tags", "origin"],
+      ["fetch", "--tags", "-f", "origin"],
       "/workspace",
       expect.any(Function),
     );

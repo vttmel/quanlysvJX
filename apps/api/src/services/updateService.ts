@@ -180,7 +180,7 @@ export class UpdateService {
     if (!status.latestTag) throw new Error("No GitHub release found");
     this.assertSafeTag(status.latestTag);
 
-    await this.streamStep("git", ["fetch", "--tags", "origin"], onEvent);
+    await this.streamStep("git", ["fetch", "--tags", "-f", "origin"], onEvent);
     await this.streamStep("git", ["checkout", "-f", status.latestTag], onEvent);
     this.ensureJxEnvFile(onEvent);
     
@@ -255,7 +255,7 @@ export class UpdateService {
       this.ensureJxEnvFile((event) => this.appendRunLog(runId, "status", event.message));
 
       this.setRunStage(runId, "fetching");
-      await this.streamRunStep(runId, "git", ["fetch", "--tags", "origin"]);
+      await this.streamRunStep(runId, "git", ["fetch", "--tags", "-f", "origin"]);
 
       this.setRunStage(runId, "checkout");
       await this.streamRunStep(runId, "git", ["checkout", "-f", run.targetTag]);
