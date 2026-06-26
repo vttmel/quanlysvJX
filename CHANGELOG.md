@@ -2,6 +2,12 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.8] - 2026-06-26
+
+### Cải tiến & Tối ưu hóa (Improvements & Refactor)
+- **Bảo toàn quyền file mssql-entrypoint**: Loại bỏ lệnh thay đổi quyền thực thi trực tiếp trên đĩa của host cho script seed, chuyển sang gọi trực tiếp qua `bash` trong container giúp Git luôn sạch và không báo đổi file mode khi khởi chạy.
+- **Bỏ qua thư mục mount cục bộ**: Bổ sung cấu hình `.gitignore` trong `apps/jx-services` để bỏ qua các thay đổi tự động phát sinh trong quá trình mount (thư mục `mount/update`).
+
 ## [1.0.7] - 2026-06-25
 
 ### Thêm mới (Added)
