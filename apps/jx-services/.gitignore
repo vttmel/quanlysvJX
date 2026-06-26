@@ -14,7 +14,7 @@ mount/logs/
 mount/paysyswin/payserver_log
 mount/paysyswin/relayserver_log
 mount/paysyswin/wineprefix-paysys.tar.gz
-
+mount/update/*
 versions/*
 
 # Cấu hình JX config
