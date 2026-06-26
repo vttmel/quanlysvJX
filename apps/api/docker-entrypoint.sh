@@ -67,8 +67,6 @@ ensure_dir "apps/jx-services/mount/paysyswin/payserver_log" "777" "1000:1000"
 ensure_dir "apps/jx-services/mount/paysyswin/relayserver_log" "777" "1000:1000"
 
 ensure_file_mode "apps/jx-services/mount/database/mssql/seed/account_tong_seed.bak" "644"
-ensure_file_mode "apps/jx-services/mount/database/mssql/seed/init-account-tong.sh" "755"
-ensure_file_mode "apps/jx-services/mount/database/mssql/seed/mssql-entrypoint.sh" "755"
 
 echo "[setup] directory preparation completed"
 

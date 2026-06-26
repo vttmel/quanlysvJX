@@ -10,6 +10,6 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-MSSQL_HOST="${MSSQL_HOST:-localhost}" /var/opt/mssql/seed/init-account-tong.sh
+MSSQL_HOST="${MSSQL_HOST:-localhost}" /bin/bash /var/opt/mssql/seed/init-account-tong.sh
 
 wait "$sqlservr_pid"
