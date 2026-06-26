@@ -2,6 +2,11 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.9] - 2026-06-26
+
+### Sửa lỗi (Fixed)
+- **Tự động cưỡng chế tag khi update**: Bổ sung cờ `-f` (force) vào lệnh `git fetch --tags` trong quá trình cập nhật tự động giúp tránh các lỗi bị bác bỏ tag cũ cục bộ trên máy clone (`would clobber existing tag`).
+
 ## [1.0.8] - 2026-06-26
 
 ### Cải tiến & Tối ưu hóa (Improvements & Refactor)
