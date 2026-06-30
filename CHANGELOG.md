@@ -2,6 +2,11 @@
 
 Tất cả những thay đổi quan trọng đối với dự án JX Manager sẽ được ghi nhận tại đây.
 
+## [1.0.10] - 2026-06-30
+
+### Thêm mới (Added)
+- **Mount thư mục server1 cho s3relay**: Bổ sung volume mount thư mục server1 vào dịch vụ s3relay trong `jx-services` (`docker-compose.yaml`).
+
 ## [1.0.9] - 2026-06-26
 
 ### Sửa lỗi (Fixed)
