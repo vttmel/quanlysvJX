@@ -188,6 +188,7 @@ services:
       - APP_CMD=s3relay_y
     volumes:
       - "${SERVER_PATH}/gateway:/src/jxser/gateway/"
+      - "${SERVER_PATH}/server1:/src/jxser/server1:ro"
       - "./mount/config/gateway/relay_config.ini:/src/jxser/gateway/s3relay/relay_config.ini"
       - "./mount/config/gateway/hostset.ini:/src/jxser/gateway/s3relay/settings/hostset.ini"
       - "./dockerfiles/entrypoint.sh:/src/entrypoint.sh"
